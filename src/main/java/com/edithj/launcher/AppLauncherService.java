@@ -38,10 +38,4 @@ public class AppLauncherService {
         return launcher.launch(normalized);
     }
 
-    /**
-     * Check if a string is a URL.
-     */
-    private boolean isUrl(String target) {
-        return target.startsWith("http://") || target.startsWith("https://");
-    }
 }

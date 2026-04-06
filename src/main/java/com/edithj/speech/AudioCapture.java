@@ -50,7 +50,7 @@ public class AudioCapture {
             thread.setDaemon(true);
             captureThread = thread;
             thread.start();
-        } catch (Exception exception) {
+        } catch (javax.sound.sampled.LineUnavailableException exception) {
             recording = false;
             microphone = null;
             throw new IllegalStateException("Unable to start audio recording", exception);

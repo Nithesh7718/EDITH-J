@@ -2,9 +2,7 @@ package com.edithj.launcher;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,22 +65,22 @@ public class WindowsLauncher {
             // Check if it's a known app
             String exe = APPS.get(normalized);
             if (exe != null) {
-                return tryLaunch(exe, normalized);
+                return tryLaunch(exe);
             }
 
             // Try direct executable name
-            if (tryLaunch(normalized, appName)) {
+            if (tryLaunch(normalized)) {
                 return true;
             }
 
             // Search in common paths
             String executable = findExecutable(normalized);
             if (executable != null) {
-                return tryLaunch(executable, appName);
+                return tryLaunch(executable);
             }
 
             return false;
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             return false;
         }
     }
@@ -109,7 +107,7 @@ public class WindowsLauncher {
      * Try to launch an executable. Supports: - Direct commands (calc.exe,
      * notepad.exe) - Registry URLs (ms-settings:, ms-clock:) - Full paths
      */
-    private boolean tryLaunch(String executable, String displayName) throws IOException {
+    private boolean tryLaunch(String executable) throws IOException {
         if (executable.startsWith("ms-")) {
             // Handle registry (ms-settings:, ms-clock:, etc.)
             try {

@@ -1,5 +1,7 @@
 package com.edithj.launcher;
 
+import java.io.IOException;
+
 /**
  * Cross-platform app/URL launcher with OS detection and graceful fallback.
  * Primary support for Windows; falls back to generic Desktop API for other
@@ -36,7 +38,7 @@ public class CrossPlatformLauncher {
 
     private String launchApp(String appName) {
         try {
-            boolean success = false;
+            boolean success;
 
             if (IS_WINDOWS) {
                 WindowsLauncher launcher = new WindowsLauncher();
@@ -52,14 +54,14 @@ public class CrossPlatformLauncher {
             } else {
                 return "Could not find or launch " + appName + ".";
             }
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             return "Error launching " + appName + ": " + exception.getMessage();
         }
     }
 
     private String launchUrl(String url) {
         try {
-            boolean success = false;
+            boolean success;
 
             if (IS_WINDOWS) {
                 WindowsLauncher launcher = new WindowsLauncher();
@@ -75,7 +77,7 @@ public class CrossPlatformLauncher {
             } else {
                 return "Could not open URL: " + url;
             }
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             return "Error opening URL: " + exception.getMessage();
         }
     }
@@ -84,26 +86,26 @@ public class CrossPlatformLauncher {
         return target.startsWith("http://") || target.startsWith("https://");
     }
 
-    private boolean launchGenericApp(String appName) throws Exception {
+    private boolean launchGenericApp(String appName) throws IOException {
         try {
             ProcessBuilder pb = new ProcessBuilder(appName);
             pb.start();
             return true;
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             return false;
         }
     }
 
-    private boolean launchGenericUrl(String url) throws Exception {
+    private boolean launchGenericUrl(String url) throws IOException {
         try {
             java.awt.Desktop.getDesktop().browse(java.net.URI.create(url));
             return true;
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             return false;
         }
     }
 
-    private boolean launchUnixApp(String appName) throws Exception {
+    private boolean launchUnixApp(String appName) throws IOException {
         java.util.Map<String, String> aliases = new java.util.HashMap<>();
         aliases.put("notepad", "gedit");
         aliases.put("calculator", "galculator");
@@ -117,17 +119,17 @@ public class CrossPlatformLauncher {
             ProcessBuilder pb = new ProcessBuilder(resolved);
             pb.start();
             return true;
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             return false;
         }
     }
 
-    private boolean launchUnixUrl(String url) throws Exception {
+    private boolean launchUnixUrl(String url) throws IOException {
         try {
             ProcessBuilder pb = new ProcessBuilder("xdg-open", url);
             pb.start();
             return true;
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             return false;
         }
     }
