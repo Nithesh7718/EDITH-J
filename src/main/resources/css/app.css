@@ -1,0 +1,77 @@
+* {
+	-fx-font-family: "Segoe UI", "Inter", sans-serif;
+}
+
+.app-shell {
+	-fx-background-color: linear-gradient(to bottom right, #0f172a, #111827 55%, #1f2937);
+}
+
+.app-header {
+	-fx-background-color: rgba(15, 23, 42, 0.92);
+	-fx-border-color: rgba(148, 163, 184, 0.18);
+	-fx-border-width: 0 0 1 0;
+}
+
+.app-title {
+	-fx-text-fill: #f8fafc;
+	-fx-font-size: 30px;
+	-fx-font-weight: 700;
+}
+
+.app-subtitle {
+	-fx-text-fill: #cbd5e1;
+	-fx-font-size: 13px;
+}
+
+.sidebar {
+	-fx-background-color: rgba(15, 23, 42, 0.8);
+	-fx-border-color: rgba(148, 163, 184, 0.16);
+	-fx-border-width: 0 1 0 0;
+}
+
+.nav-button, .primary-button {
+	-fx-background-color: #38bdf8;
+	-fx-text-fill: #0f172a;
+	-fx-font-weight: 700;
+	-fx-background-radius: 12;
+	-fx-padding: 12 16;
+}
+
+.nav-button-muted {
+	-fx-background-color: rgba(148, 163, 184, 0.16);
+	-fx-text-fill: #e2e8f0;
+}
+
+.content-host {
+	-fx-background-color: rgba(15, 23, 42, 0.42);
+}
+
+.chat-panel {
+	-fx-background-color: transparent;
+}
+
+.chat-history {
+	-fx-background-color: rgba(15, 23, 42, 0.85);
+	-fx-control-inner-background: transparent;
+	-fx-border-color: rgba(148, 163, 184, 0.18);
+	-fx-border-radius: 16;
+	-fx-background-radius: 16;
+}
+
+.chat-input {
+	-fx-background-color: rgba(15, 23, 42, 0.88);
+	-fx-text-fill: #e2e8f0;
+	-fx-border-color: rgba(148, 163, 184, 0.18);
+	-fx-border-radius: 16;
+	-fx-background-radius: 16;
+}
+
+.footer-bar {
+	-fx-background-color: rgba(15, 23, 42, 0.94);
+	-fx-border-color: rgba(148, 163, 184, 0.18);
+	-fx-border-width: 1 0 0 0;
+}
+
+.footer-status {
+	-fx-text-fill: #cbd5e1;
+}
