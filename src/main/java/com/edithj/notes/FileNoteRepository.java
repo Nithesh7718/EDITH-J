@@ -1,53 +1,33 @@
 package com.edithj.notes;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.edithj.storage.JsonStorage;
+import com.edithj.storage.StoragePaths;
 
 public class FileNoteRepository implements NoteRepository {
 
     private static final TypeReference<List<Note>> NOTE_LIST_TYPE = new TypeReference<>() {
     };
 
-    private final Path storagePath;
-    private final ObjectMapper objectMapper;
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final JsonStorage storage;
 
     public FileNoteRepository() {
-        this(Paths.get("src", "main", "resources", "data", "notes.json"));
+        this(StoragePaths.notesPath());
     }
 
     public FileNoteRepository(Path storagePath) {
-        this.storagePath = storagePath;
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        ensureStorageExists();
+        this.storage = new JsonStorage(storagePath);
     }
 
     @Override
     public List<Note> findAll() {
-        lock.readLock().lock();
-        try {
-            return new ArrayList<>(readNotes());
-        } finally {
-            lock.readLock().unlock();
-        }
+        return storage.readList(NOTE_LIST_TYPE);
     }
 
     @Override
@@ -56,14 +36,9 @@ public class FileNoteRepository implements NoteRepository {
             return Optional.empty();
         }
 
-        lock.readLock().lock();
-        try {
-            return readNotes().stream()
-                    .filter(note -> noteId.equals(note.getId()))
-                    .findFirst();
-        } finally {
-            lock.readLock().unlock();
-        }
+        return findAll().stream()
+                .filter(note -> noteId.equals(note.getId()))
+                .findFirst();
     }
 
     @Override
@@ -72,29 +47,24 @@ public class FileNoteRepository implements NoteRepository {
             throw new IllegalArgumentException("Note cannot be null");
         }
 
-        lock.writeLock().lock();
-        try {
-            List<Note> notes = readNotes();
-            int index = indexOf(notes, note.getId());
+        List<Note> notes = findAll();
+        int index = indexOf(notes, note.getId());
 
-            if (note.getCreatedAt() == null) {
-                note.setCreatedAt(Instant.now());
-            }
-            if (note.getUpdatedAt() == null) {
-                note.setUpdatedAt(Instant.now());
-            }
-
-            if (index >= 0) {
-                notes.set(index, note);
-            } else {
-                notes.add(note);
-            }
-
-            writeNotes(notes);
-            return note;
-        } finally {
-            lock.writeLock().unlock();
+        if (note.getCreatedAt() == null) {
+            note.setCreatedAt(Instant.now());
         }
+        if (note.getUpdatedAt() == null) {
+            note.setUpdatedAt(Instant.now());
+        }
+
+        if (index >= 0) {
+            notes.set(index, note);
+        } else {
+            notes.add(note);
+        }
+
+        storage.writeList(notes);
+        return note;
     }
 
     @Override
@@ -103,17 +73,12 @@ public class FileNoteRepository implements NoteRepository {
             return false;
         }
 
-        lock.writeLock().lock();
-        try {
-            List<Note> notes = readNotes();
-            boolean removed = notes.removeIf(note -> noteId.equals(note.getId()));
-            if (removed) {
-                writeNotes(notes);
-            }
-            return removed;
-        } finally {
-            lock.writeLock().unlock();
+        List<Note> notes = findAll();
+        boolean removed = notes.removeIf(note -> noteId.equals(note.getId()));
+        if (removed) {
+            storage.writeList(notes);
         }
+        return removed;
     }
 
     private int indexOf(List<Note> notes, String noteId) {
@@ -123,38 +88,5 @@ public class FileNoteRepository implements NoteRepository {
             }
         }
         return -1;
-    }
-
-    private List<Note> readNotes() {
-        ensureStorageExists();
-        try (InputStream inputStream = Files.newInputStream(storagePath)) {
-            List<Note> notes = objectMapper.readValue(inputStream, NOTE_LIST_TYPE);
-            return notes == null ? new ArrayList<>() : notes;
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to read notes storage", exception);
-        }
-    }
-
-    private void writeNotes(List<Note> notes) {
-        ensureStorageExists();
-        try (OutputStream outputStream = Files.newOutputStream(storagePath)) {
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputStream, notes);
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to write notes storage", exception);
-        }
-    }
-
-    private void ensureStorageExists() {
-        try {
-            Path parent = storagePath.getParent();
-            if (parent != null && Files.notExists(parent)) {
-                Files.createDirectories(parent);
-            }
-            if (Files.notExists(storagePath)) {
-                Files.writeString(storagePath, "[]");
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to initialize notes storage", exception);
-        }
     }
 }

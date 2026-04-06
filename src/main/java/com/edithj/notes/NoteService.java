@@ -4,6 +4,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import com.edithj.util.ValidationUtils;
+
 public class NoteService {
 
     private final NoteRepository noteRepository;
@@ -13,11 +15,7 @@ public class NoteService {
     }
 
     public Note createNote(String rawContent) {
-        String content = normalize(rawContent);
-        if (content.isBlank()) {
-            throw new IllegalArgumentException("Note content cannot be empty.");
-        }
-
+        String content = ValidationUtils.validateNonEmpty(rawContent, "Note content");
         Note note = Note.newNote(deriveTitle(content), content);
         return noteRepository.save(note);
     }
@@ -29,7 +27,7 @@ public class NoteService {
     }
 
     public List<Note> searchNotes(String rawQuery) {
-        String query = normalize(rawQuery);
+        String query = ValidationUtils.normalize(rawQuery);
         if (query.isBlank()) {
             return listNotes();
         }
@@ -40,13 +38,16 @@ public class NoteService {
     }
 
     public Optional<Note> updateNote(String noteId, String rawContent) {
-        String id = normalize(noteId);
-        String content = normalize(rawContent);
-        if (id.isBlank() || content.isBlank()) {
+        if (!ValidationUtils.isValidId(noteId)) {
             return Optional.empty();
         }
 
-        Optional<Note> existing = noteRepository.findById(id);
+        String content = ValidationUtils.normalize(rawContent);
+        if (content.isBlank()) {
+            return Optional.empty();
+        }
+
+        Optional<Note> existing = noteRepository.findById(noteId);
         if (existing.isEmpty()) {
             return Optional.empty();
         }
@@ -57,24 +58,15 @@ public class NoteService {
     }
 
     public boolean deleteNote(String noteId) {
-        String id = normalize(noteId);
-        if (id.isBlank()) {
+        if (!ValidationUtils.isValidId(noteId)) {
             return false;
         }
-        return noteRepository.deleteById(id);
+        return noteRepository.deleteById(noteId);
     }
 
     private String deriveTitle(String content) {
         int firstLineBreak = content.indexOf('\n');
         String firstLine = firstLineBreak < 0 ? content : content.substring(0, firstLineBreak);
-        String compact = firstLine.trim();
-        if (compact.length() <= 40) {
-            return compact;
-        }
-        return compact.substring(0, 40) + "...";
-    }
-
-    private String normalize(String value) {
-        return value == null ? "" : value.trim();
+        return ValidationUtils.truncate(firstLine.trim(), 40);
     }
 }
