@@ -60,49 +60,49 @@ public class IntentRouter {
         return new RoutedIntent(intentType, normalized, payload);
     }
 
-    private IntentType classify(String normalized) {
-        if (containsAny(normalized, "note", "notes", "notepad", "write down", "save this")) {
+    private IntentType classify(String input) {
+        if (containsAnyIgnoreCase(input, "note", "notes", "notepad", "write down", "save this")) {
             return IntentType.NOTES;
         }
-        if (containsAny(normalized, "remind", "reminder", "alarm", "schedule", "due")) {
+        if (containsAnyIgnoreCase(input, "remind", "reminder", "alarm", "schedule", "due")) {
             return IntentType.REMINDERS;
         }
-        if (containsAny(normalized, "open", "launch", "start", "run", "execute")) {
+        if (containsAnyIgnoreCase(input, "open", "launch", "start", "run", "execute")) {
             return IntentType.APP_LAUNCH;
         }
         return IntentType.FALLBACK_CHAT;
     }
 
-    private String extractPayload(String normalized, IntentType intentType) {
+    private String extractPayload(String input, IntentType intentType) {
         return switch (intentType) {
             case APP_LAUNCH ->
-                stripLeadingKeyword(normalized, "open", "launch", "start", "run", "execute");
+                stripLeadingKeywordIgnoreCase(input, "open", "launch", "start", "run", "execute");
             case NOTES ->
-                stripLeadingKeyword(normalized, "note", "notes", "notepad", "write down", "save this");
+                stripLeadingKeywordIgnoreCase(input, "note", "notes", "notepad", "write down", "save this");
             case REMINDERS ->
-                stripLeadingKeyword(normalized, "remind", "reminder", "alarm", "schedule");
+                stripLeadingKeywordIgnoreCase(input, "remind", "reminder", "alarm", "schedule");
             case FALLBACK_CHAT ->
-                normalized;
+                input;
         };
     }
 
-    private String stripLeadingKeyword(String input, String... keywords) {
-        String stripped = input;
+    private String stripLeadingKeywordIgnoreCase(String input, String... keywords) {
         for (String keyword : keywords) {
-            if (stripped.startsWith(keyword + " ")) {
-                stripped = stripped.substring(keyword.length()).trim();
-                break;
-            }
-            if (stripped.equals(keyword)) {
+            if (input.length() == keyword.length() && input.equalsIgnoreCase(keyword)) {
                 return "";
             }
+            if (input.length() > keyword.length() && input.regionMatches(true, 0, keyword, 0, keyword.length())
+                    && Character.isWhitespace(input.charAt(keyword.length()))) {
+                return input.substring(keyword.length()).trim();
+            }
         }
-        return stripped;
+        return input;
     }
 
-    private boolean containsAny(String input, String... keywords) {
+    private boolean containsAnyIgnoreCase(String input, String... keywords) {
+        String lowerInput = input.toLowerCase(Locale.ROOT);
         for (String keyword : keywords) {
-            if (input.contains(keyword)) {
+            if (lowerInput.contains(keyword)) {
                 return true;
             }
         }
@@ -110,6 +110,6 @@ public class IntentRouter {
     }
 
     private String normalize(String input) {
-        return input == null ? "" : input.trim().toLowerCase(Locale.ROOT);
+        return input == null ? "" : input.trim();
     }
 }
