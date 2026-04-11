@@ -1,38 +1,27 @@
 package com.edithj.commands;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.edithj.reminders.Reminder;
+import com.edithj.reminders.ReminderRepository;
 import com.edithj.reminders.ReminderService;
 
-@ExtendWith(MockitoExtension.class)
 class ReminderCommandHandlerTest {
-
-    @Mock
-    private ReminderService reminderService;
-
-    private ReminderCommandHandler handler;
-
-    @BeforeEach
-    void setUp() {
-        handler = new ReminderCommandHandler(reminderService);
-    }
 
     @Test
     void handle_listCommandFormatsReminders() {
+        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
         Reminder reminder = new Reminder("12345678-abcd", "Pay bill", Instant.now().plusSeconds(60), false, Instant.now(), Instant.now());
-        when(reminderService.listReminders()).thenReturn(List.of(reminder));
+        when(reminderRepository.findAll()).thenReturn(List.of(reminder));
 
         String response = handler.handle(new CommandHandler.CommandContext("list reminders", "list", "typed"));
 
@@ -42,8 +31,11 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_markDoneUsesService() {
-        Reminder reminder = new Reminder("id-3", "Send mail", Instant.now(), true, Instant.now(), Instant.now());
-        when(reminderService.markDone("id-3")).thenReturn(Optional.of(reminder));
+        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
+        Reminder reminder = new Reminder("id-3", "Send mail", Instant.now(), false, Instant.now(), Instant.now());
+        when(reminderRepository.findById("id-3")).thenReturn(Optional.of(reminder));
+        when(reminderRepository.save(reminder)).thenReturn(reminder);
 
         String response = handler.handle(new CommandHandler.CommandContext("done", "done id-3", "typed"));
 
@@ -52,8 +44,9 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_snoozeMissingReminderReturnsMessage() {
-        when(reminderService.snoozeReminder(org.mockito.ArgumentMatchers.eq("id-4"), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(Optional.empty());
+        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
+        when(reminderRepository.findById("id-4")).thenReturn(Optional.empty());
 
         String response = handler.handle(new CommandHandler.CommandContext("snooze", "snooze id-4 10 minutes", "typed"));
 
@@ -62,6 +55,8 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_createReminderRequiresTimeHint() {
+        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
         String response = handler.handle(new CommandHandler.CommandContext("remind", "remind me to stretch", "typed"));
 
         assertTrue(response.contains("I need a time hint"));
@@ -69,8 +64,10 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_createReminderSuccess() {
-        Reminder created = new Reminder("new-7", "stretch", Instant.now().plusSeconds(300), false, Instant.now(), Instant.now());
-        when(reminderService.createReminder("stretch", "in 5 minutes")).thenReturn(created);
+        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
+        when(reminderRepository.save(org.mockito.ArgumentMatchers.any(Reminder.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         String response = handler.handle(new CommandHandler.CommandContext("remind", "remind me to stretch in 5 minutes", "typed"));
 

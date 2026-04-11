@@ -1,54 +1,42 @@
 package com.edithj.reminders;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class ReminderServiceTest {
-
-    @Mock
-    private ReminderRepository reminderRepository;
-
-    private ReminderService reminderService;
-
-    @BeforeEach
-    void setUp() {
-        reminderService = new ReminderService(reminderRepository);
-    }
 
     @Test
     void createReminder_savesParsedReminder() {
-        when(reminderRepository.save(org.mockito.ArgumentMatchers.any(Reminder.class)))
+    ReminderRepository repository = org.mockito.Mockito.mock(ReminderRepository.class);
+    ReminderService reminderService = new ReminderService(repository);
+    when(repository.save(org.mockito.ArgumentMatchers.any(Reminder.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         Reminder reminder = reminderService.createReminder("Call mom", "in 10 minutes");
 
         assertEquals("Call mom", reminder.getText());
         assertNotNull(reminder.getDueAt());
-        verify(reminderRepository).save(org.mockito.ArgumentMatchers.any(Reminder.class));
+        verify(repository).save(org.mockito.ArgumentMatchers.any(Reminder.class));
     }
 
     @Test
     void listReminders_filtersCompletedAndSortsByDueDate() {
+        ReminderRepository repository = org.mockito.Mockito.mock(ReminderRepository.class);
+        ReminderService reminderService = new ReminderService(repository);
         Reminder done = new Reminder("1", "done", Instant.now().plusSeconds(60), true, Instant.now(), Instant.now());
         Reminder early = new Reminder("2", "early", Instant.now().plusSeconds(120), false, Instant.now(), Instant.now());
         Reminder late = new Reminder("3", "late", Instant.now().plusSeconds(240), false, Instant.now(), Instant.now());
-        when(reminderRepository.findAll()).thenReturn(List.of(late, done, early));
+        when(repository.findAll()).thenReturn(List.of(late, done, early));
 
         List<Reminder> reminders = reminderService.listReminders();
 
@@ -57,23 +45,27 @@ class ReminderServiceTest {
 
     @Test
     void markDone_updatesExistingReminder() {
+        ReminderRepository repository = org.mockito.Mockito.mock(ReminderRepository.class);
+        ReminderService reminderService = new ReminderService(repository);
         Reminder reminder = new Reminder("abc123", "task", Instant.now().plusSeconds(60), false, Instant.now(), Instant.now());
-        when(reminderRepository.findById("abc123")).thenReturn(Optional.of(reminder));
-        when(reminderRepository.save(reminder)).thenReturn(reminder);
+        when(repository.findById("abc123")).thenReturn(Optional.of(reminder));
+        when(repository.save(reminder)).thenReturn(reminder);
 
         Optional<Reminder> updated = reminderService.markDone("abc123");
 
         assertTrue(updated.isPresent());
         assertTrue(updated.get().isCompleted());
-        verify(reminderRepository).save(reminder);
+        verify(repository).save(reminder);
     }
 
     @Test
     void snoozeReminder_movesDueDateForward() {
+        ReminderRepository repository = org.mockito.Mockito.mock(ReminderRepository.class);
+        ReminderService reminderService = new ReminderService(repository);
         Instant base = Instant.now().plusSeconds(60);
         Reminder reminder = new Reminder("xyz789", "meeting", base, true, Instant.now(), Instant.now());
-        when(reminderRepository.findById("xyz789")).thenReturn(Optional.of(reminder));
-        when(reminderRepository.save(reminder)).thenReturn(reminder);
+        when(repository.findById("xyz789")).thenReturn(Optional.of(reminder));
+        when(repository.save(reminder)).thenReturn(reminder);
 
         Optional<Reminder> snoozed = reminderService.snoozeReminder("xyz789", Duration.ofMinutes(15));
 
@@ -84,7 +76,9 @@ class ReminderServiceTest {
 
     @Test
     void deleteReminder_rejectsInvalidIds() {
-        when(reminderRepository.deleteById("id-1")).thenReturn(true);
+        ReminderRepository repository = org.mockito.Mockito.mock(ReminderRepository.class);
+        ReminderService reminderService = new ReminderService(repository);
+        when(repository.deleteById("id-1")).thenReturn(true);
 
         assertTrue(reminderService.deleteReminder("id-1"));
         assertFalse(reminderService.deleteReminder(""));

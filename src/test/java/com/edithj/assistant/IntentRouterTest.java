@@ -2,26 +2,18 @@ package com.edithj.assistant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import com.edithj.commands.CommandHandler;
 
 class IntentRouterTest {
 
-    private IntentRouter router;
-
-    @BeforeEach
-    void setUp() {
-        router = new IntentRouter();
-    }
-
     @Test
     void route_classifiesNotesAndExtractsPayload() {
+        IntentRouter router = new IntentRouter();
         IntentRouter.RoutedIntent routed = router.route("note buy milk and eggs");
 
         assertEquals(IntentType.NOTES, routed.intentType());
@@ -30,6 +22,7 @@ class IntentRouterTest {
 
     @Test
     void route_classifiesMathAsUtilities() {
+        IntentRouter router = new IntentRouter();
         IntentRouter.RoutedIntent routed = router.route("calculate 12 * (3 + 1)");
 
         assertEquals(IntentType.UTILITIES, routed.intentType());
@@ -38,6 +31,7 @@ class IntentRouterTest {
 
     @Test
     void routeAndHandle_invokesRegisteredHandlerWithNormalizedChannel() {
+        IntentRouter router = new IntentRouter();
         CommandHandler handler = mock(CommandHandler.class);
         when(handler.intentType()).thenReturn(IntentType.NOTES);
         when(handler.handle(org.mockito.ArgumentMatchers.any())).thenReturn("saved");
@@ -56,6 +50,7 @@ class IntentRouterTest {
 
     @Test
     void routeAndHandle_returnsFallbackMessageWhenHandlerThrows() {
+        IntentRouter router = new IntentRouter();
         CommandHandler handler = mock(CommandHandler.class);
         when(handler.intentType()).thenReturn(IntentType.NOTES);
         when(handler.handle(org.mockito.ArgumentMatchers.any())).thenThrow(new RuntimeException("boom"));
@@ -68,6 +63,7 @@ class IntentRouterTest {
 
     @Test
     void routeAndHandle_usesDefaultMessageWhenHandlerMissing() {
+        IntentRouter router = new IntentRouter();
         AssistantResponse response = router.routeAndHandle("open calculator", "typed");
 
         assertEquals(IntentType.APP_LAUNCH, response.intentType());

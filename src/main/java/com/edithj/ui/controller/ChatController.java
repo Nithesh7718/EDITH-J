@@ -1,16 +1,17 @@
 package com.edithj.ui.controller;
 
-import com.edithj.integration.llm.GroqClient;
-import com.edithj.integration.llm.LlmClient;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
+import com.edithj.assistant.AssistantResponse;
+import com.edithj.assistant.AssistantService;
 import com.edithj.ui.model.ChatMessageViewModel;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
-
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 @SuppressWarnings("unused")
 public class ChatController {
@@ -24,7 +25,15 @@ public class ChatController {
     private TextArea messageInput;
 
     private final ObservableList<ChatMessageViewModel> messages = FXCollections.observableArrayList();
-    private final LlmClient llmClient = new GroqClient();
+    private final AssistantService assistantService;
+
+    public ChatController() {
+        this(new AssistantService());
+    }
+
+    public ChatController(AssistantService assistantService) {
+        this.assistantService = assistantService;
+    }
 
     @FXML
     private void initialize() {
@@ -42,8 +51,8 @@ public class ChatController {
         messages.add(new ChatMessageViewModel("user", text.trim(), currentTime()));
         messageInput.clear();
 
-        String reply = llmClient.generateReply(text.trim());
-        messages.add(new ChatMessageViewModel("assistant", reply, currentTime()));
+        AssistantResponse response = assistantService.handleTypedInput(text.trim());
+        messages.add(new ChatMessageViewModel("assistant", response.answer(), currentTime()));
     }
 
     private String currentTime() {

@@ -8,7 +8,7 @@ import java.nio.file.Paths;
  */
 public final class StoragePaths {
 
-    private static final Path DATA_DIR = Paths.get("src", "main", "resources", "data");
+    private static final Path DATA_DIR = Paths.get(System.getProperty("user.home", "."), ".edith-j", "data");
 
     private StoragePaths() {
         // Utility class

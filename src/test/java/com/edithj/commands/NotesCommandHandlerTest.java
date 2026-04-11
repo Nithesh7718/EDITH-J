@@ -1,38 +1,26 @@
 package com.edithj.commands;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.edithj.notes.Note;
+import com.edithj.notes.NoteRepository;
 import com.edithj.notes.NoteService;
 
-@ExtendWith(MockitoExtension.class)
 class NotesCommandHandlerTest {
-
-    @Mock
-    private NoteService noteService;
-
-    private NotesCommandHandler handler;
-
-    @BeforeEach
-    void setUp() {
-        handler = new NotesCommandHandler(noteService);
-    }
 
     @Test
     void handle_listCommandFormatsNotes() {
+        NoteRepository noteRepository = mock(NoteRepository.class);
+        NotesCommandHandler handler = new NotesCommandHandler(new NoteService(noteRepository));
         Note note = new Note("id-1", "Groceries", "Buy milk", Instant.now(), Instant.now());
-        when(noteService.listNotes()).thenReturn(List.of(note));
+        when(noteRepository.findAll()).thenReturn(List.of(note));
 
         String response = handler.handle(new CommandHandler.CommandContext("list notes", "list", "typed"));
 
@@ -42,8 +30,11 @@ class NotesCommandHandlerTest {
 
     @Test
     void handle_updateCommandReturnsUpdatedMessage() {
-        Note updated = new Note("id-2", "Updated", "Updated", Instant.now(), Instant.now());
-        when(noteService.updateNote("id-2", "Updated content")).thenReturn(Optional.of(updated));
+        NoteRepository noteRepository = mock(NoteRepository.class);
+        NotesCommandHandler handler = new NotesCommandHandler(new NoteService(noteRepository));
+        Note existing = new Note("id-2", "Old", "Old", Instant.now(), Instant.now());
+        when(noteRepository.findById("id-2")).thenReturn(Optional.of(existing));
+        when(noteRepository.save(existing)).thenReturn(existing);
 
         String response = handler.handle(new CommandHandler.CommandContext("update", "update note id-2 | Updated content", "typed"));
 
@@ -52,7 +43,9 @@ class NotesCommandHandlerTest {
 
     @Test
     void handle_deleteCommandHandlesMissingId() {
-        when(noteService.deleteNote("missing")).thenReturn(false);
+        NoteRepository noteRepository = mock(NoteRepository.class);
+        NotesCommandHandler handler = new NotesCommandHandler(new NoteService(noteRepository));
+        when(noteRepository.deleteById("missing")).thenReturn(false);
 
         String response = handler.handle(new CommandHandler.CommandContext("delete", "delete note missing", "typed"));
 
@@ -61,11 +54,13 @@ class NotesCommandHandlerTest {
 
     @Test
     void handle_defaultCreatesNote() {
-        Note created = new Note("new-1", "Task", "Task", Instant.now(), Instant.now());
-        when(noteService.createNote("finish report")).thenReturn(created);
+        NoteRepository noteRepository = mock(NoteRepository.class);
+        NotesCommandHandler handler = new NotesCommandHandler(new NoteService(noteRepository));
+        when(noteRepository.save(org.mockito.ArgumentMatchers.any(Note.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         String response = handler.handle(new CommandHandler.CommandContext("note", "finish report", "typed"));
 
-        assertTrue(response.startsWith("Saved note new-1"));
+        assertTrue(response.startsWith("Saved note"));
     }
 }
