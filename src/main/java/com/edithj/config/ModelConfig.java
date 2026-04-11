@@ -7,7 +7,7 @@ import java.util.Properties;
 public final class ModelConfig {
 
     private static final String DEFAULT_BASE_URL = "https://api.groq.com/openai/v1";
-    private static final String DEFAULT_MODEL = "llama-3.1-70b-versatile";
+    private static final String DEFAULT_MODEL = "llama-3.3-70b-versatile";
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
 
     private final String apiKey;

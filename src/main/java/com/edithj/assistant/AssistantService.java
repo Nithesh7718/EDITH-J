@@ -8,10 +8,13 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import com.edithj.commands.CommandHandler;
+import com.edithj.commands.DesktopToolsCommandHandler;
 import com.edithj.commands.FallbackChatHandler;
 import com.edithj.commands.LauncherCommandHandler;
 import com.edithj.commands.NotesCommandHandler;
 import com.edithj.commands.ReminderCommandHandler;
+import com.edithj.commands.UtilitiesCommandHandler;
+import com.edithj.commands.WeatherCommandHandler;
 import com.edithj.integration.llm.GroqClient;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
@@ -108,6 +111,9 @@ public class AssistantService {
         intentRouter.registerHandler(new NotesCommandHandler());
         intentRouter.registerHandler(new ReminderCommandHandler());
         intentRouter.registerHandler(new LauncherCommandHandler());
+        intentRouter.registerHandler(new WeatherCommandHandler());
+        intentRouter.registerHandler(new UtilitiesCommandHandler());
+        intentRouter.registerHandler(new DesktopToolsCommandHandler());
         intentRouter.registerHandler(new FallbackChatHandler(this::runFallbackChat));
     }
 

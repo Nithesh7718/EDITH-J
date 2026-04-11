@@ -64,13 +64,35 @@ public class IntentRouter {
         if (containsAnyIgnoreCase(input, "note", "notes", "notepad", "write down", "save this")) {
             return IntentType.NOTES;
         }
-        if (containsAnyIgnoreCase(input, "remind", "reminder", "alarm", "schedule", "due")) {
+        if (containsAnyIgnoreCase(input, "remind", "reminder", "alarm", "schedule", "due", "snooze")
+                || startsWithAnyIgnoreCase(input, "timer", "set timer")) {
             return IntentType.REMINDERS;
+        }
+        if (isExplicitDesktopCommand(input)) {
+            return IntentType.DESKTOP_TOOLS;
         }
         if (containsAnyIgnoreCase(input, "open", "launch", "start", "run", "execute")) {
             return IntentType.APP_LAUNCH;
         }
+        if (containsAnyIgnoreCase(input, "weather", "forecast", "temperature", "rain")) {
+            return IntentType.WEATHER;
+        }
+        if (containsAnyIgnoreCase(input,
+                "time", "date", "day", "calculate", "calc", "plus", "minus", "multiply", "divide")
+                || input.matches(".*\\d+\\s*[+\\-*/()]\\s*\\d+.*")) {
+            return IntentType.UTILITIES;
+        }
         return IntentType.FALLBACK_CHAT;
+    }
+
+    private boolean isExplicitDesktopCommand(String input) {
+        return startsWithAnyIgnoreCase(input,
+                "help", "capabilities", "what can you do", "system info", "device info", "memory status",
+                "search web", "google", "browse", "open website", "open site", "good morning", "daily briefing",
+                "show clipboard", "read clipboard", "save clipboard as note", "copy ", "draft email", "write email", "compose email",
+                "find file", "open file", "open downloads", "recent files", "add task", "todo add", "list tasks", "show tasks",
+                "done task", "remove task", "delete task", "start focus", "focus status", "end focus", "block site", "unblock site",
+                "blocked sites", "start work mode", "shutdown work mode", "work mode", "action log", "confirm open", "what did you do");
     }
 
     private String extractPayload(String input, IntentType intentType) {
@@ -81,6 +103,12 @@ public class IntentRouter {
                 stripLeadingKeywordIgnoreCase(input, "note", "notes", "notepad", "write down", "save this");
             case REMINDERS ->
                 stripLeadingKeywordIgnoreCase(input, "remind", "reminder", "alarm", "schedule");
+            case WEATHER ->
+                stripLeadingKeywordIgnoreCase(input, "weather", "forecast", "temperature", "rain", "check weather", "check forecast");
+            case UTILITIES ->
+                stripLeadingKeywordIgnoreCase(input, "calculate", "calc", "what is", "what's", "time", "date", "day");
+            case DESKTOP_TOOLS ->
+                stripLeadingKeywordIgnoreCase(input, "help", "search web", "google", "browse", "open website", "open site", "system info", "device info", "memory status");
             case FALLBACK_CHAT ->
                 input;
         };
@@ -103,6 +131,17 @@ public class IntentRouter {
         String lowerInput = input.toLowerCase(Locale.ROOT);
         for (String keyword : keywords) {
             if (lowerInput.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean startsWithAnyIgnoreCase(String input, String... prefixes) {
+        String normalized = input.toLowerCase(Locale.ROOT).trim();
+        for (String prefix : prefixes) {
+            String normalizedPrefix = prefix.toLowerCase(Locale.ROOT);
+            if (normalized.startsWith(normalizedPrefix)) {
                 return true;
             }
         }

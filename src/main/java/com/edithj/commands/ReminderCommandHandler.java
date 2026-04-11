@@ -1,5 +1,6 @@
 package com.edithj.commands;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -38,6 +39,10 @@ public class ReminderCommandHandler implements CommandHandler {
                 return formatReminders(reminderService.listReminders(), "No pending reminders.");
             }
 
+            if (startsWithAny(payload, "snooze")) {
+                return handleSnooze(payload);
+            }
+
             if (startsWithAny(payload, "done", "mark done", "completed")) {
                 return handleMarkDone(payload);
             }
@@ -54,6 +59,10 @@ public class ReminderCommandHandler implements CommandHandler {
                 return formatReminders(reminderService.searchReminders(query), "No reminders found for: " + query + ".");
             }
 
+            if (startsWithAny(payload, "timer", "set timer")) {
+                return handleTimer(payload);
+            }
+
             // Default: create a new reminder
             return handleCreate(payload);
 
@@ -63,8 +72,13 @@ public class ReminderCommandHandler implements CommandHandler {
     }
 
     private String handleCreate(String payload) {
+        String recurrence = extractRecurrence(payload);
+
         // Extract time hint (at, on, tomorrow, today, in X minutes/hours)
         String timeHint = extractTimeHint(payload);
+        if (timeHint == null && recurrence != null) {
+            timeHint = "in " + recurrence;
+        }
         if (timeHint == null) {
             return "I need a time hint. Try: remind me to call mom at 7 PM, or in 30 minutes.";
         }
@@ -72,17 +86,62 @@ public class ReminderCommandHandler implements CommandHandler {
         // Remove time hint and leading "remind me to" for the reminder text
         String text = stripTimeHint(payload, timeHint).replaceFirst("(?i)^(remind\\s+me\\s+to)\\s*", "").trim();
         text = stripKeyword(text, "remind").trim();
+        text = text.replaceFirst("(?i)^every\\s+\\d+\\s+(minutes?|hours?|days?)\\s*", "").trim();
 
         if (text.isBlank()) {
             return "Please tell me what you want to be reminded about.";
         }
 
         try {
-            Reminder reminder = reminderService.createReminder(text, timeHint);
-            return "Reminder set! \"" + text + "\" at " + formatDueTime(reminder.getDueAt());
+            String finalText = recurrence == null ? text : (text + " [recurs every " + recurrence + "]");
+            Reminder reminder = reminderService.createReminder(finalText, timeHint);
+            return "Reminder set! \"" + finalText + "\" at " + formatDueTime(reminder.getDueAt());
         } catch (IllegalArgumentException exception) {
             return "I couldn't parse the time. Try: at 5 PM, tomorrow at 9 AM, in 30 minutes.";
         }
+    }
+
+    private String handleTimer(String payload) {
+        String normalized = payload.toLowerCase();
+        Pattern durationPattern = Pattern.compile("(\\d+)\\s*(minutes?|mins?|hours?|hrs?)", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher matcher = durationPattern.matcher(normalized);
+        if (!matcher.find()) {
+            return "Use timer like: timer 10 minutes, or set timer 1 hour.";
+        }
+
+        int value = Integer.parseInt(matcher.group(1));
+        String unit = matcher.group(2).toLowerCase();
+        String timeHint = unit.startsWith("h") ? "in " + value + " hours" : "in " + value + " minutes";
+
+        Reminder reminder = reminderService.createReminder("Timer", timeHint);
+        return "Timer started for " + value + " " + unit + ". Due at " + formatDueTime(reminder.getDueAt()) + ".";
+    }
+
+    private String handleSnooze(String payload) {
+        String rest = stripKeyword(payload, "snooze").trim();
+        if (rest.isBlank()) {
+            return "Use snooze like: snooze <reminder-id> 10 minutes.";
+        }
+
+        String[] tokens = rest.split("\\s+");
+        String id = tokens[0].trim();
+        int amount = 10;
+        String unit = "minutes";
+
+        Pattern p = Pattern.compile("(\\d+)\\s*(minutes?|mins?|hours?|hrs?)", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher matcher = p.matcher(rest.substring(Math.min(rest.length(), id.length())).trim());
+        if (matcher.find()) {
+            amount = Integer.parseInt(matcher.group(1));
+            unit = matcher.group(2).toLowerCase();
+        }
+
+        Duration duration = unit.startsWith("h") ? Duration.ofHours(amount) : Duration.ofMinutes(amount);
+        Optional<Reminder> snoozed = reminderService.snoozeReminder(id, duration);
+        if (snoozed.isEmpty()) {
+            return "Could not find reminder with ID: " + id;
+        }
+
+        return "Snoozed reminder \"" + snoozed.get().getText() + "\" to " + formatDueTime(snoozed.get().getDueAt()) + ".";
     }
 
     private String handleMarkDone(String payload) {
@@ -124,8 +183,7 @@ public class ReminderCommandHandler implements CommandHandler {
         if (payload.contains(" at ")) {
             int atIndex = payload.toLowerCase().indexOf(" at ");
             String afterAt = payload.substring(atIndex + 4).trim();
-            // Extract up to next space or end
-            return afterAt.split("\\s+", 2)[0].isEmpty() ? null : afterAt;
+            return afterAt.isBlank() ? null : afterAt;
         }
 
         if (payload.contains("tomorrow")) {
@@ -145,6 +203,16 @@ public class ReminderCommandHandler implements CommandHandler {
         return null;
     }
 
+    private String extractRecurrence(String payload) {
+        java.util.regex.Matcher matcher = Pattern
+                .compile("(?i)every\\s+(\\d+)\\s+(minutes?|hours?|days?)")
+                .matcher(payload);
+        if (!matcher.find()) {
+            return null;
+        }
+        return matcher.group(1) + " " + matcher.group(2).toLowerCase();
+    }
+
     private String stripTimeHint(String payload, String timeHint) {
         if (timeHint == null) {
             return payload;
@@ -155,6 +223,7 @@ public class ReminderCommandHandler implements CommandHandler {
         result = result.replaceAll("(?i)\\s+tomorrow\\b", "");
         result = result.replaceAll("(?i)\\s+today\\b", "");
         result = result.replaceAll("(?i)\\s+in\\s+\\d+\\s+(minutes?|hours?)\\b", "");
+        result = result.replaceAll("(?i)\\s+every\\s+\\d+\\s+(minutes?|hours?|days?)\\b", "");
 
         return result.trim();
     }

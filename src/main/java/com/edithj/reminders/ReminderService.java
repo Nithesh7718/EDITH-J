@@ -1,5 +1,6 @@
 package com.edithj.reminders;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -72,5 +73,27 @@ public class ReminderService {
             return false;
         }
         return reminderRepository.deleteById(reminderId);
+    }
+
+    public Optional<Reminder> snoozeReminder(String reminderId, Duration duration) {
+        if (!ValidationUtils.isValidId(reminderId) || duration == null || duration.isNegative() || duration.isZero()) {
+            return Optional.empty();
+        }
+
+        Optional<Reminder> existing = reminderRepository.findById(reminderId);
+        if (existing.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Reminder reminder = existing.get();
+        Instant base = reminder.getDueAt() == null || reminder.getDueAt().isBefore(Instant.now())
+                ? Instant.now()
+                : reminder.getDueAt();
+
+        reminder.setDueAt(base.plus(duration));
+        reminder.setCompleted(false);
+        reminder.setUpdatedAt(Instant.now());
+
+        return Optional.of(reminderRepository.save(reminder));
     }
 }
