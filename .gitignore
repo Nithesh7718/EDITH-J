@@ -3,3 +3,8 @@ target/
 .vscode/
 *.iml
 *.log
+edith.properties
+src/main/resources/application-local.properties
+src/main/resources/application-dev.properties
+.env
+.env.*
