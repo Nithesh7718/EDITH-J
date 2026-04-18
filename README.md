@@ -13,13 +13,15 @@ EDITH-J is a Java 17 JavaFX desktop assistant. It routes typed and voice input t
 
 - `src/main/java/com/edithj/app` - application startup
 - `src/main/java/com/edithj/assistant` - intent routing and orchestration
+- `src/main/java/com/edithj/ai` - chat abstractions and Groq chat service wrapper
 - `src/main/java/com/edithj/commands` - command handlers
 - `src/main/java/com/edithj/launcher` - OS launch helpers
-- `src/main/java/com/edithj/notes` - note domain and file-backed repository
-- `src/main/java/com/edithj/reminders` - reminder domain and file-backed repository
+- `src/main/java/com/edithj/memory` - lightweight assistant memory models and service
+- `src/main/java/com/edithj/notes` - note domain and repositories
+- `src/main/java/com/edithj/reminders` - reminder domain and repositories
 - `src/main/java/com/edithj/speech` - speech capture and typed fallback
 - `src/main/java/com/edithj/ui` - JavaFX views, controllers, and navigation
-- `src/main/java/com/edithj/storage` - JSON storage helpers
+- `src/main/java/com/edithj/storage` - SQLite and JSON storage helpers
 - `src/main/resources` - FXML, CSS, prompts, and seeded data
 
 ## Requirements
@@ -50,6 +52,9 @@ mvn javafx:run
 ## Storage
 
 Notes and reminders are stored under `~/.edith-j/data/` by default.
+
+- Primary backend: SQLite (`~/.edith-j/data/edith.db`)
+- Fallback backend: JSON files when SQLite is unavailable
 
 ## Notes
 

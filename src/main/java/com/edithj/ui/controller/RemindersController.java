@@ -5,9 +5,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import com.edithj.reminders.FileReminderRepository;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
+import com.edithj.storage.RepositoryFactory;
 import com.edithj.ui.model.ReminderViewModel;
 
 import javafx.collections.FXCollections;
@@ -19,7 +19,7 @@ public class RemindersController {
     private final DateTimeFormatter dateTimeFormatter;
 
     public RemindersController() {
-        this(new ReminderService(new FileReminderRepository()));
+        this(new ReminderService(RepositoryFactory.createReminderRepository()));
     }
 
     public RemindersController(ReminderService reminderService) {

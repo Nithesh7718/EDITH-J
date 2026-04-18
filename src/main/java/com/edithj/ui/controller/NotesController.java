@@ -5,9 +5,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
-import com.edithj.notes.FileNoteRepository;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
+import com.edithj.storage.RepositoryFactory;
 import com.edithj.ui.model.NoteViewModel;
 
 public class NotesController {
@@ -17,7 +17,7 @@ public class NotesController {
     private final NoteService noteService;
 
     public NotesController() {
-        this(new NoteService(new FileNoteRepository()));
+        this(new NoteService(RepositoryFactory.createNoteRepository()));
     }
 
     public NotesController(NoteService noteService) {

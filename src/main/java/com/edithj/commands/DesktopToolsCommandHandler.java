@@ -29,12 +29,11 @@ import java.util.stream.Stream;
 
 import com.edithj.assistant.IntentType;
 import com.edithj.launcher.AppLauncherService;
-import com.edithj.notes.FileNoteRepository;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
-import com.edithj.reminders.FileReminderRepository;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
+import com.edithj.storage.RepositoryFactory;
 
 public class DesktopToolsCommandHandler implements CommandHandler {
 
@@ -60,11 +59,15 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     }
 
     public DesktopToolsCommandHandler() {
-        this(new AppLauncherService(), new NoteService(new FileNoteRepository()), new ReminderService(new FileReminderRepository()));
+        this(new AppLauncherService(),
+                new NoteService(RepositoryFactory.createNoteRepository()),
+                new ReminderService(RepositoryFactory.createReminderRepository()));
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService) {
-        this(launcherService, new NoteService(new FileNoteRepository()), new ReminderService(new FileReminderRepository()));
+        this(launcherService,
+                new NoteService(RepositoryFactory.createNoteRepository()),
+                new ReminderService(RepositoryFactory.createReminderRepository()));
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService, NoteService noteService, ReminderService reminderService) {

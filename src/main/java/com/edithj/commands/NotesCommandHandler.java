@@ -4,16 +4,16 @@ import java.util.List;
 import java.util.Optional;
 
 import com.edithj.assistant.IntentType;
-import com.edithj.notes.FileNoteRepository;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
+import com.edithj.storage.RepositoryFactory;
 
 public class NotesCommandHandler implements CommandHandler {
 
     private final NoteService noteService;
 
     public NotesCommandHandler() {
-        this(new NoteService(new FileNoteRepository()));
+        this(new NoteService(RepositoryFactory.createNoteRepository()));
     }
 
     public NotesCommandHandler(NoteService noteService) {

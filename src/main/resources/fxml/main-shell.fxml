@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.edithj.ui.controller.MainShellController">
+    <left>
+        <VBox spacing="12.0" styleClass="sidebar" prefWidth="220.0">
+            <padding>
+                <Insets top="20.0" right="16.0" bottom="20.0" left="16.0" />
+            </padding>
+            <Label text="EDITH-J" styleClass="sidebar-title" />
+            <Label text="Chat" styleClass="sidebar-item" />
+            <Label text="Notes" styleClass="sidebar-item" />
+            <Label text="Reminders" styleClass="sidebar-item" />
+            <Label text="Settings" styleClass="sidebar-item" />
+        </VBox>
+    </left>
+    <center>
+        <StackPane styleClass="shell-center">
+            <Label text="Main shell scaffold (migration in progress)" styleClass="shell-placeholder" />
+        </StackPane>
+    </center>
+</BorderPane>

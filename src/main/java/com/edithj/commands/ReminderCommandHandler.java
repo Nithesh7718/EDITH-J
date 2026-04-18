@@ -6,16 +6,16 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import com.edithj.assistant.IntentType;
-import com.edithj.reminders.FileReminderRepository;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
+import com.edithj.storage.RepositoryFactory;
 
 public class ReminderCommandHandler implements CommandHandler {
 
     private final ReminderService reminderService;
 
     public ReminderCommandHandler() {
-        this(new ReminderService(new FileReminderRepository()));
+        this(new ReminderService(RepositoryFactory.createReminderRepository()));
     }
 
     public ReminderCommandHandler(ReminderService reminderService) {

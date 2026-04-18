@@ -22,6 +22,10 @@ public final class StoragePaths {
         return DATA_DIR.resolve("reminders.json");
     }
 
+    public static Path databasePath() {
+        return DATA_DIR.resolve("edith.db");
+    }
+
     public static Path logsDirectory() {
         return DATA_DIR.resolve("logs");
     }

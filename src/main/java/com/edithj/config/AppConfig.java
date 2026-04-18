@@ -15,11 +15,13 @@ public final class AppConfig {
     private final EnvConfig envConfig;
     private final Properties properties;
     private final ModelConfig modelConfig;
+    private final StorageConfig storageConfig;
 
     private AppConfig(EnvConfig envConfig, Properties properties) {
         this.envConfig = Objects.requireNonNull(envConfig, "envConfig");
         this.properties = Objects.requireNonNull(properties, "properties");
         this.modelConfig = ModelConfig.load(this.envConfig, this.properties);
+        this.storageConfig = StorageConfig.load(this.envConfig, this.properties);
     }
 
     public static AppConfig load() {
@@ -40,6 +42,10 @@ public final class AppConfig {
 
     public ModelConfig modelConfig() {
         return modelConfig;
+    }
+
+    public StorageConfig storageConfig() {
+        return storageConfig;
     }
 
     public String appName() {
