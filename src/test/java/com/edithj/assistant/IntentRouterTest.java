@@ -49,6 +49,16 @@ class IntentRouterTest {
     }
 
     @Test
+    void route_classifiesCalendarCommands() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent routed = router.route("add a meeting tomorrow at 3pm called project sync");
+
+        assertEquals(IntentType.CALENDAR, routed.intentType());
+        assertTrue(routed.payload().contains("tomorrow"));
+    }
+
+    @Test
     void routeAndHandle_invokesRegisteredEmailHandler() {
         IntentRouter router = new IntentRouter();
         RecordingHandler handler = new RecordingHandler(IntentType.EMAIL, "opened");
@@ -61,6 +71,22 @@ class IntentRouterTest {
         assertNotNull(handler.lastContext());
         assertEquals("email hello to Krithick", handler.lastContext().normalizedInput());
         assertEquals("hello to Krithick", handler.lastContext().payload());
+        assertEquals("typed", handler.lastContext().channel());
+    }
+
+    @Test
+    void routeAndHandle_invokesRegisteredCalendarHandler() {
+        IntentRouter router = new IntentRouter();
+        RecordingHandler handler = new RecordingHandler(IntentType.CALENDAR, "drafted");
+        router.registerHandler(handler);
+
+        AssistantResponse response = router.routeAndHandle("add a meeting tomorrow at 3pm called project sync", "typed");
+
+        assertEquals(IntentType.CALENDAR, response.intentType());
+        assertEquals("drafted", response.answer());
+        assertNotNull(handler.lastContext());
+        assertEquals("add a meeting tomorrow at 3pm called project sync", handler.lastContext().normalizedInput());
+        assertTrue(handler.lastContext().payload().contains("tomorrow"));
         assertEquals("typed", handler.lastContext().channel());
     }
 

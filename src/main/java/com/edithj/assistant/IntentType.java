@@ -5,6 +5,7 @@ public enum IntentType {
     REMINDERS,
     APP_LAUNCH,
     EMAIL,
+    CALENDAR,
     WHATSAPP,
     WEATHER,
     UTILITIES,

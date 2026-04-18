@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.edithj.commands.CommandHandler;
+import com.edithj.commands.CalendarCommandHandler;
 import com.edithj.commands.DesktopToolsCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
 import com.edithj.commands.FallbackChatHandler;
@@ -116,6 +117,7 @@ public class AssistantService {
         intentRouter.registerHandler(new ReminderCommandHandler());
         intentRouter.registerHandler(new LauncherCommandHandler());
         intentRouter.registerHandler(new EmailCommandHandler());
+        intentRouter.registerHandler(new CalendarCommandHandler());
         intentRouter.registerHandler(new WhatsAppCommandHandler());
         intentRouter.registerHandler(new WeatherCommandHandler());
         intentRouter.registerHandler(new UtilitiesCommandHandler());
