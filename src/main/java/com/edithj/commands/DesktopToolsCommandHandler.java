@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import com.edithj.assistant.IntentType;
+import com.edithj.config.AppConfig;
 import com.edithj.launcher.AppLauncherService;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
@@ -53,6 +54,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     private final AppLauncherService launcherService;
     private final NoteService noteService;
     private final ReminderService reminderService;
+    private final boolean smokeLaunchersEnabled;
 
     private record TodoItem(int id, String text, boolean done) {
 
@@ -61,19 +63,29 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     public DesktopToolsCommandHandler() {
         this(new AppLauncherService(),
                 new NoteService(RepositoryFactory.createNoteRepository()),
-                new ReminderService(RepositoryFactory.createReminderRepository()));
+                new ReminderService(RepositoryFactory.createReminderRepository()),
+                AppConfig.load().isDevSmokeLaunchersEnabled());
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService) {
         this(launcherService,
                 new NoteService(RepositoryFactory.createNoteRepository()),
-                new ReminderService(RepositoryFactory.createReminderRepository()));
+                new ReminderService(RepositoryFactory.createReminderRepository()),
+                AppConfig.load().isDevSmokeLaunchersEnabled());
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService, NoteService noteService, ReminderService reminderService) {
+        this(launcherService, noteService, reminderService, AppConfig.load().isDevSmokeLaunchersEnabled());
+    }
+
+    public DesktopToolsCommandHandler(AppLauncherService launcherService,
+            NoteService noteService,
+            ReminderService reminderService,
+            boolean smokeLaunchersEnabled) {
         this.launcherService = launcherService;
         this.noteService = noteService;
         this.reminderService = reminderService;
+        this.smokeLaunchersEnabled = smokeLaunchersEnabled;
     }
 
     @Override
@@ -243,6 +255,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             - File helper: find file resume, recent files
             - Tasks: add task submit report, list tasks, done task 1
             - Focus: start focus 25, focus status, block site youtube.com
+                - Dev demo: start work mode (only when dev smoke launchers are enabled)
             - Safety: confirm open, action log
             """;
     }
@@ -293,6 +306,11 @@ public class DesktopToolsCommandHandler implements CommandHandler {
 
     private String handleRoutine(String lower) {
         if (lower.startsWith("start work mode") || lower.equals("work mode")) {
+            if (!smokeLaunchersEnabled) {
+                return "Launcher demo commands are disabled in this configuration.";
+            }
+
+            // Dev-only smoke/demo behavior to quickly verify launcher integration.
             List<String> targets = List.of("https://mail.google.com", "https://calendar.google.com", "https://github.com", "notepad");
             int count = 0;
             for (String target : targets) {

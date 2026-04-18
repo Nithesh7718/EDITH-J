@@ -56,6 +56,11 @@ public final class AppConfig {
         return properties.getProperty("app.system-prompt", "/prompts/system-prompt.txt");
     }
 
+    public boolean isDevSmokeLaunchersEnabled() {
+        String raw = properties.getProperty("edith.dev.smokeLaunchersEnabled", "false");
+        return Boolean.parseBoolean(raw.trim());
+    }
+
     private static Properties loadProperties() {
         Properties properties = new Properties();
 

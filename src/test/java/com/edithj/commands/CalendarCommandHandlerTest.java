@@ -12,7 +12,7 @@ import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.Test;
 
-import com.edithj.launcher.AppLauncherService;
+import com.edithj.launcher.FakeLauncher;
 
 class CalendarCommandHandlerTest {
 
@@ -20,7 +20,7 @@ class CalendarCommandHandlerTest {
 
     @Test
     void handle_createsIcsForTomorrowMeeting() throws Exception {
-        RecordingLauncherService launcherService = new RecordingLauncherService();
+        FakeLauncher launcherService = new FakeLauncher();
         CalendarCommandHandler handler = new CalendarCommandHandler(launcherService, FIXED_CLOCK);
 
         String response = handler.handle(new CommandHandler.CommandContext(
@@ -29,9 +29,9 @@ class CalendarCommandHandlerTest {
                 "typed"));
 
         assertTrue(response.contains("Opening a calendar draft for project sync"));
-        assertTrue(launcherService.launchedTarget().endsWith(".ics"));
+        assertTrue(launcherService.lastOpenedUrl().endsWith(".ics"));
 
-        String ics = Files.readString(Path.of(java.net.URI.create(launcherService.launchedTarget())), StandardCharsets.UTF_8);
+        String ics = Files.readString(Path.of(java.net.URI.create(launcherService.lastOpenedUrl())), StandardCharsets.UTF_8);
         assertTrue(ics.contains("SUMMARY:project sync"));
         assertTrue(ics.contains("DTSTART:20260419T150000Z"));
         assertTrue(ics.contains("DTEND:20260419T153000Z"));
@@ -39,7 +39,7 @@ class CalendarCommandHandlerTest {
 
     @Test
     void handle_createsIcsForNamedDayEvent() throws Exception {
-        RecordingLauncherService launcherService = new RecordingLauncherService();
+        FakeLauncher launcherService = new FakeLauncher();
         CalendarCommandHandler handler = new CalendarCommandHandler(launcherService, FIXED_CLOCK);
 
         String response = handler.handle(new CommandHandler.CommandContext(
@@ -48,7 +48,7 @@ class CalendarCommandHandlerTest {
                 "typed"));
 
         assertTrue(response.contains("Opening a calendar draft for standup"));
-        String ics = Files.readString(Path.of(java.net.URI.create(launcherService.launchedTarget())), StandardCharsets.UTF_8);
+        String ics = Files.readString(Path.of(java.net.URI.create(launcherService.lastOpenedUrl())), StandardCharsets.UTF_8);
         assertTrue(ics.contains("SUMMARY:standup"));
         assertTrue(ics.contains("DTSTART:20260420T100000Z"));
         assertTrue(ics.contains("DTEND:20260420T103000Z"));
@@ -56,7 +56,7 @@ class CalendarCommandHandlerTest {
 
     @Test
     void handle_createsIcsForReminderStyleRequest() throws Exception {
-        RecordingLauncherService launcherService = new RecordingLauncherService();
+        FakeLauncher launcherService = new FakeLauncher();
         CalendarCommandHandler handler = new CalendarCommandHandler(launcherService, FIXED_CLOCK);
 
         String response = handler.handle(new CommandHandler.CommandContext(
@@ -65,7 +65,7 @@ class CalendarCommandHandlerTest {
                 "typed"));
 
         assertTrue(response.contains("Opening a calendar draft for call mom"));
-        String ics = Files.readString(Path.of(java.net.URI.create(launcherService.launchedTarget())), StandardCharsets.UTF_8);
+        String ics = Files.readString(Path.of(java.net.URI.create(launcherService.lastOpenedUrl())), StandardCharsets.UTF_8);
         assertTrue(ics.contains("SUMMARY:call mom"));
         assertTrue(ics.contains("DTSTART:20260424T170000Z"));
         assertTrue(ics.contains("DTEND:20260424T173000Z"));
@@ -73,27 +73,12 @@ class CalendarCommandHandlerTest {
 
     @Test
     void handle_returnsClarificationWhenInputMissingData() {
-        RecordingLauncherService launcherService = new RecordingLauncherService();
+        FakeLauncher launcherService = new FakeLauncher();
         CalendarCommandHandler handler = new CalendarCommandHandler(launcherService, FIXED_CLOCK);
 
         String response = handler.handle(new CommandHandler.CommandContext("calendar", "calendar", "typed"));
 
         assertTrue(response.contains("I can draft a calendar event"));
-        assertEquals("", launcherService.launchedTarget());
-    }
-
-    private static final class RecordingLauncherService extends AppLauncherService {
-
-        private String launchedTarget = "";
-
-        @Override
-        public String launchApp(String target) {
-            launchedTarget = target == null ? "" : target;
-            return "Launched " + launchedTarget;
-        }
-
-        String launchedTarget() {
-            return launchedTarget;
-        }
+        assertEquals("", launcherService.lastOpenedTarget());
     }
 }
