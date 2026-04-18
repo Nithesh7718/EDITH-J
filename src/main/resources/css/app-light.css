@@ -102,3 +102,29 @@
     -fx-background-color: rgba(226, 232, 240, 0.8);
     -fx-border-color: rgba(100, 116, 139, 0.45);
 }
+
+.mic-button {
+    -fx-background-color: rgba(14, 165, 233, 0.2);
+    -fx-border-color: rgba(14, 116, 144, 0.4);
+    -fx-text-fill: #0f172a;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 8 14;
+    -fx-font-weight: 700;
+}
+
+.mic-button:hover {
+    -fx-background-color: rgba(14, 165, 233, 0.3);
+}
+
+.mic-button-listening {
+    -fx-background-color: rgba(16, 185, 129, 0.32);
+    -fx-border-color: rgba(5, 150, 105, 0.75);
+    -fx-text-fill: #064e3b;
+}
+
+.mic-button-error {
+    -fx-background-color: rgba(239, 68, 68, 0.25);
+    -fx-border-color: rgba(220, 38, 38, 0.7);
+    -fx-text-fill: #7f1d1d;
+}

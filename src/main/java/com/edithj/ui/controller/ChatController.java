@@ -2,14 +2,19 @@ package com.edithj.ui.controller;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.edithj.assistant.AssistantResponse;
+import com.edithj.speech.SpeechRecognizer;
 import com.edithj.ui.model.ChatMessageViewModel;
 import com.edithj.ui.session.UiAssistantGateway;
+import com.edithj.ui.session.UiSpeechService;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.Transition;
 import javafx.animation.TranslateTransition;
 import javafx.collections.FXCollections;
@@ -17,10 +22,12 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -33,21 +40,32 @@ import javafx.util.Duration;
 public class ChatController {
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final Logger LOGGER = Logger.getLogger(ChatController.class.getName());
 
     @FXML
     private ListView<ChatMessageViewModel> messagesList;
     @FXML
     private TextArea messageInput;
+    @FXML
+    private Button btnMic;
 
     private final ObservableList<ChatMessageViewModel> messages = FXCollections.observableArrayList();
     private final UiAssistantGateway assistantGateway;
+    private final UiSpeechService uiSpeechService;
+
+    private boolean micErrorState;
 
     public ChatController() {
-        this(UiAssistantGateway.instance());
+        this(UiAssistantGateway.instance(), new UiSpeechService(new SpeechRecognizer()));
     }
 
     public ChatController(UiAssistantGateway assistantGateway) {
+        this(assistantGateway, new UiSpeechService(new SpeechRecognizer()));
+    }
+
+    public ChatController(UiAssistantGateway assistantGateway, UiSpeechService uiSpeechService) {
         this.assistantGateway = assistantGateway;
+        this.uiSpeechService = uiSpeechService;
     }
 
     @FXML
@@ -62,6 +80,16 @@ public class ChatController {
                 sendMessage();
             }
         });
+
+        if (!btnMic.getStyleClass().contains("mic-button")) {
+            btnMic.getStyleClass().add("mic-button");
+        }
+        btnMic.setOnAction(event -> onMicClicked());
+        if (!uiSpeechService.isAvailable()) {
+            btnMic.setDisable(true);
+            btnMic.setTooltip(new Tooltip("Microphone not available"));
+        }
+        updateMicVisualState();
 
         messages.add(new ChatMessageViewModel(
                 "SYSTEM_CORE",
@@ -117,6 +145,77 @@ public class ChatController {
     private void appendAssistantMessage(AssistantResponse response) {
         messages.add(new ChatMessageViewModel("assistant", response.answer(), currentTime()));
         messagesList.scrollTo(messages.size() - 1);
+    }
+
+    private void onMicClicked() {
+        if (!uiSpeechService.isListening()) {
+            startVoiceInput();
+            return;
+        }
+        stopVoiceInput();
+    }
+
+    private void startVoiceInput() {
+        micErrorState = false;
+        updateMicVisualState();
+        uiSpeechService.startListening(
+                this::handleRecognizedText,
+                this::showVoiceError
+        );
+        updateMicVisualState();
+    }
+
+    private void stopVoiceInput() {
+        uiSpeechService.stopListening();
+        micErrorState = false;
+        updateMicVisualState();
+    }
+
+    private void handleRecognizedText(String text) {
+        micErrorState = false;
+        updateMicVisualState();
+
+        String normalized = text == null ? "" : text.trim();
+        if (normalized.isBlank()) {
+            showVoiceError(new IllegalStateException("No speech recognized"));
+            return;
+        }
+
+        messageInput.setText(normalized);
+        sendMessage();
+    }
+
+    private void showVoiceError(Throwable error) {
+        LOGGER.log(Level.WARNING, "Voice input failed", error);
+        messages.add(new ChatMessageViewModel(
+                "SYSTEM_CORE",
+                "I couldn't hear that clearly. Please try again.",
+                currentTime()
+        ));
+        messagesList.scrollTo(messages.size() - 1);
+
+        micErrorState = true;
+        updateMicVisualState();
+
+        PauseTransition clearError = new PauseTransition(Duration.seconds(1.8));
+        clearError.setOnFinished(event -> {
+            micErrorState = false;
+            updateMicVisualState();
+        });
+        clearError.play();
+    }
+
+    private void updateMicVisualState() {
+        btnMic.getStyleClass().removeAll("mic-button-listening", "mic-button-error");
+        if (uiSpeechService.isListening()) {
+            if (!btnMic.getStyleClass().contains("mic-button-listening")) {
+                btnMic.getStyleClass().add("mic-button-listening");
+            }
+            return;
+        }
+        if (micErrorState && !btnMic.getStyleClass().contains("mic-button-error")) {
+            btnMic.getStyleClass().add("mic-button-error");
+        }
     }
 
     private void insertTemplate(String template) {
