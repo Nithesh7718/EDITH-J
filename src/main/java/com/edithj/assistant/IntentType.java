@@ -4,6 +4,7 @@ public enum IntentType {
     NOTES,
     REMINDERS,
     APP_LAUNCH,
+    WHATSAPP,
     WEATHER,
     UTILITIES,
     DESKTOP_TOOLS,

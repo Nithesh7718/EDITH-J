@@ -30,6 +30,34 @@ class IntentRouterTest {
     }
 
     @Test
+    void route_classifiesWhatsAppCommands() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent routed = router.route("send a \"hello\" message to Krithick via whatsapp");
+
+        assertEquals(IntentType.WHATSAPP, routed.intentType());
+        assertTrue(routed.normalizedInput().contains("whatsapp"));
+    }
+
+    @Test
+    void routeAndHandle_invokesRegisteredWhatsAppHandler() {
+        IntentRouter router = new IntentRouter();
+        CommandHandler handler = mock(CommandHandler.class);
+        when(handler.intentType()).thenReturn(IntentType.WHATSAPP);
+        when(handler.handle(org.mockito.ArgumentMatchers.any())).thenReturn("opened");
+        router.registerHandler(handler);
+
+        AssistantResponse response = router.routeAndHandle("whatsapp hello", "typed");
+
+        assertEquals(IntentType.WHATSAPP, response.intentType());
+        assertEquals("opened", response.answer());
+        verify(handler).handle(org.mockito.ArgumentMatchers.argThat(ctx
+                -> "whatsapp hello".equals(ctx.normalizedInput())
+                && "whatsapp hello".equals(ctx.payload())
+                && "typed".equals(ctx.channel())));
+    }
+
+    @Test
     void routeAndHandle_invokesRegisteredHandlerWithNormalizedChannel() {
         IntentRouter router = new IntentRouter();
         CommandHandler handler = mock(CommandHandler.class);

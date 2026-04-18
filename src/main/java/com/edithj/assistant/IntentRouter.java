@@ -68,6 +68,9 @@ public class IntentRouter {
                 || startsWithAnyIgnoreCase(input, "timer", "set timer")) {
             return IntentType.REMINDERS;
         }
+        if (containsAnyIgnoreCase(input, "whatsapp")) {
+            return IntentType.WHATSAPP;
+        }
         if (isExplicitDesktopCommand(input)) {
             return IntentType.DESKTOP_TOOLS;
         }
@@ -99,6 +102,8 @@ public class IntentRouter {
         return switch (intentType) {
             case APP_LAUNCH ->
                 stripLeadingKeywordIgnoreCase(input, "open", "launch", "start", "run", "execute");
+            case WHATSAPP ->
+                input;
             case NOTES ->
                 stripLeadingKeywordIgnoreCase(input, "note", "notes", "notepad", "write down", "save this");
             case REMINDERS ->

@@ -14,6 +14,7 @@ import com.edithj.commands.NotesCommandHandler;
 import com.edithj.commands.ReminderCommandHandler;
 import com.edithj.commands.UtilitiesCommandHandler;
 import com.edithj.commands.WeatherCommandHandler;
+import com.edithj.commands.WhatsAppCommandHandler;
 import com.edithj.integration.llm.GroqClient;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
@@ -113,6 +114,7 @@ public class AssistantService {
         intentRouter.registerHandler(new NotesCommandHandler());
         intentRouter.registerHandler(new ReminderCommandHandler());
         intentRouter.registerHandler(new LauncherCommandHandler());
+        intentRouter.registerHandler(new WhatsAppCommandHandler());
         intentRouter.registerHandler(new WeatherCommandHandler());
         intentRouter.registerHandler(new UtilitiesCommandHandler());
         intentRouter.registerHandler(new DesktopToolsCommandHandler());
