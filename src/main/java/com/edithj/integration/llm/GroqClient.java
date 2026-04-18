@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,9 @@ public class GroqClient implements LlmClient {
 
     private static final Logger logger = LoggerFactory.getLogger(GroqClient.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final URI CHAT_COMPLETIONS_URI = URI.create("https://api.groq.com/openai/v1/chat/completions");
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(15);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
     private static final List<String> MODEL_PREFERENCES = List.of(
             "llama-3.3-70b-versatile",
             "llama3-70b-8192",
@@ -39,8 +43,9 @@ public class GroqClient implements LlmClient {
 
     public GroqClient(ModelConfig modelConfig) {
         this.modelConfig = Objects.requireNonNull(modelConfig, "modelConfig");
+        clearProxySystemProperties();
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(modelConfig.requestTimeout())
+                .connectTimeout(CONNECT_TIMEOUT)
                 .build();
         this.resolvedModel = resolveModel();
     }
@@ -58,6 +63,8 @@ public class GroqClient implements LlmClient {
             return modelConfig.missingApiKeyMessage();
         }
 
+        long startNanos = System.nanoTime();
+        String apiKey = modelConfig.apiKey();
         try {
             logger.debug("Generating reply with model: {}", resolvedModel);
             String requestBody = OBJECT_MAPPER.writeValueAsString(Map.of(
@@ -69,16 +76,22 @@ public class GroqClient implements LlmClient {
                     "temperature", modelConfig.temperature()));
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(modelConfig.chatCompletionsUrl()))
-                    .timeout(modelConfig.requestTimeout())
-                    .header("Authorization", "Bearer " + modelConfig.apiKey())
+                    .uri(CHAT_COMPLETIONS_URI)
+                    .timeout(REQUEST_TIMEOUT)
+                    .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
-            logger.debug("Sending request to Groq API: {}", modelConfig.chatCompletionsUrl());
+            logger.info("Calling Groq URI={} connectTimeout={} requestTimeout={} apiKeyPrefix={}...",
+                    CHAT_COMPLETIONS_URI,
+                    CONNECT_TIMEOUT,
+                    REQUEST_TIMEOUT,
+                    maskApiKeyPrefix(apiKey));
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            
+            long elapsedMs = Duration.ofNanos(System.nanoTime() - startNanos).toMillis();
+            logger.debug("Groq request completed in {} ms with HTTP {}", elapsedMs, response.statusCode());
+
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 logger.error("Groq API error - HTTP {}: {}", response.statusCode(), response.body());
                 return formatHttpError(response.statusCode(), response.body());
@@ -87,11 +100,19 @@ public class GroqClient implements LlmClient {
             logger.debug("Groq API returned HTTP {}", response.statusCode());
             return extractReply(response.body());
         } catch (InterruptedException exception) {
-            logger.warn("Groq request was interrupted", exception);
+            long elapsedMs = Duration.ofNanos(System.nanoTime() - startNanos).toMillis();
+            logger.warn("Groq request failed after {} ms - type={} message={}",
+                    elapsedMs,
+                    exception.getClass().getSimpleName(),
+                    exception.getMessage());
             Thread.currentThread().interrupt();
             return "Groq request was interrupted.";
         } catch (IOException exception) {
-            logger.error("IO error communicating with Groq", exception);
+            long elapsedMs = Duration.ofNanos(System.nanoTime() - startNanos).toMillis();
+            logger.error("Groq request failed after {} ms - type={} message={}",
+                    elapsedMs,
+                    exception.getClass().getSimpleName(),
+                    exception.getMessage());
             return "Unable to reach Groq: " + exception.getMessage();
         } catch (RuntimeException exception) {
             logger.error("Unexpected error while generating reply", exception);
@@ -208,5 +229,22 @@ public class GroqClient implements LlmClient {
         }
 
         return content.asText().trim();
+    }
+
+    private void clearProxySystemProperties() {
+        System.clearProperty("http.proxyHost");
+        System.clearProperty("http.proxyPort");
+        System.clearProperty("https.proxyHost");
+        System.clearProperty("https.proxyPort");
+    }
+
+    private String maskApiKeyPrefix(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
+            return "missing";
+        }
+
+        String trimmed = apiKey.trim();
+        int previewLength = Math.min(6, trimmed.length());
+        return trimmed.substring(0, previewLength);
     }
 }
