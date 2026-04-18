@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ public class FallbackChatService {
     private final LlmClient llmClient;
     private final PromptTemplateService promptTemplateService;
     private final MemoryService memoryService;
+    private final AssistantStatusService assistantStatusService;
     private final Deque<ChatTurn> memoryWindow;
     private final int maxTurns;
 
@@ -37,16 +39,19 @@ public class FallbackChatService {
                 llmClient,
                 new PromptTemplateService(com.edithj.config.AppConfig.load(), promptBuilder),
                 createMemoryServiceSafely(),
+                AssistantStatusService.instance(),
                 maxTurns);
     }
 
     FallbackChatService(LlmClient llmClient,
             PromptTemplateService promptTemplateService,
             MemoryService memoryService,
+            AssistantStatusService assistantStatusService,
             int maxTurns) {
         this.llmClient = Objects.requireNonNull(llmClient, "llmClient");
         this.promptTemplateService = Objects.requireNonNull(promptTemplateService, "promptTemplateService");
         this.memoryService = memoryService;
+        this.assistantStatusService = Objects.requireNonNull(assistantStatusService, "assistantStatusService");
         this.maxTurns = Math.max(2, maxTurns);
         this.memoryWindow = new ArrayDeque<>(this.maxTurns);
     }
@@ -82,9 +87,17 @@ public class FallbackChatService {
         String prompt = buildPromptWithMemory(channel);
         String reply = llmClient.generateReply(prompt);
         if (reply == null || reply.isBlank()) {
+            assistantStatusService.markOffline("Groq unreachable");
             return DEFAULT_REPLY;
         }
-        return reply.trim();
+
+        String trimmed = reply.trim();
+        if (indicatesGroqConnectivityFailure(trimmed)) {
+            assistantStatusService.markOffline("Groq unreachable");
+        } else {
+            assistantStatusService.markOnline("AI ready");
+        }
+        return trimmed;
     }
 
     private synchronized void remember(String role, String text) {
@@ -140,5 +153,18 @@ public class FallbackChatService {
             logger.debug("MemoryService unavailable for fallback prompt enrichment", exception);
             return null;
         }
+    }
+
+    private boolean indicatesGroqConnectivityFailure(String reply) {
+        if (reply == null || reply.isBlank()) {
+            return true;
+        }
+
+        String lower = reply.toLowerCase(Locale.ROOT);
+        return lower.contains("httpconnecttimeoutexception")
+                || lower.contains("connect timed out")
+                || lower.contains("unable to reach groq")
+                || lower.contains("groq request failed")
+                || lower.contains("groq request was interrupted");
     }
 }

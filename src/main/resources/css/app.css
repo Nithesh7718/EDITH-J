@@ -71,6 +71,16 @@
     -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.5), 10, 0, 0, 0);
 }
 
+.status-badge-offline {
+    -fx-background-color: rgba(239, 68, 68, 0.15);
+    background-color: rgba(239, 68, 68, 0.15);
+    -fx-border-color: #ef4444;
+    border-color: #ef4444;
+    -fx-text-fill: #fca5a5;
+    color: #fca5a5;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.5), 10, 0, 0, 0);
+}
+
 /* ── App Subtitle ───────────────────────────────────────── */
 .app-subtitle {
     -fx-text-fill: rgba(148, 163, 184, 0.7);

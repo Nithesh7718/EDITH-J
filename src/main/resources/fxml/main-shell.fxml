@@ -26,7 +26,7 @@
             </VBox>
             <Region HBox.hgrow="ALWAYS"/>
             <VBox alignment="CENTER_RIGHT" spacing="4.0">
-                <Label text="● SYSTEMS ONLINE" styleClass="status-badge"/>
+                <Label fx:id="statusBadgeLabel" text="● CHECKING AI STATUS" styleClass="status-badge"/>
             </VBox>
         </HBox>
     </top>

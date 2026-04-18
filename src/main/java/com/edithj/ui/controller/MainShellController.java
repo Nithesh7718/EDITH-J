@@ -2,7 +2,11 @@ package com.edithj.ui.controller;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.CompletableFuture;
 
+import com.edithj.assistant.AssistantStatus;
+import com.edithj.assistant.AssistantStatusProbe;
+import com.edithj.assistant.AssistantStatusService;
 import com.edithj.ui.navigation.SceneManager;
 
 import javafx.animation.Animation;
@@ -13,6 +17,7 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -29,6 +34,8 @@ public class MainShellController {
     @FXML
     private Label clockLabel;
     @FXML
+    private Label statusBadgeLabel;
+    @FXML
     private Button btnChat;
     @FXML
     private Button btnNotes;
@@ -37,10 +44,14 @@ public class MainShellController {
 
     private final SceneManager sceneManager = new SceneManager();
     private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private final AssistantStatusService statusService = AssistantStatusService.instance();
+    private final AssistantStatusProbe statusProbe = new AssistantStatusProbe();
 
     @FXML
     private void initialize() {
         startLiveClock();
+        refreshStatusBadge();
+        runStartupStatusProbe();
         showChatView();
     }
 
@@ -113,5 +124,24 @@ public class MainShellController {
         clock.setCycleCount(Animation.INDEFINITE);
         clock.play();
         clockLabel.setText(LocalTime.now().format(timeFormat));
+    }
+
+    private void runStartupStatusProbe() {
+        CompletableFuture.runAsync(() -> {
+            statusProbe.runStartupProbe();
+            Platform.runLater(this::refreshStatusBadge);
+        });
+    }
+
+    private void refreshStatusBadge() {
+        AssistantStatus status = statusService.status();
+        String text = status == AssistantStatus.ONLINE
+                ? "● ONLINE (AI READY)"
+                : "● OFFLINE (GROQ UNREACHABLE)";
+        statusBadgeLabel.setText(text);
+        statusBadgeLabel.getStyleClass().remove("status-badge-offline");
+        if (status == AssistantStatus.OFFLINE) {
+            statusBadgeLabel.getStyleClass().add("status-badge-offline");
+        }
     }
 }
