@@ -18,14 +18,14 @@ public class ReminderService {
     }
 
     public Reminder createReminder(String rawText, String rawTimeHint) {
-        String text = ValidationUtils.validateNonEmpty(rawText, "Reminder text");
+        String text = requireNonBlank(rawText, "Reminder text");
 
         Instant dueAt = TimeParser.parseTimeHint(rawTimeHint);
         if (dueAt == null) {
             throw new IllegalArgumentException("Unable to parse time hint: " + rawTimeHint);
         }
 
-        Reminder reminder = Reminder.newReminder(text, dueAt);
+        Reminder reminder = Reminder.newReminder(toTitleCase(text), dueAt);
         return reminderRepository.save(reminder);
     }
 
@@ -54,11 +54,12 @@ public class ReminderService {
     }
 
     public Optional<Reminder> markDone(String reminderId) {
-        if (!ValidationUtils.isValidId(reminderId)) {
+        if (!hasUsableId(reminderId)) {
             return Optional.empty();
         }
 
-        Optional<Reminder> existing = reminderRepository.findById(reminderId);
+        String normalizedId = reminderId.trim();
+        Optional<Reminder> existing = reminderRepository.findById(normalizedId);
         if (existing.isEmpty()) {
             return Optional.empty();
         }
@@ -69,18 +70,19 @@ public class ReminderService {
     }
 
     public boolean deleteReminder(String reminderId) {
-        if (!ValidationUtils.isValidId(reminderId)) {
+        if (!hasUsableId(reminderId)) {
             return false;
         }
-        return reminderRepository.deleteById(reminderId);
+        return reminderRepository.deleteById(reminderId.trim());
     }
 
     public Optional<Reminder> snoozeReminder(String reminderId, Duration duration) {
-        if (!ValidationUtils.isValidId(reminderId) || duration == null || duration.isNegative() || duration.isZero()) {
+        if (!hasUsableId(reminderId) || duration == null || duration.isNegative() || duration.isZero()) {
             return Optional.empty();
         }
 
-        Optional<Reminder> existing = reminderRepository.findById(reminderId);
+        String normalizedId = reminderId.trim();
+        Optional<Reminder> existing = reminderRepository.findById(normalizedId);
         if (existing.isEmpty()) {
             return Optional.empty();
         }
@@ -95,5 +97,28 @@ public class ReminderService {
         reminder.setUpdatedAt(Instant.now());
 
         return Optional.of(reminderRepository.save(reminder));
+    }
+
+    private String requireNonBlank(String rawText, String fieldName) {
+        String cleaned = cleanText(rawText);
+        if (cleaned.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " cannot be empty.");
+        }
+        return cleaned;
+    }
+
+    private String cleanText(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean hasUsableId(String id) {
+        return id != null && !id.trim().isBlank();
+    }
+
+    private String toTitleCase(String text) {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+        return Character.toUpperCase(text.charAt(0)) + text.substring(1);
     }
 }

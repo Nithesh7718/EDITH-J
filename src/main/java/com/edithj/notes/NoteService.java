@@ -15,7 +15,7 @@ public class NoteService {
     }
 
     public Note createNote(String rawContent) {
-        String content = ValidationUtils.validateNonEmpty(rawContent, "Note content");
+        String content = requireNonBlank(rawContent, "Note content");
         Note note = Note.newNote(deriveTitle(content), content);
         return noteRepository.save(note);
     }
@@ -38,16 +38,17 @@ public class NoteService {
     }
 
     public Optional<Note> updateNote(String noteId, String rawContent) {
-        if (!ValidationUtils.isValidId(noteId)) {
+        if (!hasUsableId(noteId)) {
             return Optional.empty();
         }
 
-        String content = ValidationUtils.normalize(rawContent);
+        String content = cleanText(rawContent);
         if (content.isBlank()) {
             return Optional.empty();
         }
 
-        Optional<Note> existing = noteRepository.findById(noteId);
+        String normalizedId = noteId.trim();
+        Optional<Note> existing = noteRepository.findById(normalizedId);
         if (existing.isEmpty()) {
             return Optional.empty();
         }
@@ -58,15 +59,39 @@ public class NoteService {
     }
 
     public boolean deleteNote(String noteId) {
-        if (!ValidationUtils.isValidId(noteId)) {
+        if (!hasUsableId(noteId)) {
             return false;
         }
-        return noteRepository.deleteById(noteId);
+        return noteRepository.deleteById(noteId.trim());
     }
 
     private String deriveTitle(String content) {
         int firstLineBreak = content.indexOf('\n');
         String firstLine = firstLineBreak < 0 ? content : content.substring(0, firstLineBreak);
-        return ValidationUtils.truncate(firstLine.trim(), 40);
+        String truncated = ValidationUtils.truncate(firstLine.trim(), 40);
+        return toTitleCase(truncated);
+    }
+
+    private String requireNonBlank(String rawText, String fieldName) {
+        String cleaned = cleanText(rawText);
+        if (cleaned.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " cannot be empty.");
+        }
+        return cleaned;
+    }
+
+    private String cleanText(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean hasUsableId(String id) {
+        return id != null && !id.trim().isBlank();
+    }
+
+    private String toTitleCase(String text) {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+        return Character.toUpperCase(text.charAt(0)) + text.substring(1);
     }
 }
