@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.edithj.config.AppConfig;
 import com.edithj.config.ModelConfig;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class GroqClient implements LlmClient {
 
+    private static final Logger logger = LoggerFactory.getLogger(GroqClient.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> MODEL_PREFERENCES = List.of(
             "llama-3.3-70b-versatile",
@@ -45,14 +49,17 @@ public class GroqClient implements LlmClient {
     public String generateReply(String prompt) {
         String normalizedPrompt = prompt == null ? "" : prompt.trim();
         if (normalizedPrompt.isBlank()) {
+            logger.debug("Empty prompt, returning empty reply");
             return "";
         }
 
         if (!modelConfig.isConfigured()) {
+            logger.warn("Groq is not configured - GROQ_API_KEY not set");
             return modelConfig.missingApiKeyMessage();
         }
 
         try {
+            logger.debug("Generating reply with model: {}", resolvedModel);
             String requestBody = OBJECT_MAPPER.writeValueAsString(Map.of(
                     "model", resolvedModel,
                     "messages", List.of(
@@ -69,18 +76,25 @@ public class GroqClient implements LlmClient {
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
+            logger.debug("Sending request to Groq API: {}", modelConfig.chatCompletionsUrl());
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                logger.error("Groq API error - HTTP {}: {}", response.statusCode(), response.body());
                 return formatHttpError(response.statusCode(), response.body());
             }
 
+            logger.debug("Groq API returned HTTP {}", response.statusCode());
             return extractReply(response.body());
         } catch (InterruptedException exception) {
+            logger.warn("Groq request was interrupted", exception);
             Thread.currentThread().interrupt();
             return "Groq request was interrupted.";
         } catch (IOException exception) {
+            logger.error("IO error communicating with Groq", exception);
             return "Unable to reach Groq: " + exception.getMessage();
         } catch (RuntimeException exception) {
+            logger.error("Unexpected error while generating reply", exception);
             return "Unable to generate a reply right now.";
         }
     }

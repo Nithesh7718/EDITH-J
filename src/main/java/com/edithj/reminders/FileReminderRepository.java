@@ -5,12 +5,16 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.edithj.storage.JsonStorage;
 import com.edithj.storage.StoragePaths;
 
 public class FileReminderRepository implements ReminderRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(FileReminderRepository.class);
     private static final TypeReference<List<Reminder>> REMINDER_LIST_TYPE = new TypeReference<>() {
     };
 
@@ -57,8 +61,10 @@ public class FileReminderRepository implements ReminderRepository {
         }
 
         if (index >= 0) {
+            logger.debug("Updating reminder: {}", reminder.getId());
             reminders.set(index, reminder);
         } else {
+            logger.debug("Creating new reminder: {}", reminder.getId());
             reminders.add(reminder);
         }
 
@@ -78,6 +84,7 @@ public class FileReminderRepository implements ReminderRepository {
             return false;
         }
 
+        logger.debug("Deleted reminder: {}", reminderId);
         reminders.remove(index);
         storage.writeList(reminders);
         return true;

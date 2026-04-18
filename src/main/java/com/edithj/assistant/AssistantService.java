@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.edithj.commands.CommandHandler;
 import com.edithj.commands.DesktopToolsCommandHandler;
 import com.edithj.commands.FallbackChatHandler;
@@ -22,6 +25,7 @@ import com.edithj.speech.SpeechService;
 
 public class AssistantService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AssistantService.class);
     private static final int DEFAULT_MEMORY_WINDOW = 12;
 
     private record ChatTurn(String role, String text) {
@@ -97,11 +101,14 @@ public class AssistantService {
     private AssistantResponse handleIncomingInput(String rawInput, String channel) {
         String normalized = normalize(rawInput);
         if (normalized.isBlank()) {
+            logger.debug("Received blank input from channel: {}", channel);
             return new AssistantResponse(IntentType.FALLBACK_CHAT, "", "Please enter a message.", channel);
         }
 
+        logger.info("Processing input from channel: {} | Input: {}", channel, normalized.substring(0, Math.min(100, normalized.length())));
         remember("user", normalized);
         AssistantResponse response = intentRouter.routeAndHandle(normalized, channel);
+        logger.info("Intent routed to: {} | Response length: {}", response.intentType(), response.answer().length());
         remember("assistant", response.answer());
 
         return response;

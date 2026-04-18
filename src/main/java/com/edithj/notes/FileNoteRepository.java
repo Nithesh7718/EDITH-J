@@ -5,12 +5,16 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.edithj.storage.JsonStorage;
 import com.edithj.storage.StoragePaths;
 
 public class FileNoteRepository implements NoteRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(FileNoteRepository.class);
     private static final TypeReference<List<Note>> NOTE_LIST_TYPE = new TypeReference<>() {
     };
 
@@ -57,6 +61,7 @@ public class FileNoteRepository implements NoteRepository {
         }
 
         if (index >= 0) {
+            logger.debug("Updating note: {}", note.getId());
             notes.set(index, note);
         } else {
             notes.add(note);
@@ -75,6 +80,7 @@ public class FileNoteRepository implements NoteRepository {
         List<Note> notes = findAll();
         boolean removed = notes.removeIf(note -> noteId.equals(note.getId()));
         if (removed) {
+            logger.debug("Deleted note: {}", noteId);
             storage.writeList(notes);
         }
         return removed;

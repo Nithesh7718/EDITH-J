@@ -11,7 +11,7 @@ class LauncherCommandHandlerTest {
         LauncherCommandHandler handler = new LauncherCommandHandler();
         String response = handler.handle(new CommandHandler.CommandContext("launch", "notepad", "typed"));
         
-        assertTrue(response != null && !response.isBlank());
+        assertTrue(response != null && !response.isBlank(), "Response should not be null or blank");
     }
 
     @Test
@@ -19,7 +19,7 @@ class LauncherCommandHandlerTest {
         LauncherCommandHandler handler = new LauncherCommandHandler();
         String response = handler.handle(new CommandHandler.CommandContext("launch", "https://example.com", "typed"));
         
-        assertTrue(response != null && !response.isBlank());
+        assertTrue(response != null && !response.isBlank(), "Response should not be null or blank");
     }
 
     @Test
