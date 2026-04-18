@@ -5,33 +5,44 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21"
-	  fx:controller="com.edithj.ui.controller.RemindersComingSoonController"
-	  spacing="12.0" styleClass="coming-soon-panel">
-	<padding>
-		<Insets top="18.0" right="18.0" bottom="18.0" left="18.0"/>
-	</padding>
-	<Label text="Reminders (coming soon)" styleClass="panel-title"/>
-	<Label text="Your upcoming reminders and timers will appear here with quick controls."
-		   styleClass="panel-hint" wrapText="true"/>
-	<ListView fx:id="remindersPreviewList" prefHeight="220.0" VBox.vgrow="ALWAYS"/>
-	<HBox spacing="8.0">
-		<Button text="New reminder" disable="true" styleClass="mini-action-button">
-			<tooltip>
-				<javafx.scene.control.Tooltip text="Planned feature - not available yet."/>
-			</tooltip>
-		</Button>
-		<Button text="Snooze" disable="true" styleClass="mini-action-button">
-			<tooltip>
-				<javafx.scene.control.Tooltip text="Planned feature - not available yet."/>
-			</tooltip>
-		</Button>
-		<Button text="Mark done" disable="true" styleClass="mini-action-button">
-			<tooltip>
-				<javafx.scene.control.Tooltip text="Planned feature - not available yet."/>
-			</tooltip>
-		</Button>
-	</HBox>
+      fx:controller="com.edithj.ui.controller.RemindersViewController"
+      spacing="12.0" styleClass="reminders-panel">
+    <padding>
+        <Insets top="16.0" right="16.0" bottom="16.0" left="16.0"/>
+    </padding>
+
+    <!-- Title and Filters -->
+    <VBox spacing="8.0">
+        <Label text="Reminders" styleClass="panel-title"/>
+        <HBox spacing="6.0" alignment="CENTER_LEFT">
+            <Button text="All" onAction="#filterAll" styleClass="filter-tab-button" fx:id="btnFilterAll"/>
+            <Button text="Today" onAction="#filterToday" styleClass="filter-tab-button" fx:id="btnFilterToday"/>
+            <Button text="Upcoming" onAction="#filterUpcoming" styleClass="filter-tab-button" fx:id="btnFilterUpcoming"/>
+            <Button text="Completed" onAction="#filterCompleted" styleClass="filter-tab-button" fx:id="btnFilterCompleted"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="countLabel" styleClass="filter-count" text="0 reminder(s)"/>
+        </HBox>
+    </VBox>
+
+    <!-- Reminders List -->
+    <ListView fx:id="remindersList" 
+              VBox.vgrow="ALWAYS" 
+              styleClass="reminders-list"/>
+
+    <!-- New Reminder Button and Status -->
+    <HBox spacing="8.0" alignment="CENTER_LEFT">
+        <Button text="+ New Reminder" onAction="#onNewReminder" styleClass="primary-button"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="statusLabel" styleClass="status-text"/>
+    </HBox>
+
+    <Label fx:id="hintLabel" 
+           text="💡 You can also manage reminders via chat. Example: 'remind me to call mom at 7 PM', 'list reminders', 'done reminder-id'"
+           styleClass="panel-hint" 
+           wrapText="true"/>
 </VBox>

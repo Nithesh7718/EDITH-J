@@ -1,5 +1,6 @@
 package com.edithj.ui.controller;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -47,6 +48,14 @@ public class RemindersController {
 
     public void deleteReminder(String reminderId) {
         reminderService.deleteReminder(reminderId);
+    }
+
+    public void createReminder(String description, String timeHint) {
+        reminderService.createReminder(description, timeHint);
+    }
+
+    public void snoozeReminder(String reminderId, int minutes) {
+        reminderService.snoozeReminder(reminderId, Duration.ofMinutes(minutes));
     }
 
     private ReminderViewModel toViewModel(Reminder reminder) {

@@ -38,22 +38,8 @@
             </padding>
             <Label text="NAVIGATION" styleClass="sidebar-label"/>
             <Button text="Home (Chat)" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
-            <HBox spacing="8.0" alignment="CENTER_LEFT" styleClass="nav-soon-wrap">
-                <Button text="Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes" HBox.hgrow="ALWAYS"/>
-                <Label text="Soon" styleClass="soon-badge">
-                    <tooltip>
-                        <javafx.scene.control.Tooltip text="Planned feature - not fully available yet."/>
-                    </tooltip>
-                </Label>
-            </HBox>
-            <HBox spacing="8.0" alignment="CENTER_LEFT" styleClass="nav-soon-wrap">
-                <Button text="Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders" HBox.hgrow="ALWAYS"/>
-                <Label text="Soon" styleClass="soon-badge">
-                    <tooltip>
-                        <javafx.scene.control.Tooltip text="Planned feature - not fully available yet."/>
-                    </tooltip>
-                </Label>
-            </HBox>
+            <Button text="Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnNotes"/>
+            <Button text="Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnReminders"/>
             <Button text="Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
             <Button text="Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
             <Separator styleClass="sidebar-divider"/>
