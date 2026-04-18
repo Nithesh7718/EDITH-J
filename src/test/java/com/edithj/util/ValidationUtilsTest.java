@@ -3,7 +3,6 @@ package com.edithj.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 class ValidationUtilsTest {
@@ -24,8 +23,13 @@ class ValidationUtilsTest {
     }
 
     @Test
-    void normalize_preservesInternalSpaces() {
+    void normalize_collapsesInternalSpaces() {
         assertEquals("hello world test", ValidationUtils.normalize("  HELLO   WORLD   TEST  "));
+    }
+
+    @Test
+    void normalize_collapsesMixedWhitespace() {
+        assertEquals("hello world", ValidationUtils.normalize("\tHELLO\n\nWORLD\t"));
     }
 
     @Test
@@ -76,6 +80,11 @@ class ValidationUtilsTest {
     }
 
     @Test
+    void isValidId_returnsTrueForUppercaseUUID() {
+        assertTrue(ValidationUtils.isValidId("550E8400-E29B-41D4-A716-446655440000"));
+    }
+
+    @Test
     void isValidId_returnsFalseForNull() {
         assertFalse(ValidationUtils.isValidId(null));
     }
@@ -89,6 +98,8 @@ class ValidationUtilsTest {
     @Test
     void isValidId_returnsFalseForInvalidFormat() {
         assertFalse(ValidationUtils.isValidId("not-a-uuid"));
+        assertFalse(ValidationUtils.isValidId("550e8400e29b41d4a716446655440000"));
+        assertFalse(ValidationUtils.isValidId("550e8400-e29b-41d4-a716-44665544000z"));
+        assertFalse(ValidationUtils.isValidId("550e8400-e29b-71d4-a716-446655440000"));
     }
 }
-

@@ -24,7 +24,7 @@ public class LauncherCommandHandler implements CommandHandler {
     public String handle(CommandContext context) {
         String payload = sanitizePayload(context);
         if (payload.isBlank()) {
-            return "Tell me which app to open, for example: open calculator, or open https://google.com.";
+            return "Please specify an application to open. For example: open calculator, or open URL https://google.com.";
         }
 
         String appName = normalizeAppName(payload);

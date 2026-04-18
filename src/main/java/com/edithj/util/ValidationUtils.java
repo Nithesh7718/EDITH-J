@@ -1,9 +1,16 @@
 package com.edithj.util;
 
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 /**
  * Centralized validation utilities for common checks.
  */
 public final class ValidationUtils {
+
+    private static final Pattern ID_PATTERN = Pattern.compile(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    );
 
     private ValidationUtils() {
         // Utility class
@@ -13,10 +20,15 @@ public final class ValidationUtils {
      * Normalize and validate non-null text.
      *
      * @param value the value to normalize
-     * @return trimmed text, never null
+     * @return trimmed, space-normalized lowercase text, never null
      */
     public static String normalize(String value) {
-        return value == null ? "" : value.trim();
+        if (value == null) {
+            return "";
+        }
+        return value.trim()
+                .replaceAll("\\s+", " ")
+                .toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -27,10 +39,19 @@ public final class ValidationUtils {
     }
 
     /**
-     * Check if ID is valid (non-null, non-blank).
+     * Check if ID is valid for the expected UUID format.
      */
     public static boolean isValidId(String id) {
-        return id != null && !id.isBlank();
+        if (id == null) {
+            return false;
+        }
+
+        String normalized = id.trim();
+        if (normalized.isBlank()) {
+            return false;
+        }
+
+        return ID_PATTERN.matcher(normalized).matches();
     }
 
     /**
