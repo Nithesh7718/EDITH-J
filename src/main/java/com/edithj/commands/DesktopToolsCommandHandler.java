@@ -12,9 +12,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -25,6 +23,11 @@ import com.edithj.desktop.ClipboardService;
 import com.edithj.desktop.DesktopFileService;
 import com.edithj.desktop.SystemClipboardService;
 import com.edithj.desktop.SystemDesktopFileService;
+import com.edithj.desktop.session.FocusSessionState;
+import com.edithj.desktop.session.InMemoryFocusSessionState;
+import com.edithj.desktop.session.InMemoryTaskSessionState;
+import com.edithj.desktop.session.TaskItem;
+import com.edithj.desktop.session.TaskSessionState;
 import com.edithj.launcher.AppLauncherService;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
@@ -41,59 +44,57 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             "google.com", "github.com", "stackoverflow.com", "wikipedia.org", "weather.com", "accuweather.com");
 
     private static final Deque<String> ACTION_LOG = new ArrayDeque<>();
-    private static final List<TodoItem> TODO_ITEMS = new ArrayList<>();
-    private static final Set<String> BLOCKED_DOMAINS = new HashSet<>();
 
     private static volatile String pendingUrlForConfirmation;
-    private static volatile Instant focusEndsAt;
 
     private final AppLauncherService launcherService;
     private final ClipboardService clipboardService;
     private final DesktopFileService desktopFileService;
     private final NoteService noteService;
     private final ReminderService reminderService;
+    private final TaskSessionState taskSessionState;
+    private final FocusSessionState focusSessionState;
     private final boolean smokeLaunchersEnabled;
     private final boolean fileOpenEnabled;
     private final boolean clipboardWriteEnabled;
 
-    private record TodoItem(int id, String text, boolean done) {
-
-    }
-
     public DesktopToolsCommandHandler() {
-        AppConfig appConfig = AppConfig.load();
         this(new AppLauncherService(),
                 new SystemClipboardService(),
                 new SystemDesktopFileService(),
                 new NoteService(RepositoryFactory.createNoteRepository()),
                 new ReminderService(RepositoryFactory.createReminderRepository()),
-                appConfig.isDevSmokeLaunchersEnabled(),
-                appConfig.isDesktopFileOpenEnabled(),
-                appConfig.isDesktopClipboardWriteEnabled());
+                new InMemoryTaskSessionState(),
+                new InMemoryFocusSessionState(),
+                AppConfig.load().isDevSmokeLaunchersEnabled(),
+                AppConfig.load().isDesktopFileOpenEnabled(),
+                AppConfig.load().isDesktopClipboardWriteEnabled());
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService) {
-        AppConfig appConfig = AppConfig.load();
         this(launcherService,
                 new SystemClipboardService(),
                 new SystemDesktopFileService(),
                 new NoteService(RepositoryFactory.createNoteRepository()),
                 new ReminderService(RepositoryFactory.createReminderRepository()),
-                appConfig.isDevSmokeLaunchersEnabled(),
-                appConfig.isDesktopFileOpenEnabled(),
-                appConfig.isDesktopClipboardWriteEnabled());
+                new InMemoryTaskSessionState(),
+                new InMemoryFocusSessionState(),
+                AppConfig.load().isDevSmokeLaunchersEnabled(),
+                AppConfig.load().isDesktopFileOpenEnabled(),
+                AppConfig.load().isDesktopClipboardWriteEnabled());
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService, NoteService noteService, ReminderService reminderService) {
-        AppConfig appConfig = AppConfig.load();
         this(launcherService,
                 new SystemClipboardService(),
                 new SystemDesktopFileService(),
                 noteService,
                 reminderService,
-                appConfig.isDevSmokeLaunchersEnabled(),
-                appConfig.isDesktopFileOpenEnabled(),
-                appConfig.isDesktopClipboardWriteEnabled());
+                new InMemoryTaskSessionState(),
+                new InMemoryFocusSessionState(),
+                AppConfig.load().isDevSmokeLaunchersEnabled(),
+                AppConfig.load().isDesktopFileOpenEnabled(),
+                AppConfig.load().isDesktopClipboardWriteEnabled());
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService,
@@ -101,12 +102,16 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             DesktopFileService desktopFileService,
             NoteService noteService,
             ReminderService reminderService,
+            TaskSessionState taskSessionState,
+            FocusSessionState focusSessionState,
             boolean smokeLaunchersEnabled) {
         this(launcherService,
                 clipboardService,
                 desktopFileService,
                 noteService,
                 reminderService,
+                taskSessionState,
+                focusSessionState,
                 smokeLaunchersEnabled,
                 true,
                 true);
@@ -117,6 +122,8 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             DesktopFileService desktopFileService,
             NoteService noteService,
             ReminderService reminderService,
+            TaskSessionState taskSessionState,
+            FocusSessionState focusSessionState,
             boolean smokeLaunchersEnabled,
             boolean fileOpenEnabled,
             boolean clipboardWriteEnabled) {
@@ -125,9 +132,31 @@ public class DesktopToolsCommandHandler implements CommandHandler {
         this.desktopFileService = desktopFileService;
         this.noteService = noteService;
         this.reminderService = reminderService;
+        this.taskSessionState = taskSessionState;
+        this.focusSessionState = focusSessionState;
         this.smokeLaunchersEnabled = smokeLaunchersEnabled;
         this.fileOpenEnabled = fileOpenEnabled;
         this.clipboardWriteEnabled = clipboardWriteEnabled;
+    }
+
+    public DesktopToolsCommandHandler(AppLauncherService launcherService,
+            ClipboardService clipboardService,
+            DesktopFileService desktopFileService,
+            NoteService noteService,
+            ReminderService reminderService,
+            boolean smokeLaunchersEnabled,
+            boolean fileOpenEnabled,
+            boolean clipboardWriteEnabled) {
+        this(launcherService,
+                clipboardService,
+                desktopFileService,
+                noteService,
+                reminderService,
+                new InMemoryTaskSessionState(),
+                new InMemoryFocusSessionState(),
+                smokeLaunchersEnabled,
+                fileOpenEnabled,
+                clipboardWriteEnabled);
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService,
@@ -139,6 +168,8 @@ public class DesktopToolsCommandHandler implements CommandHandler {
                 new SystemDesktopFileService(),
                 noteService,
                 reminderService,
+                new InMemoryTaskSessionState(),
+                new InMemoryFocusSessionState(),
                 smokeLaunchersEnabled,
                 true,
                 true);
@@ -166,6 +197,10 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             return dailyBriefing();
         }
 
+        if (isFocusRequest(lower)) {
+            return handleFocus(input, lower);
+        }
+
         if (isSystemInfoRequest(lower)) {
             return systemStatus();
         }
@@ -188,10 +223,6 @@ public class DesktopToolsCommandHandler implements CommandHandler {
 
         if (isTodoRequest(lower)) {
             return handleTasks(input, lower);
-        }
-
-        if (isFocusRequest(lower)) {
-            return handleFocus(input, lower);
         }
 
         if (lower.startsWith("confirm open")) {
@@ -475,53 +506,48 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     }
 
     private String handleTasks(String input, String lower) {
-        synchronized (TODO_ITEMS) {
-            if (lower.startsWith("add task") || lower.startsWith("todo add")) {
-                String text = input.replaceFirst("(?i)^add\\s+task\\b\\s*", "")
-                        .replaceFirst("(?i)^todo\\s+add\\b\\s*", "")
-                        .trim();
-                if (text.isBlank()) {
-                    return "Use: add task <text>.";
-                }
-                int id = TODO_ITEMS.stream().mapToInt(TodoItem::id).max().orElse(0) + 1;
-                TODO_ITEMS.add(new TodoItem(id, text, false));
-                logAction("Added task " + id);
-                return "Task added: " + id + ". " + text;
+        if (lower.startsWith("add task") || lower.startsWith("todo add")) {
+            String text = input.replaceFirst("(?i)^add\\s+task\\b\\s*", "")
+                    .replaceFirst("(?i)^todo\\s+add\\b\\s*", "")
+                    .trim();
+            if (text.isBlank()) {
+                return "Use: add task <text>.";
             }
-
-            if (lower.startsWith("done task")) {
-                int id = extractNumber(lower);
-                for (int i = 0; i < TODO_ITEMS.size(); i++) {
-                    TodoItem item = TODO_ITEMS.get(i);
-                    if (item.id() == id) {
-                        TODO_ITEMS.set(i, new TodoItem(item.id(), item.text(), true));
-                        logAction("Completed task " + id);
-                        return "Task " + id + " marked done.";
-                    }
-                }
-                return "Task not found.";
-            }
-
-            if (lower.startsWith("remove task") || lower.startsWith("delete task")) {
-                int id = extractNumber(lower);
-                boolean removed = TODO_ITEMS.removeIf(item -> item.id() == id);
-                return removed ? "Removed task " + id + "." : "Task not found.";
-            }
-
-            if (TODO_ITEMS.isEmpty()) {
-                return "No tasks yet. Use: add task <text>.";
-            }
-
-            StringBuilder sb = new StringBuilder("Tasks:\n");
-            for (TodoItem item : TODO_ITEMS) {
-                sb.append(item.done() ? "[DONE] " : "[TODO] ")
-                        .append(item.id())
-                        .append(". ")
-                        .append(item.text())
-                        .append("\n");
-            }
-            return sb.toString().trim();
+            TaskItem added = taskSessionState.addTask(text);
+            logAction("Added task " + added.id());
+            return "Task added: " + added.id() + ". " + added.text();
         }
+
+        if (lower.startsWith("done task")) {
+            int id = extractNumber(lower);
+            boolean completed = taskSessionState.completeTask(id);
+            if (completed) {
+                logAction("Completed task " + id);
+                return "Task " + id + " marked done.";
+            }
+            return "Task not found.";
+        }
+
+        if (lower.startsWith("remove task") || lower.startsWith("delete task")) {
+            int id = extractNumber(lower);
+            boolean removed = taskSessionState.removeTask(id);
+            return removed ? "Removed task " + id + "." : "Task not found.";
+        }
+
+        List<TaskItem> items = taskSessionState.listTasks();
+        if (items.isEmpty()) {
+            return "No tasks yet. Use: add task <text>.";
+        }
+
+        StringBuilder sb = new StringBuilder("Tasks:\n");
+        for (TaskItem item : items) {
+            sb.append(item.done() ? "[DONE] " : "[TODO] ")
+                    .append(item.id())
+                    .append(". ")
+                    .append(item.text())
+                    .append("\n");
+        }
+        return sb.toString().trim();
     }
 
     private String handleFocus(String input, String lower) {
@@ -530,21 +556,25 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             if (mins <= 0) {
                 mins = 25;
             }
-            focusEndsAt = Instant.now().plus(Duration.ofMinutes(mins));
+            focusSessionState.startFocus(Duration.ofMinutes(mins));
             logAction("Started focus " + mins + " min");
             return "Focus started for " + mins + " minutes.";
         }
 
         if (lower.startsWith("focus status")) {
-            if (focusEndsAt == null || focusEndsAt.isBefore(Instant.now())) {
+            if (!focusSessionState.isFocusActive(Instant.now())) {
                 return "Focus mode is not active.";
             }
-            Duration left = Duration.between(Instant.now(), focusEndsAt);
+            Instant endsAt = focusSessionState.getFocusEndsAt();
+            if (endsAt == null) {
+                return "Focus mode is not active.";
+            }
+            Duration left = Duration.between(Instant.now(), endsAt);
             return "Focus active. " + left.toMinutes() + " minutes left.";
         }
 
         if (lower.startsWith("end focus")) {
-            focusEndsAt = null;
+            focusSessionState.endFocus();
             logAction("Ended focus");
             return "Focus mode ended.";
         }
@@ -554,7 +584,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             if (domain.isBlank()) {
                 return "Use: block site youtube.com";
             }
-            BLOCKED_DOMAINS.add(domain);
+            focusSessionState.blockDomain(domain);
             return "Blocked site: " + domain;
         }
 
@@ -563,12 +593,13 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             if (domain.isBlank()) {
                 return "Use: unblock site youtube.com";
             }
-            BLOCKED_DOMAINS.remove(domain);
+            focusSessionState.unblockDomain(domain);
             return "Unblocked site: " + domain;
         }
 
         if (lower.startsWith("blocked sites")) {
-            return BLOCKED_DOMAINS.isEmpty() ? "No blocked sites." : "Blocked sites: " + String.join(", ", BLOCKED_DOMAINS);
+            Set<String> blockedDomains = focusSessionState.blockedDomains();
+            return blockedDomains.isEmpty() ? "No blocked sites." : "Blocked sites: " + String.join(", ", blockedDomains);
         }
 
         return "Focus commands: start focus 25, focus status, end focus, block site <domain>.";
@@ -604,7 +635,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
 
     private boolean isBlocked(String url) {
         String lower = url.toLowerCase(Locale.ROOT);
-        for (String blocked : BLOCKED_DOMAINS) {
+        for (String blocked : focusSessionState.blockedDomains()) {
             if (lower.contains(blocked)) {
                 return true;
             }
