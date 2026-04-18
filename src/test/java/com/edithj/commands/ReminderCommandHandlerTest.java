@@ -1,10 +1,9 @@
 package com.edithj.commands;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,10 +17,10 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_listCommandFormatsReminders() {
-        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
         ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
         Reminder reminder = new Reminder("12345678-abcd", "Pay bill", Instant.now().plusSeconds(60), false, Instant.now(), Instant.now());
-        when(reminderRepository.findAll()).thenReturn(List.of(reminder));
+        reminderRepository.setReminders(List.of(reminder));
 
         String response = handler.handle(new CommandHandler.CommandContext("list reminders", "list", "typed"));
 
@@ -31,11 +30,10 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_markDoneUsesService() {
-        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
         ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
         Reminder reminder = new Reminder("id-3", "Send mail", Instant.now(), false, Instant.now(), Instant.now());
-        when(reminderRepository.findById("id-3")).thenReturn(Optional.of(reminder));
-        when(reminderRepository.save(reminder)).thenReturn(reminder);
+        reminderRepository.setReminders(List.of(reminder));
 
         String response = handler.handle(new CommandHandler.CommandContext("done", "done id-3", "typed"));
 
@@ -44,9 +42,9 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_snoozeMissingReminderReturnsMessage() {
-        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
         ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
-        when(reminderRepository.findById("id-4")).thenReturn(Optional.empty());
+        reminderRepository.setReminders(List.of());
 
         String response = handler.handle(new CommandHandler.CommandContext("snooze", "snooze id-4 10 minutes", "typed"));
 
@@ -55,7 +53,7 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_createReminderRequiresTimeHint() {
-        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
         ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
         String response = handler.handle(new CommandHandler.CommandContext("remind", "remind me to stretch", "typed"));
 
@@ -64,13 +62,43 @@ class ReminderCommandHandlerTest {
 
     @Test
     void handle_createReminderSuccess() {
-        ReminderRepository reminderRepository = mock(ReminderRepository.class);
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
         ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
-        when(reminderRepository.save(org.mockito.ArgumentMatchers.any(Reminder.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
 
         String response = handler.handle(new CommandHandler.CommandContext("remind", "remind me to stretch in 5 minutes", "typed"));
 
         assertTrue(response.startsWith("Reminder set!"));
+    }
+
+    private static final class InMemoryReminderRepository implements ReminderRepository {
+
+        private final List<Reminder> reminders = new ArrayList<>();
+
+        void setReminders(List<Reminder> values) {
+            reminders.clear();
+            reminders.addAll(values);
+        }
+
+        @Override
+        public List<Reminder> findAll() {
+            return new ArrayList<>(reminders);
+        }
+
+        @Override
+        public Optional<Reminder> findById(String reminderId) {
+            return reminders.stream().filter(reminder -> reminder.getId().equals(reminderId)).findFirst();
+        }
+
+        @Override
+        public Reminder save(Reminder reminder) {
+            reminders.removeIf(existing -> existing.getId().equals(reminder.getId()));
+            reminders.add(reminder);
+            return reminder;
+        }
+
+        @Override
+        public boolean deleteById(String reminderId) {
+            return reminders.removeIf(existing -> existing.getId().equals(reminderId));
+        }
     }
 }

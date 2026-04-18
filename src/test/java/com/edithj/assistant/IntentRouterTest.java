@@ -1,11 +1,10 @@
 package com.edithj.assistant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.edithj.commands.CommandHandler;
 
@@ -40,29 +39,51 @@ class IntentRouterTest {
     }
 
     @Test
+    void route_classifiesEmailCommands() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent routed = router.route("draft an email to hr@example.com with subject 'Leave request' and say I need a day off");
+
+        assertEquals(IntentType.EMAIL, routed.intentType());
+        assertTrue(routed.normalizedInput().contains("email"));
+    }
+
+    @Test
+    void routeAndHandle_invokesRegisteredEmailHandler() {
+        IntentRouter router = new IntentRouter();
+        RecordingHandler handler = new RecordingHandler(IntentType.EMAIL, "opened");
+        router.registerHandler(handler);
+
+        AssistantResponse response = router.routeAndHandle("email hello to Krithick", "typed");
+
+        assertEquals(IntentType.EMAIL, response.intentType());
+        assertEquals("opened", response.answer());
+        assertNotNull(handler.lastContext());
+        assertEquals("email hello to Krithick", handler.lastContext().normalizedInput());
+        assertEquals("hello to Krithick", handler.lastContext().payload());
+        assertEquals("typed", handler.lastContext().channel());
+    }
+
+    @Test
     void routeAndHandle_invokesRegisteredWhatsAppHandler() {
         IntentRouter router = new IntentRouter();
-        CommandHandler handler = mock(CommandHandler.class);
-        when(handler.intentType()).thenReturn(IntentType.WHATSAPP);
-        when(handler.handle(org.mockito.ArgumentMatchers.any())).thenReturn("opened");
+        RecordingHandler handler = new RecordingHandler(IntentType.WHATSAPP, "opened");
         router.registerHandler(handler);
 
         AssistantResponse response = router.routeAndHandle("whatsapp hello", "typed");
 
         assertEquals(IntentType.WHATSAPP, response.intentType());
         assertEquals("opened", response.answer());
-        verify(handler).handle(org.mockito.ArgumentMatchers.argThat(ctx
-                -> "whatsapp hello".equals(ctx.normalizedInput())
-                && "whatsapp hello".equals(ctx.payload())
-                && "typed".equals(ctx.channel())));
+        assertNotNull(handler.lastContext());
+        assertEquals("whatsapp hello", handler.lastContext().normalizedInput());
+        assertEquals("whatsapp hello", handler.lastContext().payload());
+        assertEquals("typed", handler.lastContext().channel());
     }
 
     @Test
     void routeAndHandle_invokesRegisteredHandlerWithNormalizedChannel() {
         IntentRouter router = new IntentRouter();
-        CommandHandler handler = mock(CommandHandler.class);
-        when(handler.intentType()).thenReturn(IntentType.NOTES);
-        when(handler.handle(org.mockito.ArgumentMatchers.any())).thenReturn("saved");
+        RecordingHandler handler = new RecordingHandler(IntentType.NOTES, "saved");
         router.registerHandler(handler);
 
         AssistantResponse response = router.routeAndHandle(" note buy milk ", "");
@@ -70,18 +91,16 @@ class IntentRouterTest {
         assertEquals(IntentType.NOTES, response.intentType());
         assertEquals("typed", response.channel());
         assertEquals("saved", response.answer());
-        verify(handler).handle(org.mockito.ArgumentMatchers.argThat(ctx
-                -> "note buy milk".equals(ctx.normalizedInput())
-                && "buy milk".equals(ctx.payload())
-                && "typed".equals(ctx.channel())));
+        assertNotNull(handler.lastContext());
+        assertEquals("note buy milk", handler.lastContext().normalizedInput());
+        assertEquals("buy milk", handler.lastContext().payload());
+        assertEquals("typed", handler.lastContext().channel());
     }
 
     @Test
     void routeAndHandle_returnsFallbackMessageWhenHandlerThrows() {
         IntentRouter router = new IntentRouter();
-        CommandHandler handler = mock(CommandHandler.class);
-        when(handler.intentType()).thenReturn(IntentType.NOTES);
-        when(handler.handle(org.mockito.ArgumentMatchers.any())).thenThrow(new RuntimeException("boom"));
+        RecordingHandler handler = new RecordingHandler(IntentType.NOTES, new RuntimeException("boom"));
         router.registerHandler(handler);
 
         AssistantResponse response = router.routeAndHandle("note task", "typed");
@@ -96,5 +115,43 @@ class IntentRouterTest {
 
         assertEquals(IntentType.APP_LAUNCH, response.intentType());
         assertTrue(response.answer().startsWith("No handler is configured for intent:"));
+    }
+
+    private static final class RecordingHandler implements CommandHandler {
+
+        private final IntentType intentType;
+        private final String response;
+        private final RuntimeException failure;
+        private CommandContext lastContext;
+
+        RecordingHandler(IntentType intentType, String response) {
+            this.intentType = intentType;
+            this.response = response;
+            this.failure = null;
+        }
+
+        RecordingHandler(IntentType intentType, RuntimeException failure) {
+            this.intentType = intentType;
+            this.response = null;
+            this.failure = failure;
+        }
+
+        @Override
+        public IntentType intentType() {
+            return intentType;
+        }
+
+        @Override
+        public String handle(CommandContext context) {
+            lastContext = context;
+            if (failure != null) {
+                throw failure;
+            }
+            return response;
+        }
+
+        CommandContext lastContext() {
+            return lastContext;
+        }
     }
 }

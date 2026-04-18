@@ -83,7 +83,7 @@ public class CrossPlatformLauncher {
     }
 
     private boolean isUrl(String target) {
-        return target.startsWith("http://") || target.startsWith("https://");
+        return target.startsWith("http://") || target.startsWith("https://") || target.startsWith("mailto:");
     }
 
     private boolean launchGenericApp(String appName) throws IOException {

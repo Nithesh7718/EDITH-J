@@ -68,6 +68,9 @@ public class IntentRouter {
                 || startsWithAnyIgnoreCase(input, "timer", "set timer")) {
             return IntentType.REMINDERS;
         }
+        if (isEmailCommand(input)) {
+            return IntentType.EMAIL;
+        }
         if (containsAnyIgnoreCase(input, "whatsapp")) {
             return IntentType.WHATSAPP;
         }
@@ -102,6 +105,8 @@ public class IntentRouter {
         return switch (intentType) {
             case APP_LAUNCH ->
                 stripLeadingKeywordIgnoreCase(input, "open", "launch", "start", "run", "execute");
+            case EMAIL ->
+                stripLeadingKeywordIgnoreCase(input, "email", "send an email", "send email", "draft an email", "draft email", "compose an email", "compose email", "write an email", "write email", "mail to");
             case WHATSAPP ->
                 input;
             case NOTES ->
@@ -140,6 +145,13 @@ public class IntentRouter {
             }
         }
         return false;
+    }
+
+    private boolean isEmailCommand(String input) {
+        String lower = input.toLowerCase(Locale.ROOT).trim();
+        return lower.matches(".*\\b(email|mail)\\b.*")
+                || startsWithAnyIgnoreCase(lower, "send an email", "send email", "draft an email", "draft email", "compose an email", "compose email", "write an email", "write email", "email", "mail to")
+                || lower.contains(" with subject ") && lower.contains(" email ");
     }
 
     private boolean startsWithAnyIgnoreCase(String input, String... prefixes) {

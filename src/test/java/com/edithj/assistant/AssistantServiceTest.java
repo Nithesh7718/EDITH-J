@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import com.edithj.commands.EmailCommandHandler;
 import com.edithj.commands.WhatsAppCommandHandler;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
@@ -51,6 +52,26 @@ class AssistantServiceTest {
         assertEquals(IntentType.WHATSAPP, response.intentType());
         assertTrue(response.answer().contains("Opening WhatsApp Web with your message"));
         assertEquals("https://wa.me/?text=hello%20world", launcherService.launchedTarget());
+        assertFalse(fallbackChatService.wasInvoked());
+    }
+
+    @Test
+    void handleTypedInput_routesEmailIntentsWithoutFallbackChat() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        RecordingLauncherService launcherService = new RecordingLauncherService();
+        service.registerCommandHandler(new EmailCommandHandler(launcherService));
+
+        AssistantResponse response = service.handleTypedInput("email hello to Krithick");
+
+        assertEquals(IntentType.EMAIL, response.intentType());
+        assertTrue(response.answer().contains("Opening your email client with a draft message"));
+        assertEquals("mailto:?subject=Message%20from%20EDITH-J&body=hello", launcherService.launchedTarget());
         assertFalse(fallbackChatService.wasInvoked());
     }
 
