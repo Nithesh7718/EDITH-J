@@ -1,9 +1,5 @@
 package com.edithj.assistant;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -28,18 +24,9 @@ public class AssistantService {
     private static final Logger logger = LoggerFactory.getLogger(AssistantService.class);
     private static final int DEFAULT_MEMORY_WINDOW = 12;
 
-    private record ChatTurn(String role, String text) {
-
-    }
-
-    private final LlmClient llmClient;
-    private final PromptBuilder promptBuilder;
     private final SpeechService speechService;
     private final IntentRouter intentRouter;
-    private final Deque<ChatTurn> memoryWindow;
-    private final int maxTurns;
-
-    private final String systemPrompt;
+    private final FallbackChatService fallbackChatService;
     private String lastVoiceTranscript = "";
 
     public AssistantService() {
@@ -51,13 +38,21 @@ public class AssistantService {
             SpeechService speechService,
             IntentRouter intentRouter,
             int maxTurns) {
-        this.llmClient = Objects.requireNonNull(llmClient, "llmClient");
-        this.promptBuilder = Objects.requireNonNull(promptBuilder, "promptBuilder");
+        this(llmClient, promptBuilder, speechService, intentRouter,
+                new FallbackChatService(llmClient, promptBuilder, maxTurns), maxTurns);
+    }
+
+    AssistantService(LlmClient llmClient,
+            PromptBuilder promptBuilder,
+            SpeechService speechService,
+            IntentRouter intentRouter,
+            FallbackChatService fallbackChatService,
+            int maxTurns) {
+        Objects.requireNonNull(llmClient, "llmClient");
+        Objects.requireNonNull(promptBuilder, "promptBuilder");
         this.speechService = Objects.requireNonNull(speechService, "speechService");
         this.intentRouter = Objects.requireNonNull(intentRouter, "intentRouter");
-        this.maxTurns = Math.max(2, maxTurns);
-        this.memoryWindow = new ArrayDeque<>(this.maxTurns);
-        this.systemPrompt = this.promptBuilder.loadSystemPrompt();
+        this.fallbackChatService = Objects.requireNonNull(fallbackChatService, "fallbackChatService");
 
         registerDefaultHandlers();
     }
@@ -106,10 +101,10 @@ public class AssistantService {
         }
 
         logger.info("Processing input from channel: {} | Input: {}", channel, normalized.substring(0, Math.min(100, normalized.length())));
-        remember("user", normalized);
+        fallbackChatService.recordUserTurn(normalized);
         AssistantResponse response = intentRouter.routeAndHandle(normalized, channel);
         logger.info("Intent routed to: {} | Response length: {}", response.intentType(), response.answer().length());
-        remember("assistant", response.answer());
+        fallbackChatService.recordAssistantTurn(response.answer());
 
         return response;
     }
@@ -121,45 +116,7 @@ public class AssistantService {
         intentRouter.registerHandler(new WeatherCommandHandler());
         intentRouter.registerHandler(new UtilitiesCommandHandler());
         intentRouter.registerHandler(new DesktopToolsCommandHandler());
-        intentRouter.registerHandler(new FallbackChatHandler(this::runFallbackChat));
-    }
-
-    private String runFallbackChat(CommandHandler.CommandContext context) {
-        String prompt = buildPromptWithMemory(context.channel());
-        String reply = llmClient.generateReply(prompt);
-        if (reply == null || reply.isBlank()) {
-            return "I could not generate a response right now.";
-        }
-        return reply.trim();
-    }
-
-    private String buildPromptWithMemory(String channel) {
-        StringBuilder prompt = new StringBuilder();
-
-        if (!systemPrompt.isBlank()) {
-            prompt.append(systemPrompt.trim()).append("\n\n");
-        }
-
-        prompt.append("Input channel: ").append(channel).append("\n");
-        prompt.append("Conversation memory:\n");
-
-        for (ChatTurn turn : snapshotMemory()) {
-            prompt.append(turn.role()).append(": ").append(turn.text()).append("\n");
-        }
-
-        prompt.append("assistant: ");
-        return prompt.toString();
-    }
-
-    private synchronized void remember(String role, String text) {
-        if (memoryWindow.size() >= maxTurns) {
-            memoryWindow.removeFirst();
-        }
-        memoryWindow.addLast(new ChatTurn(role, text));
-    }
-
-    private synchronized List<ChatTurn> snapshotMemory() {
-        return new ArrayList<>(memoryWindow);
+        intentRouter.registerHandler(new FallbackChatHandler(context -> fallbackChatService.runFallbackChat(context.channel())));
     }
 
     private String normalize(String input) {

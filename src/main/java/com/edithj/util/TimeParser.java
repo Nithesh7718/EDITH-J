@@ -1,8 +1,10 @@
 package com.edithj.util;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,6 +17,7 @@ public final class TimeParser {
     private static final Pattern TIME_PATTERN = Pattern.compile("(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|AM|PM)?");
     private static final Pattern MINUTES_PATTERN = Pattern.compile("in\\s+(\\d+)\\s+minutes?", Pattern.CASE_INSENSITIVE);
     private static final Pattern HOURS_PATTERN = Pattern.compile("in\\s+(\\d+)\\s+hours?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DURATION_PATTERN = Pattern.compile("^(-?\\d+)\\s*([smhd])$", Pattern.CASE_INSENSITIVE);
 
     private TimeParser() {
         // Utility class
@@ -86,5 +89,59 @@ public final class TimeParser {
         }
 
         return null;
+    }
+
+    public static Optional<Duration> parseDuration(String input) {
+        if (input == null || input.isBlank()) {
+            return Optional.empty();
+        }
+
+        Matcher matcher = DURATION_PATTERN.matcher(input.trim());
+        if (!matcher.matches()) {
+            return Optional.empty();
+        }
+
+        long amount;
+        try {
+            amount = Long.parseLong(matcher.group(1));
+        } catch (NumberFormatException exception) {
+            return Optional.empty();
+        }
+
+        if (amount <= 0) {
+            return Optional.empty();
+        }
+
+        Duration duration = switch (matcher.group(2).toLowerCase()) {
+            case "s" ->
+                Duration.ofSeconds(amount);
+            case "m" ->
+                Duration.ofMinutes(amount);
+            case "h" ->
+                Duration.ofHours(amount);
+            case "d" ->
+                Duration.ofDays(amount);
+            default ->
+                Duration.ZERO;
+        };
+
+        return duration.isZero() ? Optional.empty() : Optional.of(duration);
+    }
+
+    public static String formatDuration(Duration duration) {
+        if (duration == null || duration.isZero() || duration.isNegative()) {
+            throw new IllegalArgumentException("duration");
+        }
+
+        if (duration.toDays() > 0 && duration.equals(Duration.ofDays(duration.toDays()))) {
+            return duration.toDays() + "d";
+        }
+        if (duration.toHours() > 0 && duration.equals(Duration.ofHours(duration.toHours()))) {
+            return duration.toHours() + "h";
+        }
+        if (duration.toMinutes() > 0 && duration.equals(Duration.ofMinutes(duration.toMinutes()))) {
+            return duration.toMinutes() + "m";
+        }
+        return duration.getSeconds() + "s";
     }
 }
