@@ -1,16 +1,13 @@
 package com.edithj.commands;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import com.edithj.reminders.InMemoryReminderRepository;
 import com.edithj.reminders.Reminder;
-import com.edithj.reminders.ReminderRepository;
 import com.edithj.reminders.ReminderService;
 
 class ReminderCommandHandlerTest {
@@ -70,35 +67,33 @@ class ReminderCommandHandlerTest {
         assertTrue(response.startsWith("Reminder set!"));
     }
 
-    private static final class InMemoryReminderRepository implements ReminderRepository {
+    @Test
+    void handle_timerWithInvalidDurationReturnsHelp() {
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
 
-        private final List<Reminder> reminders = new ArrayList<>();
+        String response = handler.handle(new CommandHandler.CommandContext("timer", "timer later", "typed"));
 
-        void setReminders(List<Reminder> values) {
-            reminders.clear();
-            reminders.addAll(values);
-        }
+        assertTrue(response.contains("Use timer like"));
+    }
 
-        @Override
-        public List<Reminder> findAll() {
-            return new ArrayList<>(reminders);
-        }
+    @Test
+    void handle_doneWithoutIdReturnsGuidance() {
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
 
-        @Override
-        public Optional<Reminder> findById(String reminderId) {
-            return reminders.stream().filter(reminder -> reminder.getId().equals(reminderId)).findFirst();
-        }
+        String response = handler.handle(new CommandHandler.CommandContext("done", "done", "typed"));
 
-        @Override
-        public Reminder save(Reminder reminder) {
-            reminders.removeIf(existing -> existing.getId().equals(reminder.getId()));
-            reminders.add(reminder);
-            return reminder;
-        }
+        assertTrue(response.contains("Please provide the reminder ID"));
+    }
 
-        @Override
-        public boolean deleteById(String reminderId) {
-            return reminders.removeIf(existing -> existing.getId().equals(reminderId));
-        }
+    @Test
+    void handle_reminderWithInvalidTimeFormatReturnsGuidance() {
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
+        ReminderCommandHandler handler = new ReminderCommandHandler(new ReminderService(reminderRepository));
+
+        String response = handler.handle(new CommandHandler.CommandContext("remind", "remind me to call mom at 99:99", "typed"));
+
+        assertTrue(response.contains("couldn't parse the time"));
     }
 }

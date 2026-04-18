@@ -1,5 +1,6 @@
 package com.edithj.reminders;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -12,15 +13,21 @@ import com.edithj.util.ValidationUtils;
 public class ReminderService {
 
     private final ReminderRepository reminderRepository;
+    private final Clock clock;
 
     public ReminderService(ReminderRepository reminderRepository) {
+        this(reminderRepository, Clock.systemDefaultZone());
+    }
+
+    public ReminderService(ReminderRepository reminderRepository, Clock clock) {
         this.reminderRepository = reminderRepository;
+        this.clock = clock;
     }
 
     public Reminder createReminder(String rawText, String rawTimeHint) {
         String text = requireNonBlank(rawText, "Reminder text");
 
-        Instant dueAt = TimeParser.parseTimeHint(rawTimeHint);
+        Instant dueAt = TimeParser.parseTimeHint(rawTimeHint, clock);
         if (dueAt == null) {
             throw new IllegalArgumentException("Unable to parse time hint: " + rawTimeHint);
         }
@@ -88,13 +95,14 @@ public class ReminderService {
         }
 
         Reminder reminder = existing.get();
-        Instant base = reminder.getDueAt() == null || reminder.getDueAt().isBefore(Instant.now())
-                ? Instant.now()
+        Instant now = clock.instant();
+        Instant base = reminder.getDueAt() == null || reminder.getDueAt().isBefore(now)
+                ? now
                 : reminder.getDueAt();
 
         reminder.setDueAt(base.plus(duration));
         reminder.setCompleted(false);
-        reminder.setUpdatedAt(Instant.now());
+        reminder.setUpdatedAt(now);
 
         return Optional.of(reminderRepository.save(reminder));
     }

@@ -1,16 +1,16 @@
 package com.edithj.reminders;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import org.junit.jupiter.api.Test;
 
 class ReminderServiceTest {
@@ -18,12 +18,14 @@ class ReminderServiceTest {
     @Test
     void createReminder_savesParsedReminder() {
         InMemoryReminderRepository repository = new InMemoryReminderRepository();
-        ReminderService reminderService = new ReminderService(repository);
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-04-18T10:00:00Z"), ZoneOffset.UTC);
+        ReminderService reminderService = new ReminderService(repository, fixedClock);
 
         Reminder reminder = reminderService.createReminder("Call mom", "in 10 minutes");
 
         assertEquals("Call mom", reminder.getText());
         assertNotNull(reminder.getDueAt());
+        assertEquals(Instant.parse("2026-04-18T10:10:00Z"), reminder.getDueAt());
         assertEquals(1, repository.savedReminders().size());
     }
 
@@ -57,16 +59,33 @@ class ReminderServiceTest {
     @Test
     void snoozeReminder_movesDueDateForward() {
         InMemoryReminderRepository repository = new InMemoryReminderRepository();
-        ReminderService reminderService = new ReminderService(repository);
-        Instant base = Instant.now().plusSeconds(60);
-        Reminder reminder = new Reminder("xyz789", "meeting", base, true, Instant.now(), Instant.now());
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-04-18T10:00:00Z"), ZoneOffset.UTC);
+        ReminderService reminderService = new ReminderService(repository, fixedClock);
+        Instant base = Instant.parse("2026-04-18T10:01:00Z");
+        Reminder reminder = new Reminder("xyz789", "meeting", base, true, fixedClock.instant(), fixedClock.instant());
         repository.setReminders(List.of(reminder));
 
         Optional<Reminder> snoozed = reminderService.snoozeReminder("xyz789", Duration.ofMinutes(15));
 
         assertTrue(snoozed.isPresent());
         assertFalse(snoozed.get().isCompleted());
-        assertTrue(snoozed.get().getDueAt().isAfter(base));
+        assertEquals(Instant.parse("2026-04-18T10:16:00Z"), snoozed.get().getDueAt());
+    }
+
+    @Test
+    void snoozeReminder_usesCurrentTimeWhenReminderIsPastDue() {
+        InMemoryReminderRepository repository = new InMemoryReminderRepository();
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-04-18T10:00:00Z"), ZoneOffset.UTC);
+        ReminderService reminderService = new ReminderService(repository, fixedClock);
+
+        Reminder reminder = new Reminder("late-1", "late task", Instant.parse("2026-04-18T09:00:00Z"), false,
+                fixedClock.instant(), fixedClock.instant());
+        repository.setReminders(List.of(reminder));
+
+        Optional<Reminder> snoozed = reminderService.snoozeReminder("late-1", Duration.ofMinutes(15));
+
+        assertTrue(snoozed.isPresent());
+        assertEquals(Instant.parse("2026-04-18T10:15:00Z"), snoozed.get().getDueAt());
     }
 
     @Test
@@ -77,43 +96,5 @@ class ReminderServiceTest {
 
         assertTrue(reminderService.deleteReminder("id-1"));
         assertFalse(reminderService.deleteReminder(""));
-    }
-
-    private static final class InMemoryReminderRepository implements ReminderRepository {
-
-        private final List<Reminder> reminders = new ArrayList<>();
-        private final List<Reminder> savedReminders = new ArrayList<>();
-
-        void setReminders(List<Reminder> values) {
-            reminders.clear();
-            reminders.addAll(values);
-        }
-
-        List<Reminder> savedReminders() {
-            return savedReminders;
-        }
-
-        @Override
-        public List<Reminder> findAll() {
-            return new ArrayList<>(reminders);
-        }
-
-        @Override
-        public Optional<Reminder> findById(String reminderId) {
-            return reminders.stream().filter(reminder -> reminder.getId().equals(reminderId)).findFirst();
-        }
-
-        @Override
-        public Reminder save(Reminder reminder) {
-            savedReminders.add(reminder);
-            reminders.removeIf(existing -> existing.getId().equals(reminder.getId()));
-            reminders.add(reminder);
-            return reminder;
-        }
-
-        @Override
-        public boolean deleteById(String reminderId) {
-            return reminders.removeIf(existing -> existing.getId().equals(reminderId));
-        }
     }
 }

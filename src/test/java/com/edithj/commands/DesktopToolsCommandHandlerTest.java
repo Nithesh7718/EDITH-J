@@ -1,60 +1,66 @@
 package com.edithj.commands;
 
+import java.nio.file.Path;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import org.junit.jupiter.api.Test;
 
+import com.edithj.desktop.FakeClipboardService;
+import com.edithj.desktop.FakeDesktopFileService;
 import com.edithj.launcher.FakeLauncher;
-import com.edithj.notes.Note;
-import com.edithj.notes.NoteRepository;
+import com.edithj.notes.InMemoryNoteRepository;
 import com.edithj.notes.NoteService;
-import com.edithj.reminders.Reminder;
-import com.edithj.reminders.ReminderRepository;
+import com.edithj.reminders.InMemoryReminderRepository;
 import com.edithj.reminders.ReminderService;
 
 class DesktopToolsCommandHandlerTest {
 
+    private CommandHandler.CommandContext context(String input) {
+        return new CommandHandler.CommandContext(input, input, "typed");
+    }
+
     @Test
     void handle_withScreenshotReturnsFriendlyMessage() {
-        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false);
-        String response = handler.handle(new CommandHandler.CommandContext("screenshot", "screenshot", "typed"));
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
+        String response = handler.handle(context("screenshot"));
 
         assertTrue(response != null && !response.isBlank());
     }
 
     @Test
     void handle_withClipboardReturnsFriendlyMessage() {
-        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false);
-        String response = handler.handle(new CommandHandler.CommandContext("clipboard", "clipboard", "typed"));
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
+        String response = handler.handle(context("clipboard"));
 
         assertTrue(response != null && !response.isBlank());
     }
 
     @Test
     void handle_withoutPayloadReturnsFriendlyMessage() {
-        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false);
-        String response = handler.handle(new CommandHandler.CommandContext("desktop", "", "typed"));
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
+        String response = handler.handle(new CommandHandler.CommandContext("", "", "typed"));
 
         assertTrue(!response.isBlank());
     }
 
     @Test
     void intentType_returnsDesktopTools() {
-        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false);
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
 
         assertTrue(handler.intentType().toString().contains("DESKTOP"));
     }
 
     @Test
     void handle_withBlankPayloadReturnsFriendlyMessage() {
-        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false);
-        String response = handler.handle(new CommandHandler.CommandContext("desktop", "   ", "typed"));
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
+        String response = handler.handle(new CommandHandler.CommandContext("   ", "   ", "typed"));
 
         assertTrue(!response.isBlank());
     }
@@ -62,9 +68,10 @@ class DesktopToolsCommandHandlerTest {
     @Test
     void handle_workModeDisabled_doesNotLaunchAnyTarget() {
         FakeLauncher fakeLauncher = new FakeLauncher();
-        DesktopToolsCommandHandler handler = newHandler(fakeLauncher, false);
+        DesktopToolsCommandHandler handler = newHandler(fakeLauncher, false, new FakeClipboardService(),
+                new FakeDesktopFileService());
 
-        String response = handler.handle(new CommandHandler.CommandContext("start work mode", "start work mode", "typed"));
+        String response = handler.handle(context("start work mode"));
 
         assertEquals("Launcher demo commands are disabled in this configuration.", response);
         assertEquals(0, fakeLauncher.launchCount());
@@ -73,76 +80,123 @@ class DesktopToolsCommandHandlerTest {
     @Test
     void handle_workModeEnabled_launchesDemoTargetsWithFakeLauncher() {
         FakeLauncher fakeLauncher = new FakeLauncher();
-        DesktopToolsCommandHandler handler = newHandler(fakeLauncher, true);
+        DesktopToolsCommandHandler handler = newHandler(fakeLauncher, true, new FakeClipboardService(),
+                new FakeDesktopFileService());
 
-        String response = handler.handle(new CommandHandler.CommandContext("start work mode", "start work mode", "typed"));
+        String response = handler.handle(context("start work mode"));
 
         assertTrue(response.contains("Work mode started"));
         assertEquals(4, fakeLauncher.launchCount());
         assertEquals("notepad", fakeLauncher.lastOpenedApp());
     }
 
-    private DesktopToolsCommandHandler newHandler(FakeLauncher fakeLauncher, boolean smokeLaunchersEnabled) {
+    @Test
+    void handle_showClipboard_readsFromFakeClipboardOnly() {
+        FakeClipboardService clipboard = new FakeClipboardService();
+        clipboard.setText("sample clipboard text");
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, clipboard, new FakeDesktopFileService());
+
+        String response = handler.handle(context("show clipboard"));
+
+        assertTrue(response.contains("sample clipboard text"));
+    }
+
+    @Test
+    void handle_copyWhenClipboardUnavailable_returnsHelpfulMessage() {
+        FakeClipboardService clipboard = new FakeClipboardService();
+        clipboard.setWritable(false);
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, clipboard, new FakeDesktopFileService());
+
+        String response = handler.handle(context("copy hello"));
+
+        assertEquals("Clipboard is unavailable right now.", response);
+    }
+
+    @Test
+    void handle_saveClipboardAsNote_withEmptyClipboardReturnsMessage() {
+        FakeClipboardService clipboard = new FakeClipboardService();
+        clipboard.setText("");
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, clipboard, new FakeDesktopFileService());
+
+        String response = handler.handle(context("save clipboard as note"));
+
+        assertEquals("Clipboard is empty or unavailable.", response);
+    }
+
+    @Test
+    void handle_recentFiles_usesFakeFileService() {
+        FakeDesktopFileService fileService = new FakeDesktopFileService();
+        fileService.setRecentFiles(List.of(Path.of("C:/fake/Downloads/report.pdf"), Path.of("C:/fake/Downloads/notes.txt")));
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(), fileService);
+
+        String response = handler.handle(context("recent files"));
+
+        assertTrue(response.contains("report.pdf"));
+        assertTrue(response.contains("notes.txt"));
+    }
+
+    @Test
+    void handle_openFile_withNoMatchesReturnsHelpfulMessage() {
+        FakeDesktopFileService fileService = new FakeDesktopFileService();
+        fileService.setSearchableFiles(List.of(Path.of("C:/fake/Documents/design.docx")));
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(), fileService);
+
+        String response = handler.handle(context("open file budget"));
+
+        assertEquals("No files found for: budget", response);
+    }
+
+    @Test
+    void handle_addTaskWithoutTextReturnsGuidance() {
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
+
+        String response = handler.handle(context("add task"));
+
+        assertEquals("Use: add task <text>.", response);
+    }
+
+    @Test
+    void handle_openFileWhenDisabled_returnsFlagMessage() {
+        FakeDesktopFileService fileService = new FakeDesktopFileService();
+        fileService.setSearchableFiles(List.of(Path.of("C:/fake/Documents/budget.xlsx")));
+
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                fileService, false, true);
+
+        String response = handler.handle(context("open file budget"));
+
+        assertEquals("File open commands are disabled in this configuration.", response);
+    }
+
+    @Test
+    void handle_copyWhenDisabled_returnsFlagMessage() {
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService(), true, false);
+
+        String response = handler.handle(context("copy hello"));
+
+        assertEquals("Clipboard write commands are disabled in this configuration.", response);
+    }
+
+    private DesktopToolsCommandHandler newHandler(
+            FakeLauncher fakeLauncher,
+            boolean smokeLaunchersEnabled,
+            FakeClipboardService clipboard,
+            FakeDesktopFileService fileService) {
+        return newHandler(fakeLauncher, smokeLaunchersEnabled, clipboard, fileService, true, true);
+    }
+
+    private DesktopToolsCommandHandler newHandler(
+            FakeLauncher fakeLauncher,
+            boolean smokeLaunchersEnabled,
+            FakeClipboardService clipboard,
+            FakeDesktopFileService fileService,
+            boolean fileOpenEnabled,
+            boolean clipboardWriteEnabled) {
         NoteService noteService = new NoteService(new InMemoryNoteRepository());
         ReminderService reminderService = new ReminderService(new InMemoryReminderRepository());
-        return new DesktopToolsCommandHandler(fakeLauncher, noteService, reminderService, smokeLaunchersEnabled);
-    }
-
-    private static final class InMemoryNoteRepository implements NoteRepository {
-
-        private final List<Note> notes = new ArrayList<>();
-
-        @Override
-        public List<Note> findAll() {
-            return new ArrayList<>(notes);
-        }
-
-        @Override
-        public Optional<Note> findById(String noteId) {
-            return notes.stream().filter(note -> note.getId().equals(noteId)).findFirst();
-        }
-
-        @Override
-        public Note save(Note note) {
-            notes.removeIf(existing -> existing.getId().equals(note.getId()));
-            notes.add(note);
-            return note;
-        }
-
-        @Override
-        public boolean deleteById(String noteId) {
-            return notes.removeIf(existing -> existing.getId().equals(noteId));
-        }
-    }
-
-    private static final class InMemoryReminderRepository implements ReminderRepository {
-
-        private final List<Reminder> reminders = new ArrayList<>();
-
-        InMemoryReminderRepository() {
-            reminders.add(new Reminder("r-1", "test reminder", Instant.now().plusSeconds(600), false, Instant.now(), Instant.now()));
-        }
-
-        @Override
-        public List<Reminder> findAll() {
-            return new ArrayList<>(reminders);
-        }
-
-        @Override
-        public Optional<Reminder> findById(String reminderId) {
-            return reminders.stream().filter(reminder -> reminder.getId().equals(reminderId)).findFirst();
-        }
-
-        @Override
-        public Reminder save(Reminder reminder) {
-            reminders.removeIf(existing -> existing.getId().equals(reminder.getId()));
-            reminders.add(reminder);
-            return reminder;
-        }
-
-        @Override
-        public boolean deleteById(String reminderId) {
-            return reminders.removeIf(existing -> existing.getId().equals(reminderId));
-        }
+        return new DesktopToolsCommandHandler(fakeLauncher, clipboard, fileService, noteService, reminderService,
+                smokeLaunchersEnabled, fileOpenEnabled, clipboardWriteEnabled);
     }
 }

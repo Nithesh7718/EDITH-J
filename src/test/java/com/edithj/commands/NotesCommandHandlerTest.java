@@ -1,15 +1,13 @@
 package com.edithj.commands;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import com.edithj.notes.InMemoryNoteRepository;
 import com.edithj.notes.Note;
-import com.edithj.notes.NoteRepository;
 import com.edithj.notes.NoteService;
 
 class NotesCommandHandlerTest {
@@ -60,35 +58,23 @@ class NotesCommandHandlerTest {
         assertTrue(response.startsWith("Saved note"));
     }
 
-    private static final class InMemoryNoteRepository implements NoteRepository {
+    @Test
+    void handle_updateWithoutDelimiterReturnsGuidance() {
+        InMemoryNoteRepository noteRepository = new InMemoryNoteRepository();
+        NotesCommandHandler handler = new NotesCommandHandler(new NoteService(noteRepository));
 
-        private final List<Note> notes = new ArrayList<>();
+        String response = handler.handle(new CommandHandler.CommandContext("update", "update note id-2 updated content", "typed"));
 
-        void setNotes(List<Note> values) {
-            notes.clear();
-            notes.addAll(values);
-        }
+        assertTrue(response.contains("Use update note like"));
+    }
 
-        @Override
-        public List<Note> findAll() {
-            return new ArrayList<>(notes);
-        }
+    @Test
+    void handle_searchWithoutQueryReturnsGuidance() {
+        InMemoryNoteRepository noteRepository = new InMemoryNoteRepository();
+        NotesCommandHandler handler = new NotesCommandHandler(new NoteService(noteRepository));
 
-        @Override
-        public Optional<Note> findById(String noteId) {
-            return notes.stream().filter(note -> note.getId().equals(noteId)).findFirst();
-        }
+        String response = handler.handle(new CommandHandler.CommandContext("search", "search notes", "typed"));
 
-        @Override
-        public Note save(Note note) {
-            notes.removeIf(existing -> existing.getId().equals(note.getId()));
-            notes.add(note);
-            return note;
-        }
-
-        @Override
-        public boolean deleteById(String noteId) {
-            return notes.removeIf(existing -> existing.getId().equals(noteId));
-        }
+        assertTrue(response.contains("Please provide a search query"));
     }
 }

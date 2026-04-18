@@ -1,15 +1,9 @@
 package com.edithj.commands;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -19,16 +13,18 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import com.edithj.assistant.IntentType;
 import com.edithj.config.AppConfig;
+import com.edithj.desktop.ClipboardService;
+import com.edithj.desktop.DesktopFileService;
+import com.edithj.desktop.SystemClipboardService;
+import com.edithj.desktop.SystemDesktopFileService;
 import com.edithj.launcher.AppLauncherService;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
@@ -52,40 +48,100 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     private static volatile Instant focusEndsAt;
 
     private final AppLauncherService launcherService;
+    private final ClipboardService clipboardService;
+    private final DesktopFileService desktopFileService;
     private final NoteService noteService;
     private final ReminderService reminderService;
     private final boolean smokeLaunchersEnabled;
+    private final boolean fileOpenEnabled;
+    private final boolean clipboardWriteEnabled;
 
     private record TodoItem(int id, String text, boolean done) {
 
     }
 
     public DesktopToolsCommandHandler() {
+        AppConfig appConfig = AppConfig.load();
         this(new AppLauncherService(),
+                new SystemClipboardService(),
+                new SystemDesktopFileService(),
                 new NoteService(RepositoryFactory.createNoteRepository()),
                 new ReminderService(RepositoryFactory.createReminderRepository()),
-                AppConfig.load().isDevSmokeLaunchersEnabled());
+                appConfig.isDevSmokeLaunchersEnabled(),
+                appConfig.isDesktopFileOpenEnabled(),
+                appConfig.isDesktopClipboardWriteEnabled());
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService) {
+        AppConfig appConfig = AppConfig.load();
         this(launcherService,
+                new SystemClipboardService(),
+                new SystemDesktopFileService(),
                 new NoteService(RepositoryFactory.createNoteRepository()),
                 new ReminderService(RepositoryFactory.createReminderRepository()),
-                AppConfig.load().isDevSmokeLaunchersEnabled());
+                appConfig.isDevSmokeLaunchersEnabled(),
+                appConfig.isDesktopFileOpenEnabled(),
+                appConfig.isDesktopClipboardWriteEnabled());
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService, NoteService noteService, ReminderService reminderService) {
-        this(launcherService, noteService, reminderService, AppConfig.load().isDevSmokeLaunchersEnabled());
+        AppConfig appConfig = AppConfig.load();
+        this(launcherService,
+                new SystemClipboardService(),
+                new SystemDesktopFileService(),
+                noteService,
+                reminderService,
+                appConfig.isDevSmokeLaunchersEnabled(),
+                appConfig.isDesktopFileOpenEnabled(),
+                appConfig.isDesktopClipboardWriteEnabled());
+    }
+
+    public DesktopToolsCommandHandler(AppLauncherService launcherService,
+            ClipboardService clipboardService,
+            DesktopFileService desktopFileService,
+            NoteService noteService,
+            ReminderService reminderService,
+            boolean smokeLaunchersEnabled) {
+        this(launcherService,
+                clipboardService,
+                desktopFileService,
+                noteService,
+                reminderService,
+                smokeLaunchersEnabled,
+                true,
+                true);
+    }
+
+    public DesktopToolsCommandHandler(AppLauncherService launcherService,
+            ClipboardService clipboardService,
+            DesktopFileService desktopFileService,
+            NoteService noteService,
+            ReminderService reminderService,
+            boolean smokeLaunchersEnabled,
+            boolean fileOpenEnabled,
+            boolean clipboardWriteEnabled) {
+        this.launcherService = launcherService;
+        this.clipboardService = clipboardService;
+        this.desktopFileService = desktopFileService;
+        this.noteService = noteService;
+        this.reminderService = reminderService;
+        this.smokeLaunchersEnabled = smokeLaunchersEnabled;
+        this.fileOpenEnabled = fileOpenEnabled;
+        this.clipboardWriteEnabled = clipboardWriteEnabled;
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService,
             NoteService noteService,
             ReminderService reminderService,
             boolean smokeLaunchersEnabled) {
-        this.launcherService = launcherService;
-        this.noteService = noteService;
-        this.reminderService = reminderService;
-        this.smokeLaunchersEnabled = smokeLaunchersEnabled;
+        this(launcherService,
+                new SystemClipboardService(),
+                new SystemDesktopFileService(),
+                noteService,
+                reminderService,
+                smokeLaunchersEnabled,
+                true,
+                true);
     }
 
     @Override
@@ -256,8 +312,12 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             - Tasks: add task submit report, list tasks, done task 1
             - Focus: start focus 25, focus status, block site youtube.com
                 - Dev demo: start work mode (only when dev smoke launchers are enabled)
+                - File open actions: %s
+                - Clipboard write actions: %s
             - Safety: confirm open, action log
-            """;
+            """.formatted(
+                fileOpenEnabled ? "enabled" : "disabled",
+                clipboardWriteEnabled ? "enabled" : "disabled");
     }
 
     private String dailyBriefing() {
@@ -292,11 +352,16 @@ public class DesktopToolsCommandHandler implements CommandHandler {
         }
 
         if (lower.startsWith("copy ")) {
+            if (!clipboardWriteEnabled) {
+                return "Clipboard write commands are disabled in this configuration.";
+            }
             String text = input.substring(5).trim();
             if (text.isBlank()) {
                 return "Nothing to copy.";
             }
-            writeClipboard(text);
+            if (!writeClipboard(text)) {
+                return "Clipboard is unavailable right now.";
+            }
             logAction("Copied text to clipboard");
             return "Copied to clipboard.";
         }
@@ -332,6 +397,10 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     }
 
     private String draftEmail(String input) {
+        if (!clipboardWriteEnabled) {
+            return "Draft-to-clipboard is disabled in this configuration.";
+        }
+
         String topic = input.replaceFirst("(?i)^draft\\s+email\\s+", "")
                 .replaceFirst("(?i)^write\\s+email\\s+", "")
                 .replaceFirst("(?i)^compose\\s+email\\s+", "")
@@ -347,39 +416,34 @@ public class DesktopToolsCommandHandler implements CommandHandler {
                 + "Thanks,\n"
                 + "[Your Name]";
 
-        writeClipboard(body);
+        if (!writeClipboard(body)) {
+            return "I prepared the draft, but clipboard is unavailable right now.";
+        }
         logAction("Drafted email for " + topic);
         return "Email draft copied to clipboard:\n\n" + body;
     }
 
     private String handleFiles(String input, String lower) {
         if (lower.startsWith("open downloads")) {
-            Path downloads = Path.of(System.getProperty("user.home"), "Downloads");
+            if (!fileOpenEnabled) {
+                return "File open commands are disabled in this configuration.";
+            }
+            Path downloads = desktopFileService.downloadsPath();
             logAction("Opened Downloads");
             return launcherService.launchApp(downloads.toString());
         }
 
         if (lower.startsWith("recent files")) {
-            Path downloads = Path.of(System.getProperty("user.home"), "Downloads");
-            if (!Files.isDirectory(downloads)) {
-                return "Downloads folder not found.";
+            List<Path> files = desktopFileService.listRecentFiles(5);
+            if (files.isEmpty()) {
+                return "No recent files found in Downloads.";
             }
-            try (Stream<Path> stream = Files.list(downloads)) {
-                List<Path> files = stream.filter(Files::isRegularFile)
-                        .sorted(Comparator.comparing(path -> path.toFile().lastModified(), Comparator.reverseOrder()))
-                        .limit(5)
-                        .toList();
-                if (files.isEmpty()) {
-                    return "No recent files found in Downloads.";
-                }
-                StringBuilder sb = new StringBuilder("Recent files:\n");
-                for (Path path : files) {
-                    sb.append("- ").append(path.getFileName()).append("\n");
-                }
-                return sb.toString().trim();
-            } catch (IOException exception) {
-                return "Could not read recent files right now.";
+
+            StringBuilder sb = new StringBuilder("Recent files:\n");
+            for (Path path : files) {
+                sb.append("- ").append(path.getFileName()).append("\n");
             }
+            return sb.toString().trim();
         }
 
         String query = input.replaceFirst("(?i)^find\\s+file\\s+", "")
@@ -389,12 +453,15 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             return "Use: find file <name> or open file <name>.";
         }
 
-        List<Path> matches = findFiles(query, 5);
+        List<Path> matches = desktopFileService.findFiles(query, 5);
         if (matches.isEmpty()) {
             return "No files found for: " + query;
         }
 
         if (lower.startsWith("open file")) {
+            if (!fileOpenEnabled) {
+                return "File open commands are disabled in this configuration.";
+            }
             Path top = matches.get(0);
             logAction("Opened file " + top.getFileName());
             return launcherService.launchApp(top.toString());
@@ -407,37 +474,11 @@ public class DesktopToolsCommandHandler implements CommandHandler {
         return sb.toString().trim();
     }
 
-    private List<Path> findFiles(String query, int limit) {
-        String q = query.toLowerCase(Locale.ROOT);
-        List<Path> roots = List.of(
-                Path.of(System.getProperty("user.home"), "Downloads"),
-                Path.of(System.getProperty("user.home"), "Documents"),
-                Path.of(System.getProperty("user.home"), "Desktop"));
-
-        List<Path> results = new ArrayList<>();
-        for (Path root : roots) {
-            if (!Files.isDirectory(root)) {
-                continue;
-            }
-            try (Stream<Path> stream = Files.walk(root, 4)) {
-                stream.filter(Files::isRegularFile)
-                        .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).contains(q))
-                        .limit(limit - results.size())
-                        .forEach(results::add);
-            } catch (IOException ignored) {
-            }
-            if (results.size() >= limit) {
-                break;
-            }
-        }
-        return results;
-    }
-
     private String handleTasks(String input, String lower) {
         synchronized (TODO_ITEMS) {
             if (lower.startsWith("add task") || lower.startsWith("todo add")) {
-                String text = input.replaceFirst("(?i)^add\\s+task\\s+", "")
-                        .replaceFirst("(?i)^todo\\s+add\\s+", "")
+                String text = input.replaceFirst("(?i)^add\\s+task\\b\\s*", "")
+                        .replaceFirst("(?i)^todo\\s+add\\b\\s*", "")
                         .trim();
                 if (text.isBlank()) {
                     return "Use: add task <text>.";
@@ -600,20 +641,11 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     }
 
     private String readClipboard() {
-        try {
-            Object value = Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
-            return value == null ? "" : value.toString();
-        } catch (UnsupportedFlavorException | IOException | IllegalStateException exception) {
-            return "";
-        }
+        return clipboardService.readText();
     }
 
-    private void writeClipboard(String text) {
-        try {
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
-        } catch (IllegalStateException exception) {
-            // Clipboard temporarily unavailable.
-        }
+    private boolean writeClipboard(String text) {
+        return clipboardService.writeText(text);
     }
 
     private int extractNumber(String text) {

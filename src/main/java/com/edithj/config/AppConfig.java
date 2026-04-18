@@ -61,6 +61,16 @@ public final class AppConfig {
         return Boolean.parseBoolean(raw.trim());
     }
 
+    public boolean isDesktopFileOpenEnabled() {
+        String raw = properties.getProperty("edith.desktop.fileOpenEnabled", "true");
+        return Boolean.parseBoolean(raw.trim());
+    }
+
+    public boolean isDesktopClipboardWriteEnabled() {
+        String raw = properties.getProperty("edith.desktop.clipboardWriteEnabled", "true");
+        return Boolean.parseBoolean(raw.trim());
+    }
+
     private static Properties loadProperties() {
         Properties properties = new Properties();
 
