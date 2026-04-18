@@ -4,8 +4,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import com.edithj.assistant.AssistantResponse;
-import com.edithj.assistant.AssistantService;
 import com.edithj.ui.model.ChatMessageViewModel;
+import com.edithj.ui.session.UiAssistantGateway;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -29,23 +29,24 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-
 public class ChatController {
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
-    @FXML private ListView<ChatMessageViewModel> messagesList;
-    @FXML private TextArea messageInput;
+    @FXML
+    private ListView<ChatMessageViewModel> messagesList;
+    @FXML
+    private TextArea messageInput;
 
     private final ObservableList<ChatMessageViewModel> messages = FXCollections.observableArrayList();
-    private final AssistantService assistantService;
+    private final UiAssistantGateway assistantGateway;
 
     public ChatController() {
-        this(new AssistantService());
+        this(UiAssistantGateway.instance());
     }
 
-    public ChatController(AssistantService assistantService) {
-        this.assistantService = assistantService;
+    public ChatController(UiAssistantGateway assistantGateway) {
+        this.assistantGateway = assistantGateway;
     }
 
     @FXML
@@ -62,26 +63,65 @@ public class ChatController {
         });
 
         messages.add(new ChatMessageViewModel(
-            "SYSTEM_CORE",
-            "EDITH Initialization Complete. All systems nominal. How may I assist?",
-            currentTime()
+                "SYSTEM_CORE",
+                "EDITH Initialization Complete. All systems nominal. How may I assist?",
+                currentTime()
         ));
     }
 
     @FXML
     private void sendMessage() {
         String text = messageInput.getText();
-        if (text == null || text.isBlank()) return;
+        if (text == null || text.isBlank()) {
+            return;
+        }
 
-        messages.add(new ChatMessageViewModel("user", text.trim(), currentTime()));
+        String normalized = text.trim();
+        messages.add(new ChatMessageViewModel("user", normalized, currentTime()));
         messageInput.clear();
 
-        // Scroll to bottom
         messagesList.scrollTo(messages.size() - 1);
 
-        AssistantResponse response = assistantService.handleTypedInput(text.trim());
+        assistantGateway.executeAsync(normalized, this::appendAssistantMessage, throwable -> {
+            messages.add(new ChatMessageViewModel("assistant", "I hit an error while handling that request.", currentTime()));
+            messagesList.scrollTo(messages.size() - 1);
+        });
+    }
+
+    @FXML
+    private void insertSetReminderTemplate() {
+        insertTemplate("remind me to  at ");
+    }
+
+    @FXML
+    private void insertAddNoteTemplate() {
+        insertTemplate("note ");
+    }
+
+    @FXML
+    private void insertWorkModeTemplate() {
+        insertTemplate("start work mode");
+    }
+
+    @FXML
+    private void insertToolsTemplate() {
+        insertTemplate("open desktop tools");
+    }
+
+    @FXML
+    private void insertHelpTemplate() {
+        insertTemplate("what can you do?");
+    }
+
+    private void appendAssistantMessage(AssistantResponse response) {
         messages.add(new ChatMessageViewModel("assistant", response.answer(), currentTime()));
         messagesList.scrollTo(messages.size() - 1);
+    }
+
+    private void insertTemplate(String template) {
+        messageInput.setText(template);
+        messageInput.requestFocus();
+        messageInput.positionCaret(template.length());
     }
 
     private String currentTime() {
@@ -106,10 +146,10 @@ public class ChatController {
 
             // -- Sender row (role + timestamp) -----------
             String senderTag = isSystem ? "⚙  " + item.getRole().toUpperCase()
-                                        : isUser ? "▸  YOU" : "▸  EDITH";
+                    : isUser ? "▸  YOU" : "▸  EDITH";
             Label senderLabel = new Label(senderTag + "   " + item.getTimestamp());
             senderLabel.getStyleClass().add(isSystem ? "msg-sender-system"
-                                                      : isUser ? "msg-sender-user" : "msg-sender-ai");
+                    : isUser ? "msg-sender-user" : "msg-sender-ai");
 
             // -- Message content -------------------------
             final String fullText = item.getMessage();
@@ -117,12 +157,12 @@ public class ChatController {
             messageLabel.setWrapText(true);
             messageLabel.setMaxWidth(560);
             messageLabel.getStyleClass().add(isSystem ? "msg-text-system"
-                                                       : isUser ? "msg-text-user" : "msg-text-ai");
+                    : isUser ? "msg-text-user" : "msg-text-ai");
 
             // -- Bubble container ------------------------
             VBox bubble = new VBox(5, senderLabel, messageLabel);
             bubble.getStyleClass().add(isSystem ? "msg-system-bubble"
-                                                 : isUser ? "msg-user-bubble" : "msg-ai-bubble");
+                    : isUser ? "msg-user-bubble" : "msg-ai-bubble");
             bubble.setMaxWidth(580);
 
             // -- Outer row layout for alignment ----------
@@ -157,7 +197,10 @@ public class ChatController {
             if (!isUser && !isSystem) {
                 // Typewriter effect for EDITH responses
                 Transition typewriter = new Transition() {
-                    { setCycleDuration(Duration.millis(Math.min(1200, fullText.length() * 18L))); }
+                    {
+                        setCycleDuration(Duration.millis(Math.min(1200, fullText.length() * 18L)));
+                    }
+
                     @Override
                     protected void interpolate(double frac) {
                         int len = (int) Math.round(fullText.length() * frac);

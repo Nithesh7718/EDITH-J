@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21"
+      fx:controller="com.edithj.ui.controller.SettingsViewController"
+      spacing="12.0" styleClass="settings-panel">
+    <padding>
+        <Insets top="18.0" right="18.0" bottom="18.0" left="18.0"/>
+    </padding>
+    <Label text="Settings" styleClass="panel-title"/>
+    <Label text="This panel exposes basic runtime toggles while core behavior stays in the assistant pipeline." styleClass="panel-hint" wrapText="true"/>
+
+    <VBox spacing="8.0" styleClass="content-card">
+        <Label text="Model" styleClass="card-title"/>
+        <Label fx:id="apiKeyStatusLabel" text="Checking Groq API key..."/>
+    </VBox>
+
+    <VBox spacing="8.0" styleClass="content-card">
+        <Label text="Theme" styleClass="card-title"/>
+        <Label fx:id="themeStatusLabel" text="Current theme: Dark"/>
+        <ToggleButton fx:id="themeToggleButton" text="Switch to Light Mode" onAction="#onToggleTheme" styleClass="mini-action-button"/>
+    </VBox>
+</VBox>
