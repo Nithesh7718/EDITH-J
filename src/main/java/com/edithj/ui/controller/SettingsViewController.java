@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 
+@SuppressWarnings("unused")
 public class SettingsViewController {
 
     @FXML
@@ -19,6 +20,7 @@ public class SettingsViewController {
 
     private final ThemeService themeService = ThemeService.instance();
 
+    @SuppressWarnings("unused")
     @FXML
     private void initialize() {
         boolean hasApiKey = AppConfig.load().modelConfig().apiKey() != null
@@ -29,6 +31,7 @@ public class SettingsViewController {
         themeService.themeProperty().addListener((obs, oldValue, newValue) -> updateThemeLabels(newValue));
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void onToggleTheme() {
         if (themeToggleButton.getScene() == null) {

@@ -22,6 +22,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
+@SuppressWarnings("unused")
 public class MainShellController {
 
     @FXML
