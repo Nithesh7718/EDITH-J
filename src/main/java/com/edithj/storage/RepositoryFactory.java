@@ -7,6 +7,9 @@ import com.edithj.config.AppConfig;
 import com.edithj.notes.FileNoteRepository;
 import com.edithj.notes.NoteRepository;
 import com.edithj.notes.SQLiteNoteRepository;
+import com.edithj.memory.InMemoryMemoryRepository;
+import com.edithj.memory.MemoryRepository;
+import com.edithj.memory.SQLiteMemoryRepository;
 import com.edithj.reminders.FileReminderRepository;
 import com.edithj.reminders.ReminderRepository;
 import com.edithj.reminders.SQLiteReminderRepository;
@@ -46,6 +49,16 @@ public final class RepositoryFactory {
         } catch (RuntimeException exception) {
             logger.warn("SQLite reminder repository unavailable, falling back to JSON storage", exception);
             return new FileReminderRepository();
+        }
+    }
+
+    public static MemoryRepository createMemoryRepository() {
+        try {
+            DATABASE_MANAGER.initialize();
+            return new SQLiteMemoryRepository(DATABASE_MANAGER);
+        } catch (RuntimeException exception) {
+            logger.warn("SQLite memory repository unavailable, falling back to in-memory storage", exception);
+            return new InMemoryMemoryRepository();
         }
     }
 }

@@ -11,7 +11,7 @@ import java.util.Objects;
 
 public class SceneManager {
 
-    public static final String MAIN_VIEW = "/fxml/main-view.fxml";
+    public static final String MAIN_VIEW = "/fxml/main-shell.fxml";
 
     public void showMainWindow(Stage stage) {
         Scene scene = new Scene(loadView(MAIN_VIEW), 1200, 800);

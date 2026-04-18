@@ -6,28 +6,49 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.edithj.ai.PromptTemplateService;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
+import com.edithj.memory.MemoryEntry;
+import com.edithj.memory.MemoryService;
 
 public class FallbackChatService {
+
+    private static final Logger logger = LoggerFactory.getLogger(FallbackChatService.class);
 
     private record ChatTurn(String role, String text) {
 
     }
 
     private static final String DEFAULT_REPLY = "I could not generate a response right now.";
+    private static final int PROMPT_MEMORY_LIMIT = 6;
 
     private final LlmClient llmClient;
-    private final String systemPrompt;
+    private final PromptTemplateService promptTemplateService;
+    private final MemoryService memoryService;
     private final Deque<ChatTurn> memoryWindow;
     private final int maxTurns;
 
     public FallbackChatService(LlmClient llmClient, PromptBuilder promptBuilder, int maxTurns) {
+        this(
+                llmClient,
+                new PromptTemplateService(com.edithj.config.AppConfig.load(), promptBuilder),
+                createMemoryServiceSafely(),
+                maxTurns);
+    }
+
+    FallbackChatService(LlmClient llmClient,
+            PromptTemplateService promptTemplateService,
+            MemoryService memoryService,
+            int maxTurns) {
         this.llmClient = Objects.requireNonNull(llmClient, "llmClient");
-        Objects.requireNonNull(promptBuilder, "promptBuilder");
+        this.promptTemplateService = Objects.requireNonNull(promptTemplateService, "promptTemplateService");
+        this.memoryService = memoryService;
         this.maxTurns = Math.max(2, maxTurns);
         this.memoryWindow = new ArrayDeque<>(this.maxTurns);
-        this.systemPrompt = promptBuilder.loadSystemPrompt();
     }
 
     public synchronized void recordUserTurn(String text) {
@@ -40,6 +61,7 @@ public class FallbackChatService {
 
     String buildPromptWithMemory(String channel) {
         StringBuilder prompt = new StringBuilder();
+        String systemPrompt = resolveSystemPrompt();
 
         if (!systemPrompt.isBlank()) {
             prompt.append(systemPrompt.trim()).append("\n\n");
@@ -85,5 +107,38 @@ public class FallbackChatService {
 
     private String normalizeText(String text) {
         return text == null ? "" : text.trim();
+    }
+
+    private String resolveSystemPrompt() {
+        String basePrompt = safePrompt(promptTemplateService.systemPrompt());
+        if (memoryService == null) {
+            return basePrompt;
+        }
+
+        try {
+            List<MemoryEntry> entries = memoryService.recent(PROMPT_MEMORY_LIMIT);
+            if (entries == null || entries.isEmpty()) {
+                return basePrompt;
+            }
+
+            String enrichedPrompt = safePrompt(promptTemplateService.systemPromptWithMemory(entries));
+            return enrichedPrompt.isBlank() ? basePrompt : enrichedPrompt;
+        } catch (RuntimeException exception) {
+            logger.debug("Unable to enrich system prompt with memory; using base prompt", exception);
+            return basePrompt;
+        }
+    }
+
+    private String safePrompt(String prompt) {
+        return prompt == null ? "" : prompt;
+    }
+
+    private static MemoryService createMemoryServiceSafely() {
+        try {
+            return new MemoryService();
+        } catch (RuntimeException exception) {
+            logger.debug("MemoryService unavailable for fallback prompt enrichment", exception);
+            return null;
+        }
     }
 }

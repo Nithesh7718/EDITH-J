@@ -59,6 +59,22 @@ public class DatabaseManager {
                         updated_at TEXT NOT NULL
                     )
                     """);
+
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS memory_entries (
+                        id TEXT PRIMARY KEY,
+                        category TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    )
+                    """);
+
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS app_meta (
+                        meta_key TEXT PRIMARY KEY,
+                        meta_value TEXT NOT NULL
+                    )
+                    """);
             logger.debug("SQLite schema initialized at {}", databasePath);
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to initialize SQLite schema", exception);

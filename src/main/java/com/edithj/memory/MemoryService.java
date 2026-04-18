@@ -1,37 +1,34 @@
 package com.edithj.memory;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import com.edithj.storage.RepositoryFactory;
 
 public class MemoryService {
 
-    private final List<MemoryEntry> entries = new ArrayList<>();
+    private final MemoryRepository memoryRepository;
 
-    public synchronized MemoryEntry add(String category, String content) {
-        MemoryEntry entry = new MemoryEntry(category, content);
-        entries.add(entry);
-        return entry;
+    public MemoryService() {
+        this(RepositoryFactory.createMemoryRepository());
     }
 
-    public synchronized List<MemoryEntry> recent(int limit) {
-        int size = entries.size();
-        if (size == 0 || limit <= 0) {
+    public MemoryService(MemoryRepository memoryRepository) {
+        this.memoryRepository = memoryRepository;
+    }
+
+    public MemoryEntry add(String category, String content) {
+        MemoryEntry entry = new MemoryEntry(category, content);
+        return memoryRepository.save(entry);
+    }
+
+    public List<MemoryEntry> recent(int limit) {
+        if (limit <= 0) {
             return List.of();
         }
-
-        int fromIndex = Math.max(0, size - limit);
-        return new ArrayList<>(entries.subList(fromIndex, size));
+        return memoryRepository.findRecent(limit);
     }
 
-    public synchronized List<MemoryEntry> search(String query) {
-        if (query == null || query.isBlank()) {
-            return recent(20);
-        }
-
-        String normalizedQuery = query.trim().toLowerCase();
-        return entries.stream()
-                .filter(entry -> entry.content().toLowerCase().contains(normalizedQuery)
-                || entry.category().toLowerCase().contains(normalizedQuery))
-                .toList();
+    public List<MemoryEntry> search(String query) {
+        return memoryRepository.search(query, 20);
     }
 }
