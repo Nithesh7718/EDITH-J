@@ -1,6 +1,10 @@
 package com.edithj.ui.controller;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 import com.edithj.ui.navigation.SceneManager;
+
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -16,9 +20,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-
+@SuppressWarnings("unused")
 public class MainController {
 
     @FXML private StackPane contentHost;

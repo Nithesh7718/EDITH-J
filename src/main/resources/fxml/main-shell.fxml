@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -19,26 +20,30 @@
             </padding>
             <VBox spacing="2.0" alignment="CENTER_LEFT">
                 <HBox spacing="6.0" alignment="CENTER_LEFT">
-                    <Label text="[ EDITH" styleClass="app-title"/>
-                    <Label text="-J ]" styleClass="app-title-accent"/>
+                    <Label text="EDITH" styleClass="app-title"/>
+                    <Label text="-J" styleClass="app-title-accent"/>
                 </HBox>
-                <Label text="▸  EARLY DEFENSE INTELLIGENCE TARGETING HOST" styleClass="app-subtitle"/>
+                <Label text="Your desktop assistant" styleClass="app-subtitle"/>
             </VBox>
             <Region HBox.hgrow="ALWAYS"/>
-            <VBox alignment="CENTER_RIGHT" spacing="4.0">
-                <Label fx:id="statusBadgeLabel" text="● CHECKING AI STATUS" styleClass="status-badge"/>
-            </VBox>
+            <Label fx:id="statusBadgeLabel" text="Ready" styleClass="status-badge"/>
+            <Button text="Settings" onAction="#openSettingsDialog" styleClass="header-button"/>
+            <Button text="What can you do?" onAction="#openHelpDialog" styleClass="header-button-accent"/>
         </HBox>
     </top>
     <left>
-        <VBox spacing="8.0" prefWidth="200.0" styleClass="sidebar" BorderPane.alignment="TOP_CENTER">
+        <VBox spacing="10.0" prefWidth="232.0" styleClass="sidebar" BorderPane.alignment="TOP_CENTER">
             <padding>
                 <Insets top="24.0" right="12.0" bottom="24.0" left="12.0"/>
             </padding>
             <Label text="NAVIGATION" styleClass="sidebar-label"/>
-            <Button text="⬡  CHAT" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
-            <Button text="▤  NOTES" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes"/>
-            <Button text="⏱  REMINDERS" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders"/>
+            <Button text="Home (Chat)" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
+            <Button text="Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnNotes"/>
+            <Button text="Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnReminders"/>
+            <Button text="Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
+            <Button text="Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
+            <Separator styleClass="sidebar-divider"/>
+            <Label text="Voice + typed commands share one assistant pipeline." styleClass="sidebar-tip" wrapText="true"/>
             <Region VBox.vgrow="ALWAYS"/>
             <Label text="BUILD v0.1.0" styleClass="sidebar-label"/>
         </VBox>
@@ -46,15 +51,4 @@
     <center>
         <StackPane fx:id="contentHost" styleClass="content-host" BorderPane.alignment="CENTER"/>
     </center>
-    <bottom>
-        <HBox spacing="12.0" styleClass="footer-bar" BorderPane.alignment="CENTER_LEFT" alignment="CENTER_LEFT">
-            <padding>
-                <Insets top="8.0" right="24.0" bottom="8.0" left="24.0"/>
-            </padding>
-            <Label text="▸" styleClass="footer-status"/>
-            <Label fx:id="sectionTitle" text="CHAT" styleClass="footer-status"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="clockLabel" text="--:--:--" styleClass="footer-meta"/>
-        </HBox>
-    </bottom>
 </BorderPane>

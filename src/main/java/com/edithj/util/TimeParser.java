@@ -1,9 +1,9 @@
 package com.edithj.util;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,24 +31,28 @@ public final class TimeParser {
      * @return parsed Instant, or null if unable to parse
      */
     public static Instant parseTimeHint(String hint) {
+        return parseTimeHint(hint, Clock.systemDefaultZone());
+    }
+
+    public static Instant parseTimeHint(String hint, Clock clock) {
         if (hint == null || hint.isBlank()) {
             return null;
         }
 
         hint = hint.toLowerCase().trim();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
 
         // Handle "in X minutes/hours" pattern
         Matcher minutesMatcher = MINUTES_PATTERN.matcher(hint);
         if (minutesMatcher.find()) {
             int minutes = Integer.parseInt(minutesMatcher.group(1));
-            return now.plusMinutes(minutes).atZone(ZoneId.systemDefault()).toInstant();
+            return now.plusMinutes(minutes).atZone(clock.getZone()).toInstant();
         }
 
         Matcher hoursMatcher = HOURS_PATTERN.matcher(hint);
         if (hoursMatcher.find()) {
             int hours = Integer.parseInt(hoursMatcher.group(1));
-            return now.plusHours(hours).atZone(ZoneId.systemDefault()).toInstant();
+            return now.plusHours(hours).atZone(clock.getZone()).toInstant();
         }
 
         // Determine the day: today, tomorrow, or within the string
@@ -85,7 +89,7 @@ public final class TimeParser {
                 targetTime = targetTime.plusDays(1);
             }
 
-            return targetTime.atZone(ZoneId.systemDefault()).toInstant();
+            return targetTime.atZone(clock.getZone()).toInstant();
         }
 
         return null;

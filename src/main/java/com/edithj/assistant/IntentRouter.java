@@ -64,9 +64,18 @@ public class IntentRouter {
         if (containsAnyIgnoreCase(input, "note", "notes", "notepad", "write down", "save this")) {
             return IntentType.NOTES;
         }
+        if (isCalendarCommand(input)) {
+            return IntentType.CALENDAR;
+        }
         if (containsAnyIgnoreCase(input, "remind", "reminder", "alarm", "schedule", "due", "snooze")
                 || startsWithAnyIgnoreCase(input, "timer", "set timer")) {
             return IntentType.REMINDERS;
+        }
+        if (isEmailCommand(input)) {
+            return IntentType.EMAIL;
+        }
+        if (containsAnyIgnoreCase(input, "whatsapp")) {
+            return IntentType.WHATSAPP;
         }
         if (isExplicitDesktopCommand(input)) {
             return IntentType.DESKTOP_TOOLS;
@@ -85,6 +94,14 @@ public class IntentRouter {
         return IntentType.FALLBACK_CHAT;
     }
 
+    private boolean isCalendarCommand(String input) {
+        return startsWithAnyIgnoreCase(input,
+                "add a meeting", "add meeting", "create an event", "create event", "schedule a meeting",
+                "schedule an event", "schedule a reminder", "calendar", "add event", "create calendar event")
+                || containsAnyIgnoreCase(input, "meeting", "event", "calendar", "appointment")
+                && containsAnyIgnoreCase(input, "today", "tomorrow", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "at ", "called", "named", "for ", "to ");
+    }
+
     private boolean isExplicitDesktopCommand(String input) {
         return startsWithAnyIgnoreCase(input,
                 "help", "capabilities", "what can you do", "system info", "device info", "memory status",
@@ -99,6 +116,12 @@ public class IntentRouter {
         return switch (intentType) {
             case APP_LAUNCH ->
                 stripLeadingKeywordIgnoreCase(input, "open", "launch", "start", "run", "execute");
+            case EMAIL ->
+                stripLeadingKeywordIgnoreCase(input, "email", "send an email", "send email", "draft an email", "draft email", "compose an email", "compose email", "write an email", "write email", "mail to");
+            case CALENDAR ->
+                stripLeadingKeywordIgnoreCase(input, "add a meeting", "add meeting", "create an event", "create event", "schedule a meeting", "schedule an event", "schedule a reminder", "calendar", "add event", "create calendar event");
+            case WHATSAPP ->
+                input;
             case NOTES ->
                 stripLeadingKeywordIgnoreCase(input, "note", "notes", "notepad", "write down", "save this");
             case REMINDERS ->
@@ -135,6 +158,13 @@ public class IntentRouter {
             }
         }
         return false;
+    }
+
+    private boolean isEmailCommand(String input) {
+        String lower = input.toLowerCase(Locale.ROOT).trim();
+        return lower.matches(".*\\b(email|mail)\\b.*")
+                || startsWithAnyIgnoreCase(lower, "send an email", "send email", "draft an email", "draft email", "compose an email", "compose email", "write an email", "write email", "email", "mail to")
+                || lower.contains(" with subject ") && lower.contains(" email ");
     }
 
     private boolean startsWithAnyIgnoreCase(String input, String... prefixes) {

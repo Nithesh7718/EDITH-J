@@ -1,0 +1,130 @@
+* {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.app-shell {
+    -fx-background-color: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+}
+
+.app-header {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-color: transparent transparent #cbd5e1 transparent;
+}
+
+.app-title {
+    -fx-text-fill: #0f172a;
+}
+
+.app-title-accent {
+    -fx-text-fill: #0f766e;
+}
+
+.app-subtitle,
+.panel-hint,
+.sidebar-label,
+.sidebar-tip {
+    -fx-text-fill: #475569;
+}
+
+.status-badge {
+    -fx-background-color: rgba(16, 185, 129, 0.12);
+    -fx-border-color: rgba(16, 185, 129, 0.55);
+    -fx-text-fill: #065f46;
+}
+
+.sidebar {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-color: transparent #cbd5e1 transparent transparent;
+}
+
+.content-card,
+.chat-history {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-control-inner-background: rgba(255, 255, 255, 0.9);
+    -fx-border-color: rgba(148, 163, 184, 0.5);
+}
+
+.panel-title,
+.card-title,
+.task-item-label,
+.msg-text-user,
+.msg-text-ai,
+.msg-text-system {
+    -fx-text-fill: #0f172a;
+}
+
+.msg-user-bubble {
+    -fx-background-color: rgba(14, 116, 144, 0.1);
+    -fx-border-color: rgba(14, 116, 144, 0.35);
+}
+
+.msg-ai-bubble {
+    -fx-background-color: rgba(226, 232, 240, 0.8);
+    -fx-border-color: rgba(51, 65, 85, 0.25);
+}
+
+.msg-system-bubble {
+    -fx-background-color: rgba(251, 191, 36, 0.14);
+    -fx-border-color: rgba(217, 119, 6, 0.35);
+}
+
+.chat-input,
+.tools-output {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-control-inner-background: rgba(255, 255, 255, 0.95);
+    -fx-text-fill: #0f172a;
+    -fx-prompt-text-fill: rgba(71, 85, 105, 0.8);
+}
+
+.nav-button,
+.nav-button-muted,
+.nav-button-active,
+.quick-action-button,
+.mini-action-button,
+.header-button,
+.header-button-accent,
+.send-button {
+    -fx-text-fill: #0f172a;
+}
+
+.send-button,
+.quick-action-button,
+.header-button,
+.header-button-accent,
+.nav-button,
+.nav-button-active {
+    -fx-background-color: rgba(14, 165, 233, 0.2);
+    -fx-border-color: rgba(14, 116, 144, 0.4);
+}
+
+.nav-button-muted,
+.mini-action-button {
+    -fx-background-color: rgba(226, 232, 240, 0.8);
+    -fx-border-color: rgba(100, 116, 139, 0.45);
+}
+
+.mic-button {
+    -fx-background-color: rgba(14, 165, 233, 0.2);
+    -fx-border-color: rgba(14, 116, 144, 0.4);
+    -fx-text-fill: #0f172a;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 8 14;
+    -fx-font-weight: 700;
+}
+
+.mic-button:hover {
+    -fx-background-color: rgba(14, 165, 233, 0.3);
+}
+
+.mic-button-listening {
+    -fx-background-color: rgba(16, 185, 129, 0.32);
+    -fx-border-color: rgba(5, 150, 105, 0.75);
+    -fx-text-fill: #064e3b;
+}
+
+.mic-button-error {
+    -fx-background-color: rgba(239, 68, 68, 0.25);
+    -fx-border-color: rgba(220, 38, 38, 0.7);
+    -fx-text-fill: #7f1d1d;
+}
