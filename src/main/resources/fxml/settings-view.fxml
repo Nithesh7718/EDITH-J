@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.VBox?>
@@ -23,5 +24,15 @@
         <Label text="Theme" styleClass="card-title"/>
         <Label fx:id="themeStatusLabel" text="Current theme: Dark"/>
         <ToggleButton fx:id="themeToggleButton" text="Switch to Light Mode" onAction="#onToggleTheme" styleClass="mini-action-button"/>
+    </VBox>
+
+    <VBox spacing="8.0" styleClass="content-card">
+        <Label text="Voice input" styleClass="card-title"/>
+        <CheckBox fx:id="voiceAutoSendCheckBox"
+                  text="Automatically send recognized voice input"
+                  onAction="#onVoiceAutoSendToggled"/>
+        <Label text="You can say: send a &quot;hello&quot; msg to Krithick via WhatsApp, or send a email reg &quot;project update&quot; to krithick."
+               styleClass="panel-hint"
+               wrapText="true"/>
     </VBox>
 </VBox>

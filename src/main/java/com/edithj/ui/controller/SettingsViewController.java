@@ -3,8 +3,10 @@ package com.edithj.ui.controller;
 import com.edithj.config.AppConfig;
 import com.edithj.ui.session.ThemeService;
 import com.edithj.ui.session.ThemeService.Theme;
+import com.edithj.ui.session.UiPreferencesService;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 
@@ -17,8 +19,11 @@ public class SettingsViewController {
     private Label themeStatusLabel;
     @FXML
     private ToggleButton themeToggleButton;
+    @FXML
+    private CheckBox voiceAutoSendCheckBox;
 
     private final ThemeService themeService = ThemeService.instance();
+    private final UiPreferencesService uiPreferencesService = UiPreferencesService.instance();
 
     @SuppressWarnings("unused")
     @FXML
@@ -29,6 +34,13 @@ public class SettingsViewController {
 
         updateThemeLabels(themeService.currentTheme());
         themeService.themeProperty().addListener((obs, oldValue, newValue) -> updateThemeLabels(newValue));
+
+        voiceAutoSendCheckBox.setSelected(uiPreferencesService.isAutoSendVoiceInputEnabled());
+        uiPreferencesService.autoSendVoiceInputProperty().addListener((obs, oldValue, newValue) -> {
+            if (voiceAutoSendCheckBox.isSelected() != newValue) {
+                voiceAutoSendCheckBox.setSelected(newValue);
+            }
+        });
     }
 
     @SuppressWarnings("unused")
@@ -38,6 +50,12 @@ public class SettingsViewController {
             return;
         }
         themeService.toggleTheme(themeToggleButton.getScene());
+    }
+
+    @SuppressWarnings("unused")
+    @FXML
+    private void onVoiceAutoSendToggled() {
+        uiPreferencesService.setAutoSendVoiceInputEnabled(voiceAutoSendCheckBox.isSelected());
     }
 
     private void updateThemeLabels(Theme theme) {

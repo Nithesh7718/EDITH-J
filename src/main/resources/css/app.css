@@ -1082,6 +1082,11 @@
     -fx-text-fill: #fee2e2;
 }
 
+.mic-status-hint {
+    -fx-text-fill: rgba(148, 163, 184, 0.95);
+    -fx-font-size: 11px;
+}
+
 /* ─── LIST VIEW POLISH ───────────────────────────── */
 .list-view {
     -fx-background-color: transparent;

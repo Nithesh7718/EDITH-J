@@ -9,6 +9,7 @@ import com.edithj.assistant.AssistantResponse;
 import com.edithj.speech.SpeechRecognizer;
 import com.edithj.ui.model.ChatMessageViewModel;
 import com.edithj.ui.session.UiAssistantGateway;
+import com.edithj.ui.session.UiPreferencesService;
 import com.edithj.ui.session.UiSpeechService;
 
 import javafx.animation.FadeTransition;
@@ -48,10 +49,18 @@ public class ChatController {
     private TextArea messageInput;
     @FXML
     private Button btnMic;
+    @FXML
+    private Label micStatusLabel;
 
     private final ObservableList<ChatMessageViewModel> messages = FXCollections.observableArrayList();
     private final UiAssistantGateway assistantGateway;
     private final UiSpeechService uiSpeechService;
+    private final UiPreferencesService uiPreferencesService = UiPreferencesService.instance();
+
+    private static final String MIC_HINT_IDLE = "Tap to speak";
+    private static final String MIC_HINT_LISTENING = "Listening...";
+    private static final String MIC_HINT_ERROR = "Didn't catch that, try again.";
+    private static final String MIC_HINT_UNAVAILABLE = "Microphone unavailable";
 
     private boolean micErrorState;
 
@@ -88,6 +97,9 @@ public class ChatController {
         if (!uiSpeechService.isAvailable()) {
             btnMic.setDisable(true);
             btnMic.setTooltip(new Tooltip("Microphone not available"));
+            micStatusLabel.setText(MIC_HINT_UNAVAILABLE);
+        } else {
+            micStatusLabel.setText(MIC_HINT_IDLE);
         }
         updateMicVisualState();
 
@@ -157,6 +169,7 @@ public class ChatController {
 
     private void startVoiceInput() {
         micErrorState = false;
+        micStatusLabel.setText(MIC_HINT_LISTENING);
         updateMicVisualState();
         uiSpeechService.startListening(
                 this::handleRecognizedText,
@@ -168,11 +181,13 @@ public class ChatController {
     private void stopVoiceInput() {
         uiSpeechService.stopListening();
         micErrorState = false;
+        micStatusLabel.setText(MIC_HINT_IDLE);
         updateMicVisualState();
     }
 
     private void handleRecognizedText(String text) {
         micErrorState = false;
+        micStatusLabel.setText(MIC_HINT_IDLE);
         updateMicVisualState();
 
         String normalized = text == null ? "" : text.trim();
@@ -182,7 +197,13 @@ public class ChatController {
         }
 
         messageInput.setText(normalized);
-        sendMessage();
+        if (uiPreferencesService.isAutoSendVoiceInputEnabled()) {
+            sendMessage();
+            return;
+        }
+
+        messageInput.requestFocus();
+        messageInput.positionCaret(messageInput.getText().length());
     }
 
     private void showVoiceError(Throwable error) {
@@ -195,11 +216,15 @@ public class ChatController {
         messagesList.scrollTo(messages.size() - 1);
 
         micErrorState = true;
+        micStatusLabel.setText(MIC_HINT_ERROR);
         updateMicVisualState();
 
         PauseTransition clearError = new PauseTransition(Duration.seconds(1.8));
         clearError.setOnFinished(event -> {
             micErrorState = false;
+            if (uiSpeechService.isAvailable()) {
+                micStatusLabel.setText(MIC_HINT_IDLE);
+            }
             updateMicVisualState();
         });
         clearError.play();

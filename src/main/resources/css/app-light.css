@@ -128,3 +128,8 @@
     -fx-border-color: rgba(220, 38, 38, 0.7);
     -fx-text-fill: #7f1d1d;
 }
+
+.mic-status-hint {
+    -fx-text-fill: #475569;
+    -fx-font-size: 11px;
+}

@@ -34,6 +34,7 @@
                   wrapText="true" prefRowCount="3"
                   HBox.hgrow="ALWAYS" styleClass="chat-input"/>
         <Button fx:id="btnMic" text="Mic" prefWidth="70.0"/>
+        <Label fx:id="micStatusLabel" text="Tap to speak" styleClass="mic-status-hint"/>
         <Button text="Send" onAction="#sendMessage" prefWidth="110.0" styleClass="send-button"/>
     </HBox>
 </VBox>
