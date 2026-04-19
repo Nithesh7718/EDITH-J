@@ -11,8 +11,12 @@ import com.edithj.launcher.AppLauncherService;
 
 public class WhatsAppCommandHandler implements CommandHandler {
 
+    private static final Pattern WHATSAPP_CALL_PATTERN = Pattern.compile(
+        "(?i)\\b(?:make\\s+)?(?:a\\s+)?call\\b.*\\b(?:via|on)\\s+whatsapp\\b|\\b(?:via|on)\\s+whatsapp\\b.*\\bcall\\b");
     private static final Pattern CONTACT_PATTERN = Pattern.compile(
             "(?i)\\b(?:message\\s+to|send\\s+to|to)\\s+(.+?)(?=\\s+(?:via\\s+)?whatsapp\\b|[.!?,;:]|$)");
+    private static final Pattern CALL_CONTACT_PATTERN = Pattern.compile(
+            "(?i)\\bcall\\s+(?:to\\s+)?(.+?)(?=\\s+(?:via|on)\\s+whatsapp\\b|[.!?,;:]|$)");
     private static final Pattern QUOTED_MESSAGE_PATTERN = Pattern.compile("\"([^\"]+)\"|'([^']+)'");
 
     private final AppLauncherService launcherService;
@@ -35,8 +39,14 @@ public class WhatsAppCommandHandler implements CommandHandler {
         String input = context == null ? "" : context.normalizedInput();
         ParsedWhatsAppRequest parsedRequest = parseRequest(input);
 
+        if (parsedRequest.callIntent()) {
+            String contact = parsedRequest.contactName().isBlank() ? "that contact" : parsedRequest.contactName();
+            return "I can't start WhatsApp calls yet, but I can help send a message instead. What should I say to "
+                    + contact + "?";
+        }
+
         if (parsedRequest.message().isBlank()) {
-            return "I can open WhatsApp with a message, but I didn’t catch the text. Please try something like: send a \"hello\" message via WhatsApp.";
+            return "I can open WhatsApp with a message, but I didn’t catch the text. Try: send \"hello\" to Krithick via WhatsApp.";
         }
 
         try {
@@ -44,11 +54,13 @@ public class WhatsAppCommandHandler implements CommandHandler {
             String launchResult = launcherService.launchApp(url);
 
             StringBuilder response = new StringBuilder();
-            response.append("Opening WhatsApp Web with your message: \"")
+                response.append("Opening WhatsApp Web with your message")
+                    .append(!parsedRequest.contactName().isBlank() ? " to " + parsedRequest.contactName() : "")
+                    .append(": \"")
                     .append(parsedRequest.message())
                     .append("\".");
             if (!parsedRequest.contactName().isBlank()) {
-                response.append(" Contact mentioned: ").append(parsedRequest.contactName()).append('.');
+                response.append(" I’ll keep the recipient in mind.");
             }
 
             if (launchResult != null && !launchResult.isBlank()) {
@@ -64,13 +76,19 @@ public class WhatsAppCommandHandler implements CommandHandler {
     ParsedWhatsAppRequest parseRequest(String rawInput) {
         String normalized = rawInput == null ? "" : rawInput.trim();
         if (normalized.isBlank()) {
-            return new ParsedWhatsAppRequest("", "");
+            return new ParsedWhatsAppRequest("", "", false);
         }
 
-        String contactName = extractContactName(normalized);
+        boolean callIntent = WHATSAPP_CALL_PATTERN.matcher(normalized).find();
+
+        String contactName = callIntent ? extractCallContactName(normalized) : extractContactName(normalized);
         String quotedMessage = extractQuotedMessage(normalized);
         if (!quotedMessage.isBlank()) {
-            return new ParsedWhatsAppRequest(quotedMessage, contactName);
+            return new ParsedWhatsAppRequest(quotedMessage, contactName, callIntent);
+        }
+
+        if (callIntent) {
+            return new ParsedWhatsAppRequest("", contactName, true);
         }
 
         String messageCandidate = normalized;
@@ -85,7 +103,7 @@ public class WhatsAppCommandHandler implements CommandHandler {
         messageCandidate = messageCandidate.replaceAll("(?i)\\bwhatsapp\\b", " ");
         messageCandidate = stripWrapperWords(messageCandidate);
 
-        return new ParsedWhatsAppRequest(messageCandidate, contactName);
+        return new ParsedWhatsAppRequest(messageCandidate, contactName, false);
     }
 
     String buildWhatsAppWebUrl(String message) {
@@ -118,6 +136,14 @@ public class WhatsAppCommandHandler implements CommandHandler {
         return "";
     }
 
+    private String extractCallContactName(String input) {
+        Matcher matcher = CALL_CONTACT_PATTERN.matcher(input);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+        return extractContactName(input);
+    }
+
     private String stripWrapperWords(String text) {
         String current = text == null ? "" : text.trim();
         String previous;
@@ -132,7 +158,7 @@ public class WhatsAppCommandHandler implements CommandHandler {
         return current;
     }
 
-    record ParsedWhatsAppRequest(String message, String contactName) {
+    record ParsedWhatsAppRequest(String message, String contactName, boolean callIntent) {
 
     }
 }

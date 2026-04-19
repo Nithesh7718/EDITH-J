@@ -27,6 +27,19 @@ class WhatsAppCommandHandlerTest {
 
         assertEquals("hello", parsed.message());
         assertEquals("Krithick", parsed.contactName());
+        assertTrue(!parsed.callIntent());
+    }
+
+    @Test
+    void parseRequest_detectsWhatsappCallIntentAndContact() {
+        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(new FakeLauncher());
+
+        WhatsAppCommandHandler.ParsedWhatsAppRequest parsed
+                = handler.parseRequest("make a call to krithick via whatsapp");
+
+        assertTrue(parsed.callIntent());
+        assertEquals("krithick", parsed.contactName());
+        assertEquals("", parsed.message());
     }
 
     @Test
@@ -49,6 +62,21 @@ class WhatsAppCommandHandlerTest {
 
         assertEquals("https://wa.me/?text=hello%20world", launcherService.lastOpenedUrl());
         assertTrue(response.contains("Opening WhatsApp Web with your message: \"hello world\"."));
+    }
+
+    @Test
+    void handle_callIntent_returnsLimitationAndDoesNotLaunchWhatsApp() {
+        FakeLauncher launcherService = new FakeLauncher();
+        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(launcherService);
+
+        String response = handler.handle(new CommandHandler.CommandContext(
+                "make a call to Krithick via whatsapp",
+                "make a call to Krithick via whatsapp",
+                "typed"));
+
+        assertTrue(response.contains("can’t start WhatsApp calls") || response.contains("can't start WhatsApp calls"));
+        assertTrue(response.contains("Krithick"));
+        assertTrue(launcherService.lastOpenedTarget().isBlank());
     }
 
     @Test

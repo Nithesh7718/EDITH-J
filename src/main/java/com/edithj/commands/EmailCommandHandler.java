@@ -17,6 +17,8 @@ public class EmailCommandHandler implements CommandHandler {
             "(?i)\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b");
     private static final Pattern SUBJECT_QUOTED_PATTERN = Pattern.compile(
             "(?i)\\bsubject\\s*['\"]([^'\"]+)['\"]");
+    private static final Pattern REGARDING_SUBJECT_QUOTED_PATTERN = Pattern.compile(
+            "(?i)\\breg(?:arding)?\\s*['\"]([^'\"]*)['\"]");
     private static final Pattern CONTACT_PATTERN = Pattern.compile(
             "(?i)\\b(?:to|recipient(?:\\s+is)?)\\s+(.+?)(?=\\s+(?:with\\s+)?subject\\b|\\s+(?:and\\s+)?(?:say|saying|message|body)\\b|[.!?,;:]|$)");
     private static final Pattern BODY_SIGNAL_PATTERN = Pattern.compile(
@@ -43,8 +45,18 @@ public class EmailCommandHandler implements CommandHandler {
         String input = context == null ? "" : context.normalizedInput();
         ParsedEmailRequest parsedRequest = parseRequest(input);
 
+        if (parsedRequest.emptySubjectRequested()) {
+            return "What should the email be about?";
+        }
+
+        if (parsedRequest.body().isBlank() && parsedRequest.subjectExplicit()) {
+            String recipient = formatRecipientLabel(parsedRequest);
+            return "I’ll draft an email to " + recipient + " with subject \""
+                    + parsedRequest.subject() + "\". What would you like the body to say?";
+        }
+
         if (parsedRequest.body().isBlank()) {
-            return "I can open your email client with a draft, but I didn’t catch the message text. Please try something like: draft an email to hr@example.com saying I need a day off.";
+            return "I can open your email client with a draft, but I didn’t catch the message text. Try: draft an email to hr@example.com saying I need a day off.";
         }
 
         try {
@@ -57,7 +69,7 @@ public class EmailCommandHandler implements CommandHandler {
                         .append(parsedRequest.recipientEmail())
                         .append('.');
             } else if (!parsedRequest.contactName().isBlank()) {
-                response.append("Opening your email client with a draft message; please choose the recipient (I detected '")
+                response.append("Opening your email client with a draft message. Please choose the recipient, since I detected '")
                         .append(parsedRequest.contactName())
                         .append("' as the contact name).");
             } else {
@@ -77,15 +89,23 @@ public class EmailCommandHandler implements CommandHandler {
     ParsedEmailRequest parseRequest(String rawInput) {
         String normalized = rawInput == null ? "" : rawInput.trim();
         if (normalized.isBlank()) {
-            return new ParsedEmailRequest("", "", DEFAULT_SUBJECT, "");
+            return new ParsedEmailRequest("", "", DEFAULT_SUBJECT, "", false, false);
         }
 
         String recipientEmail = extractRecipientEmail(normalized);
         String contactName = recipientEmail.isBlank() ? extractContactName(normalized) : "";
-        String subject = extractSubject(normalized);
+        SubjectParseResult subjectParseResult = extractSubject(normalized);
+        String subject = subjectParseResult.subject();
         String body = extractBody(normalized, subject, recipientEmail, contactName);
 
-        return new ParsedEmailRequest(recipientEmail, contactName, subject, body);
+        return new ParsedEmailRequest(
+                recipientEmail,
+                contactName,
+                subject,
+                body,
+                subjectParseResult.subjectExplicit(),
+                subjectParseResult.emptySubjectRequested()
+        );
     }
 
     String buildMailtoUrl(ParsedEmailRequest parsedRequest) {
@@ -128,10 +148,20 @@ public class EmailCommandHandler implements CommandHandler {
         return "";
     }
 
-    private String extractSubject(String input) {
+    private SubjectParseResult extractSubject(String input) {
+        Matcher regardingMatcher = REGARDING_SUBJECT_QUOTED_PATTERN.matcher(input);
+        if (regardingMatcher.find()) {
+            String subject = regardingMatcher.group(1);
+            String normalizedSubject = subject == null ? "" : subject.trim();
+            if (normalizedSubject.isBlank()) {
+                return new SubjectParseResult(DEFAULT_SUBJECT, true, true);
+            }
+            return new SubjectParseResult(normalizedSubject, true, false);
+        }
+
         Matcher quotedMatcher = SUBJECT_QUOTED_PATTERN.matcher(input);
         if (quotedMatcher.find()) {
-            return quotedMatcher.group(1).trim();
+            return new SubjectParseResult(quotedMatcher.group(1).trim(), true, false);
         }
 
         Matcher unquotedMatcher = Pattern.compile(
@@ -139,11 +169,11 @@ public class EmailCommandHandler implements CommandHandler {
         if (unquotedMatcher.find()) {
             String subject = unquotedMatcher.group(1).trim();
             if (!subject.isBlank()) {
-                return subject;
+                return new SubjectParseResult(subject, true, false);
             }
         }
 
-        return DEFAULT_SUBJECT;
+        return new SubjectParseResult(DEFAULT_SUBJECT, false, false);
     }
 
     private String extractBody(String input, String subject, String recipientEmail, String contactName) {
@@ -190,7 +220,7 @@ public class EmailCommandHandler implements CommandHandler {
 
     private String stripCommandPrefix(String input) {
         String current = input == null ? "" : input.trim();
-        current = current.replaceFirst("(?i)^(send\\s+an\\s+email|send\\s+email|draft\\s+an\\s+email|draft\\s+email|compose\\s+an\\s+email|compose\\s+email|write\\s+an\\s+email|write\\s+email|email|mail\\s+to)\\b\\s*", "");
+        current = current.replaceFirst("(?i)^(send\\s+a?n?\\s+email|send\\s+email|draft\\s+a?n?\\s+email|draft\\s+email|compose\\s+a?n?\\s+email|compose\\s+email|write\\s+a?n?\\s+email|write\\s+email|email|mail\\s+to)\\b\\s*", "");
         return current.trim();
     }
 
@@ -208,9 +238,20 @@ public class EmailCommandHandler implements CommandHandler {
         String current = input == null ? "" : input.trim();
         current = current.replaceFirst("(?i)\\bwith\\s+subject\\s*['\"][^'\"]+['\"]", "");
         current = current.replaceFirst("(?i)\\bsubject\\s*['\"][^'\"]+['\"]", "");
+        current = current.replaceFirst("(?i)\\breg(?:arding)?\\s*['\"][^'\"]*['\"]", "");
         current = current.replaceFirst("(?i)\\bwith\\s+subject\\s+[^,;:.]+", "");
         current = current.replaceFirst("(?i)\\bsubject\\s+[^,;:.]+", "");
         return current.trim();
+    }
+
+    private String formatRecipientLabel(ParsedEmailRequest parsedRequest) {
+        if (!parsedRequest.contactName().isBlank()) {
+            return parsedRequest.contactName();
+        }
+        if (!parsedRequest.recipientEmail().isBlank()) {
+            return parsedRequest.recipientEmail();
+        }
+        return "that contact";
     }
 
     private String stripNoiseWords(String input) {
@@ -237,7 +278,16 @@ public class EmailCommandHandler implements CommandHandler {
         return value != null && EMAIL_ADDRESS_PATTERN.matcher(value.trim()).matches();
     }
 
-    record ParsedEmailRequest(String recipientEmail, String contactName, String subject, String body) {
+    record ParsedEmailRequest(String recipientEmail,
+            String contactName,
+            String subject,
+            String body,
+            boolean subjectExplicit,
+            boolean emptySubjectRequested) {
+
+    }
+
+    private record SubjectParseResult(String subject, boolean subjectExplicit, boolean emptySubjectRequested) {
 
     }
 }

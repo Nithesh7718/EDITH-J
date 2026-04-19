@@ -2,7 +2,6 @@ package com.edithj.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 import com.edithj.launcher.FakeLauncher;
@@ -62,9 +61,57 @@ class EmailCommandHandlerTest {
     @Test
     void buildMailtoUrl_usesDefaultSubjectAndEncodesBody() {
         EmailCommandHandler handler = new EmailCommandHandler(new FakeLauncher());
-        EmailCommandHandler.ParsedEmailRequest request = new EmailCommandHandler.ParsedEmailRequest("", "Krithick", "Message from EDITH-J", "hello world");
+        EmailCommandHandler.ParsedEmailRequest request = new EmailCommandHandler.ParsedEmailRequest(
+                "",
+                "Krithick",
+                "Message from EDITH-J",
+                "hello world",
+                false,
+                false);
 
         assertEquals("mailto:?subject=Message%20from%20EDITH-J&body=hello%20world", handler.buildMailtoUrl(request));
+    }
+
+    @Test
+    void parseRequest_extractsRegardingQuotedSubjectAndContact() {
+        EmailCommandHandler handler = new EmailCommandHandler(new FakeLauncher());
+
+        EmailCommandHandler.ParsedEmailRequest parsed = handler.parseRequest("send a email reg \"project update\" to krithick");
+
+        assertEquals("krithick", parsed.contactName());
+        assertEquals("project update", parsed.subject());
+        assertTrue(parsed.subjectExplicit());
+        assertTrue(parsed.body().isBlank());
+    }
+
+    @Test
+    void handle_returnsFollowUpWhenRegardingSubjectIsEmpty() {
+        FakeLauncher launcherService = new FakeLauncher();
+        EmailCommandHandler handler = new EmailCommandHandler(launcherService);
+
+        String response = handler.handle(new CommandHandler.CommandContext(
+                "send a email reg \"  \" to krithick",
+                "send a email reg \"  \" to krithick",
+                "typed"));
+
+        assertEquals("What should the email be about?", response);
+        assertTrue(launcherService.lastOpenedTarget().isBlank());
+    }
+
+    @Test
+    void handle_returnsBodyPromptWhenSubjectProvidedViaRegarding() {
+        FakeLauncher launcherService = new FakeLauncher();
+        EmailCommandHandler handler = new EmailCommandHandler(launcherService);
+
+        String response = handler.handle(new CommandHandler.CommandContext(
+                "send an email regarding \"project update\" to krithick",
+                "send an email regarding \"project update\" to krithick",
+                "typed"));
+
+        assertTrue(response.contains("I’ll draft an email to krithick") || response.contains("I'll draft an email to krithick"));
+        assertTrue(response.contains("subject \"project update\""));
+        assertTrue(response.contains("What would you like the body to say?"));
+        assertTrue(launcherService.lastOpenedTarget().isBlank());
     }
 
 }

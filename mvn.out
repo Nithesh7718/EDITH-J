@@ -1,0 +1,316 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------------< com.edithj:edith-j >-------------------------
+[INFO] Building EDITH-J 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ edith-j ---
+[INFO] Deleting E:\EDITH-J\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ edith-j ---
+[INFO] Copying 14 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ edith-j ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 90 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ edith-j ---
+[INFO] skip non existing resourceDirectory E:\EDITH-J\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ edith-j ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 34 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.1:test (default-test) @ edith-j ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.edithj.assistant.AssistantServiceTest
+21:26:50.922 [ERROR] org.sqlite.SQLiteJDBCLoader - Failed to delete old native lib
+java.nio.file.AccessDeniedException: C:\Users\nithe\AppData\Local\Temp\sqlite-3.46.1.3-83e40104-c4e8-4e30-82c2-582e84d18e7e-sqlitejdbc.dll
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:89)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:103)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:108)
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.implDelete(WindowsFileSystemProvider.java:275)
+	at java.base/sun.nio.fs.AbstractFileSystemProvider.delete(AbstractFileSystemProvider.java:105)
+	at java.base/java.nio.file.Files.delete(Files.java:1152)
+	at org.sqlite.SQLiteJDBCLoader.lambda$cleanup$1(SQLiteJDBCLoader.java:102)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183)
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+	at java.base/java.util.Iterator.forEachRemaining(Iterator.java:133)
+	at java.base/java.util.Spliterators$IteratorSpliterator.forEachRemaining(Spliterators.java:1845)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+	at org.sqlite.SQLiteJDBCLoader.cleanup(SQLiteJDBCLoader.java:97)
+	at org.sqlite.SQLiteJDBCLoader.initialize(SQLiteJDBCLoader.java:73)
+	at org.sqlite.core.NativeDB.load(NativeDB.java:69)
+	at org.sqlite.SQLiteConnection.open(SQLiteConnection.java:280)
+	at org.sqlite.SQLiteConnection.<init>(SQLiteConnection.java:67)
+	at org.sqlite.jdbc3.JDBC3Connection.<init>(JDBC3Connection.java:28)
+	at org.sqlite.jdbc4.JDBC4Connection.<init>(JDBC4Connection.java:19)
+	at org.sqlite.JDBC.createConnection(JDBC.java:106)
+	at org.sqlite.JDBC.connect(JDBC.java:79)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:681)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:252)
+	at com.edithj.storage.DatabaseManager.openConnection(DatabaseManager.java:31)
+	at com.edithj.storage.DatabaseManager.initialize(DatabaseManager.java:41)
+	at com.edithj.storage.RepositoryFactory.createMemoryRepository(RepositoryFactory.java:57)
+	at com.edithj.memory.MemoryService.<init>(MemoryService.java:12)
+	at com.edithj.assistant.FallbackChatService.createMemoryServiceSafely(FallbackChatService.java:151)
+	at com.edithj.assistant.FallbackChatService.<init>(FallbackChatService.java:41)
+	at com.edithj.assistant.AssistantServiceTest$TrackingFallbackChatService.<init>(AssistantServiceTest.java:112)
+	at com.edithj.assistant.AssistantServiceTest.handleTypedInput_routesWhatsAppIntentsWithoutFallbackChat(AssistantServiceTest.java:44)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:767)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$8(TestMethodTestDescriptor.java:217)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:213)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:138)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:68)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+21:26:51.105 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.129 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.135 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.595 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.596 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.600 [INFO ] c.edithj.assistant.AssistantService - Processing input from channel: typed | Input: whatsapp hello world
+21:26:51.605 [INFO ] c.edithj.assistant.AssistantService - Intent routed to: WHATSAPP | Response length: 106
+21:26:51.631 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.633 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.636 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.639 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.641 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.643 [INFO ] c.edithj.assistant.AssistantService - Processing input from channel: typed | Input: email hello to Krithick
+21:26:51.646 [INFO ] c.edithj.assistant.AssistantService - Intent routed to: EMAIL | Response length: 187
+21:26:51.652 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.653 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.655 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.659 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.660 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.662 [INFO ] c.edithj.assistant.AssistantService - Processing input from channel: typed | Input: note buy milk
+21:26:51.675 [INFO ] c.edithj.assistant.AssistantService - Intent routed to: NOTES | Response length: 57
+21:26:51.681 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.682 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.684 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.689 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.691 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.694 [INFO ] c.edithj.assistant.AssistantService - Processing input from channel: typed | Input: add a meeting tomorrow at 3pm called project sync
+21:26:51.701 [INFO ] c.edithj.assistant.AssistantService - Intent routed to: CALENDAR | Response length: 157
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 1.156 s <<< FAILURE! -- in com.edithj.assistant.AssistantServiceTest
+[ERROR] com.edithj.assistant.AssistantServiceTest.handleTypedInput_routesWhatsAppIntentsWithoutFallbackChat -- Time elapsed: 1.043 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:31)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:183)
+	at com.edithj.assistant.AssistantServiceTest.handleTypedInput_routesWhatsAppIntentsWithoutFallbackChat(AssistantServiceTest.java:54)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[INFO] Running com.edithj.assistant.FallbackChatServiceTest
+21:26:51.713 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.722 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+21:26:51.726 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\.edith-j\data\edith.db
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in com.edithj.assistant.FallbackChatServiceTest
+[INFO] Running com.edithj.assistant.IntentRouterTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in com.edithj.assistant.IntentRouterTest
+[INFO] Running com.edithj.commands.CalendarCommandHandlerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in com.edithj.commands.CalendarCommandHandlerTest
+[INFO] Running com.edithj.commands.DesktopToolsCommandHandlerTest
+[INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s -- in com.edithj.commands.DesktopToolsCommandHandlerTest
+[INFO] Running com.edithj.commands.EmailCommandHandlerTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in com.edithj.commands.EmailCommandHandlerTest
+[INFO] Running com.edithj.commands.FallbackChatHandlerTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.edithj.commands.FallbackChatHandlerTest
+[INFO] Running com.edithj.commands.LauncherCommandHandlerTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.edithj.commands.LauncherCommandHandlerTest
+[INFO] Running com.edithj.commands.NotesCommandHandlerTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in com.edithj.commands.NotesCommandHandlerTest
+[INFO] Running com.edithj.commands.ReminderCommandHandlerTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.edithj.commands.ReminderCommandHandlerTest
+[INFO] Running com.edithj.commands.UtilitiesCommandHandlerTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in com.edithj.commands.UtilitiesCommandHandlerTest
+[INFO] Running com.edithj.commands.WeatherCommandHandlerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.edithj.commands.WeatherCommandHandlerTest
+[INFO] Running com.edithj.commands.WhatsAppCommandHandlerTest
+[ERROR] Tests run: 7, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.011 s <<< FAILURE! -- in com.edithj.commands.WhatsAppCommandHandlerTest
+[ERROR] com.edithj.commands.WhatsAppCommandHandlerTest.handle_returnsClarificationWhenMessageMissingAndDoesNotLaunch -- Time elapsed: 0.001 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:31)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:183)
+	at com.edithj.commands.WhatsAppCommandHandlerTest.handle_returnsClarificationWhenMessageMissingAndDoesNotLaunch(WhatsAppCommandHandlerTest.java:52)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[ERROR] com.edithj.commands.WhatsAppCommandHandlerTest.handle_buildsWhatsAppWebUrlAndLaunchesIt -- Time elapsed: 0.001 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:31)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:183)
+	at com.edithj.commands.WhatsAppCommandHandlerTest.handle_buildsWhatsAppWebUrlAndLaunchesIt(WhatsAppCommandHandlerTest.java:64)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[ERROR] com.edithj.commands.WhatsAppCommandHandlerTest.handle_callIntent_returnsLimitationAndDoesNotLaunchWhatsApp -- Time elapsed: 0.001 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:31)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:183)
+	at com.edithj.commands.WhatsAppCommandHandlerTest.handle_callIntent_returnsLimitationAndDoesNotLaunchWhatsApp(WhatsAppCommandHandlerTest.java:77)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[INFO] Running com.edithj.config.AppConfigTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.edithj.config.AppConfigTest
+[INFO] Running com.edithj.integration.ConfigLoadingTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.edithj.integration.ConfigLoadingTest
+[INFO] Running com.edithj.integration.PromptBuilderTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.edithj.integration.PromptBuilderTest
+[INFO] Running com.edithj.launcher.CrossPlatformLauncherTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.edithj.launcher.CrossPlatformLauncherTest
+[INFO] Running com.edithj.memory.MemoryServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.edithj.memory.MemoryServiceTest
+[INFO] Running com.edithj.memory.SQLiteMemoryRepositoryTest
+21:26:51.946 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\AppData\Local\Temp\edithj-memory11458675698753115582.db
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 s -- in com.edithj.memory.SQLiteMemoryRepositoryTest
+[INFO] Running com.edithj.notes.NoteServiceTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.edithj.notes.NoteServiceTest
+[INFO] Running com.edithj.reminders.ReminderServiceTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in com.edithj.reminders.ReminderServiceTest
+[INFO] Running com.edithj.speech.SpeechRecognizerTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in com.edithj.speech.SpeechRecognizerTest
+[INFO] Running com.edithj.storage.DatabaseManagerTest
+21:26:52.016 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\AppData\Local\Temp\edithj-db-manager14728419910920350238.db
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.023 s -- in com.edithj.storage.DatabaseManagerTest
+[INFO] Running com.edithj.storage.JsonToSqliteMigrationServiceTest
+21:26:52.043 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\AppData\Local\Temp\edithj-migrate13234242253143707420.db
+21:26:52.205 [DEBUG] c.e.reminders.FileReminderRepository - Creating new reminder: rem-1
+21:26:52.210 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\AppData\Local\Temp\edithj-migrate13234242253143707420.db
+21:26:52.243 [INFO ] c.e.s.JsonToSqliteMigrationService - JSON->SQLite migration complete. notes=1, reminders=1
+21:26:52.246 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\AppData\Local\Temp\edithj-migrate13234242253143707420.db
+21:26:52.248 [DEBUG] c.e.s.JsonToSqliteMigrationService - JSON->SQLite migration already completed.
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.236 s -- in com.edithj.storage.JsonToSqliteMigrationServiceTest
+[INFO] Running com.edithj.storage.SQLiteRepositoryIntegrationTest
+21:26:52.281 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\AppData\Local\Temp\edithj-note193677015732867469.db
+21:26:52.316 [DEBUG] com.edithj.storage.DatabaseManager - SQLite schema initialized at C:\Users\nithe\AppData\Local\Temp\edithj-reminder14373401144756056390.db
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.070 s -- in com.edithj.storage.SQLiteRepositoryIntegrationTest
+[INFO] Running com.edithj.storage.StoragePathsTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.edithj.storage.StoragePathsTest
+[INFO] Running com.edithj.util.TimeParserTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in com.edithj.util.TimeParserTest
+[INFO] Running com.edithj.util.ValidationUtilsTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in com.edithj.util.ValidationUtilsTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   AssistantServiceTest.handleTypedInput_routesWhatsAppIntentsWithoutFallbackChat:54 expected: <true> but was: <false>
+[ERROR]   WhatsAppCommandHandlerTest.handle_buildsWhatsAppWebUrlAndLaunchesIt:64 expected: <true> but was: <false>
+[ERROR]   WhatsAppCommandHandlerTest.handle_callIntent_returnsLimitationAndDoesNotLaunchWhatsApp:77 expected: <true> but was: <false>
+[ERROR]   WhatsAppCommandHandlerTest.handle_returnsClarificationWhenMessageMissingAndDoesNotLaunch:52 expected: <true> but was: <false>
+[INFO] 
+[ERROR] Tests run: 150, Failures: 4, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.348 s
+[INFO] Finished at: 2026-04-19T21:26:52+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.1:test (default-test) on project edith-j: There are test failures.
+[ERROR] 
+[ERROR] Please refer to E:\EDITH-J\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
