@@ -9,6 +9,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.TargetDataLine;
 
 import com.edithj.speech.SpeechRecognizer;
+import com.edithj.speech.NoSpeechRecognizedException;
 
 import javafx.application.Platform;
 
@@ -25,7 +26,7 @@ public final class UiSpeechService {
 
     public UiSpeechService(SpeechRecognizer recognizer) {
         this.recognizer = Objects.requireNonNull(recognizer, "recognizer");
-        this.available = probeMicrophoneAvailability();
+        this.available = this.recognizer.isAvailable() && probeMicrophoneAvailability();
     }
 
     public void startListening(Consumer<String> onResult, Consumer<Throwable> onError) {
@@ -111,7 +112,7 @@ public final class UiSpeechService {
             SpeechRecognizer.RecognitionResult result = recognizer.stopListeningAndRecognize();
             String transcript = result == null ? "" : result.transcript();
             if (transcript == null || transcript.isBlank()) {
-                runOnUiThread(() -> onError.accept(new IllegalStateException("No speech recognized")));
+                runOnUiThread(() -> onError.accept(new NoSpeechRecognizedException("No speech recognized")));
                 return;
             }
             runOnUiThread(() -> onResult.accept(transcript.trim()));

@@ -8,6 +8,10 @@ public class SpeechRecognizer {
     public interface TranscriptionEngine {
 
         String transcribeWav(byte[] wavAudio);
+
+        default boolean isAvailable() {
+            return true;
+        }
     }
 
     public record RecognitionResult(String transcript, byte[] wavAudio, boolean usedTypedFallback) {
@@ -19,7 +23,7 @@ public class SpeechRecognizer {
     private final TranscriptionEngine transcriptionEngine;
 
     public SpeechRecognizer() {
-        this(new AudioCapture(), new TypedFallbackService(), null);
+        this(new AudioCapture(), new TypedFallbackService(), VoskSpeechEngine.loadDefault());
     }
 
     public SpeechRecognizer(AudioCapture audioCapture,
@@ -31,13 +35,21 @@ public class SpeechRecognizer {
     }
 
     public void startListening() {
+        if (!isAvailable()) {
+            throw new IllegalStateException("Speech recognition is unavailable");
+        }
         audioCapture.startRecording();
     }
 
     public RecognitionResult stopListeningAndRecognize() {
         byte[] wavAudio = audioCapture.stopRecording();
 
-        String transcript = transcribe(wavAudio);
+        String transcript;
+        try {
+            transcript = transcribe(wavAudio);
+        } catch (NoSpeechRecognizedException exception) {
+            return new RecognitionResult("", wavAudio, false);
+        }
         boolean usedTypedFallback = false;
 
         if (transcript.isBlank()) {
@@ -57,6 +69,10 @@ public class SpeechRecognizer {
         return typedFallbackService;
     }
 
+    public boolean isAvailable() {
+        return transcriptionEngine != null && transcriptionEngine.isAvailable();
+    }
+
     private String transcribe(byte[] wavAudio) {
         if (transcriptionEngine == null || wavAudio == null || wavAudio.length == 0) {
             return "";
@@ -65,6 +81,8 @@ public class SpeechRecognizer {
         try {
             String text = transcriptionEngine.transcribeWav(wavAudio);
             return text == null ? "" : text.trim();
+        } catch (NoSpeechRecognizedException exception) {
+            throw exception;
         } catch (RuntimeException exception) {
             return "";
         }
