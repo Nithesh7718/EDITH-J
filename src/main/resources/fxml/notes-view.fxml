@@ -11,42 +11,32 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21"
-      fx:controller="com.edithj.ui.controller.NotesViewController"
-      spacing="16.0" styleClass="notes-panel">
+<!-- Notes sidebar border now uses JavaFX border-color and border-width syntax only. -->
+<HBox xmlns:fx="http://javafx.com/fxml/1"
+    xmlns="http://javafx.com/javafx/21" fx:controller="com.edithj.ui.controller.NotesViewController" spacing="16.0" styleClass="notes-panel">
     <padding>
         <Insets top="16.0" right="16.0" bottom="16.0" left="16.0"/>
     </padding>
 
     <!-- Left Sidebar: List and Search -->
-    <VBox spacing="12.0" style="-fx-border-right: 1px solid rgba(14, 165, 233, 0.2); -fx-padding: 0 12 0 0;" prefWidth="280">
+    <VBox spacing="12.0" style="-fx-border-color: transparent rgba(14, 165, 233, 0.2) transparent transparent; -fx-border-width: 0 1 0 0; -fx-padding: 0 12 0 0;" prefWidth="280">
         <Label text="Notes" styleClass="panel-title"/>
-        <TextField fx:id="searchField" 
-                   promptText="Search notes..." 
-                   styleClass="search-field"/>
-        <ListView fx:id="notesList" 
-                  VBox.vgrow="ALWAYS" 
-                  styleClass="notes-list"/>
+        <TextField fx:id="searchField" promptText="Search notes..." styleClass="search-field"/>
+        <ListView fx:id="notesList" VBox.vgrow="ALWAYS" styleClass="notes-list"/>
     </VBox>
 
     <!-- Right Side: Editor Pane -->
     <VBox spacing="12.0" HBox.hgrow="ALWAYS">
         <Label text="Note Content" styleClass="section-heading"/>
-        
+
         <VBox spacing="8.0" styleClass="editor-section">
             <Label text="Title" styleClass="field-label"/>
-            <TextField fx:id="titleField" 
-                       promptText="Enter note title..."
-                       styleClass="note-field"/>
+            <TextField fx:id="titleField" promptText="Enter note title..." styleClass="note-field"/>
         </VBox>
 
         <VBox spacing="8.0" VBox.vgrow="ALWAYS">
             <Label text="Content" styleClass="field-label"/>
-            <TextArea fx:id="contentArea" 
-                      promptText="Enter note content..." 
-                      wrapText="true"
-                      styleClass="note-field"
-                      VBox.vgrow="ALWAYS"/>
+            <TextArea fx:id="contentArea" promptText="Enter note content..." wrapText="true" styleClass="note-field" VBox.vgrow="ALWAYS"/>
         </VBox>
 
         <HBox spacing="8.0" alignment="CENTER_LEFT">
@@ -57,9 +47,6 @@
             <Label fx:id="statusLabel" styleClass="status-text"/>
         </HBox>
 
-        <Label fx:id="hintLabel" 
-               text="💡 You can also manage notes via chat. Example: 'note buy milk', 'list notes', 'search notes project'"
-               styleClass="panel-hint" 
-               wrapText="true"/>
+        <Label fx:id="hintLabel" text="💡 You can also manage notes via chat. Example: 'note buy milk', 'list notes', 'search notes project'" styleClass="panel-hint" wrapText="true"/>
     </VBox>
 </HBox>

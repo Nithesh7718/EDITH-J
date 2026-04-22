@@ -1,3 +1,4 @@
+/* Reminder cards now use JavaFX border syntax for the item divider. */
 package com.edithj.ui.controller;
 
 import java.time.LocalDate;
@@ -181,10 +182,14 @@ public class RemindersViewController {
     private void applyCurrentFilter() {
         Platform.runLater(() -> {
             switch (currentFilter) {
-                case ALL -> filterAll();
-                case TODAY -> filterToday();
-                case UPCOMING -> filterUpcoming();
-                case COMPLETED -> filterCompleted();
+                case ALL ->
+                    filterAll();
+                case TODAY ->
+                    filterToday();
+                case UPCOMING ->
+                    filterUpcoming();
+                case COMPLETED ->
+                    filterCompleted();
             }
         });
     }
@@ -196,10 +201,14 @@ public class RemindersViewController {
         }
 
         switch (currentFilter) {
-            case ALL -> btnFilterAll.getStyleClass().add("filter-tab-button-active");
-            case TODAY -> btnFilterToday.getStyleClass().add("filter-tab-button-active");
-            case UPCOMING -> btnFilterUpcoming.getStyleClass().add("filter-tab-button-active");
-            case COMPLETED -> btnFilterCompleted.getStyleClass().add("filter-tab-button-active");
+            case ALL ->
+                btnFilterAll.getStyleClass().add("filter-tab-button-active");
+            case TODAY ->
+                btnFilterToday.getStyleClass().add("filter-tab-button-active");
+            case UPCOMING ->
+                btnFilterUpcoming.getStyleClass().add("filter-tab-button-active");
+            case COMPLETED ->
+                btnFilterCompleted.getStyleClass().add("filter-tab-button-active");
         }
     }
 
@@ -238,6 +247,7 @@ public class RemindersViewController {
      * Custom ListCell for displaying reminders with inline action buttons.
      */
     private static class ReminderCell extends ListCell<ReminderViewModel> {
+
         private final VBox container;
         private final Label textLabel;
         private final Label dueLabel;
@@ -249,13 +259,13 @@ public class RemindersViewController {
         private final Runnable onDone;
         private final Runnable onSnooze;
         private final Runnable onDelete;
-    private final java.util.function.Consumer<ReminderViewModel> onDoneConsumer;
-    private final java.util.function.Consumer<ReminderViewModel> onSnoozeConsumer;
-    private final java.util.function.Consumer<ReminderViewModel> onDeleteConsumer;
+        private final java.util.function.Consumer<ReminderViewModel> onDoneConsumer;
+        private final java.util.function.Consumer<ReminderViewModel> onSnoozeConsumer;
+        private final java.util.function.Consumer<ReminderViewModel> onDeleteConsumer;
 
         ReminderCell(java.util.function.Consumer<ReminderViewModel> onDone,
-                     java.util.function.Consumer<ReminderViewModel> onSnooze,
-                     java.util.function.Consumer<ReminderViewModel> onDelete) {
+                java.util.function.Consumer<ReminderViewModel> onSnooze,
+                java.util.function.Consumer<ReminderViewModel> onDelete) {
             this.onDone = null; // Not used directly
             this.onSnooze = null; // Not used directly
             this.onDelete = null; // Not used directly
@@ -264,7 +274,7 @@ public class RemindersViewController {
             this.onDeleteConsumer = onDelete;
 
             container = new VBox();
-            container.setStyle("-fx-padding: 10px; -fx-border-bottom: 1px solid rgba(14, 165, 233, 0.1);");
+            container.setStyle("-fx-padding: 10; -fx-border-color: transparent transparent rgba(14, 165, 233, 0.1) transparent; -fx-border-width: 0 0 1 0;");
             container.setSpacing(6.0);
 
             HBox titleRow = new HBox();
@@ -326,6 +336,3 @@ public class RemindersViewController {
         }
     }
 }
-
-
-

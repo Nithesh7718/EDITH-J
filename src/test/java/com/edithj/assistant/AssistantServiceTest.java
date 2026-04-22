@@ -51,8 +51,8 @@ class AssistantServiceTest {
         AssistantResponse response = service.handleTypedInput("whatsapp hello world");
 
         assertEquals(IntentType.WHATSAPP, response.intentType());
-        assertTrue(response.answer().contains("Opening WhatsApp Web with your message"));
-        assertEquals("https://wa.me/?text=hello%20world", launcherService.lastOpenedUrl());
+        assertTrue(response.answer().contains("Opening WhatsApp in the app with your message"));
+        assertEquals("whatsapp://send?text=hello%20world", launcherService.lastOpenedUrl());
         assertFalse(fallbackChatService.wasInvoked());
     }
 

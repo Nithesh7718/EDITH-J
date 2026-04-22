@@ -1,3 +1,4 @@
+/* Notes list rows now use JavaFX border syntax for the item divider. */
 package com.edithj.ui.controller;
 
 import java.util.List;
@@ -161,6 +162,7 @@ public class NotesViewController {
      * Custom ListCell for displaying notes with title and snippet.
      */
     private static class NoteListCell extends ListCell<NoteViewModel> {
+
         private final VBox container;
         private final Label titleLabel;
         private final Label snippetLabel;
@@ -168,7 +170,7 @@ public class NotesViewController {
         NoteListCell() {
             container = new VBox();
             container.setSpacing(4.0);
-            container.setStyle("-fx-padding: 8px; -fx-border-bottom: 1px solid rgba(14, 165, 233, 0.1);");
+            container.setStyle("-fx-padding: 8; -fx-border-color: transparent transparent rgba(14, 165, 233, 0.1) transparent; -fx-border-width: 0 0 1 0;");
 
             titleLabel = new Label();
             titleLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #bae6fd;");

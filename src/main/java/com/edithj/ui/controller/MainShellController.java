@@ -46,70 +46,93 @@ import javafx.util.Duration;
 /**
  * Controller for the FRIDAY-style main shell of EDITH-J.
  *
- * <p>Architecture overview:
+ * <p>
+ * Architecture overview:
  * <ul>
- *   <li>All business logic stays in service / gateway classes.</li>
- *   <li>This controller wires UI properties to observable services via bindings.</li>
- *   <li>State transitions are driven through {@link UiAssistantGateway}.</li>
- *   <li>The audio aura responds to {@link UiAssistantGateway#audioInputLevelProperty()}.</li>
+ * <li>All business logic stays in service / gateway classes.</li>
+ * <li>This controller wires UI properties to observable services via
+ * bindings.</li>
+ * <li>State transitions are driven through {@link UiAssistantGateway}.</li>
+ * <li>The audio aura responds to
+ * {@link UiAssistantGateway#audioInputLevelProperty()}.</li>
  * </ul>
  */
 @SuppressWarnings("unused")
 public class MainShellController {
 
-    private static final DateTimeFormatter TIME_FORMAT  = DateTimeFormatter.ofPattern("HH:mm");
-    private static final String MIC_HINT_IDLE           = "Tap 🎙 or press Space to speak";
-    private static final String MIC_HINT_LISTENING      = "Listening… speak now";
-    private static final String MIC_HINT_ERROR          = "Didn't catch that — please try again";
-    private static final String MIC_HINT_UNAVAILABLE    = "Microphone unavailable";
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final String MIC_HINT_IDLE = "Tap 🎙 or press Space to speak";
+    private static final String MIC_HINT_LISTENING = "Listening… speak now";
+    private static final String MIC_HINT_ERROR = "Didn't catch that — please try again";
+    private static final String MIC_HINT_UNAVAILABLE = "Microphone unavailable";
 
     // ── FXML injections ───────────────────────────────────────────────────────
-    @FXML private StackPane     auraHost;
-    @FXML private StackPane     contentHost;
+    @FXML
+    private StackPane auraHost;
+    @FXML
+    private StackPane contentHost;
 
     // Status bar
-    @FXML private Label         statePillLabel;
-    @FXML private Label         connectionLabel;
-    @FXML private Label         modelBadgeLabel;
+    @FXML
+    private Label statePillLabel;
+    @FXML
+    private Label connectionLabel;
+    @FXML
+    private Label modelBadgeLabel;
 
     // Left panel
-    @FXML private Label         stateCardLabel;
-    @FXML private Label         modelCardLabel;
-    @FXML private Label         lastCommandLabel;
+    @FXML
+    private Label stateCardLabel;
+    @FXML
+    private Label modelCardLabel;
+    @FXML
+    private Label lastCommandLabel;
 
     // Nav buttons
-    @FXML private Button        btnChat;
-    @FXML private Button        btnNotes;
-    @FXML private Button        btnReminders;
-    @FXML private Button        btnDesktopTools;
-    @FXML private Button        btnSettings;
+    @FXML
+    private Button btnChat;
+    @FXML
+    private Button btnNotes;
+    @FXML
+    private Button btnReminders;
+    @FXML
+    private Button btnDesktopTools;
+    @FXML
+    private Button btnSettings;
 
     // Transcript
-    @FXML private ListView<ChatMessageViewModel> transcriptList;
-    @FXML private HBox          partialBar;
-    @FXML private Label         partialLabel;
+    @FXML
+    private ListView<ChatMessageViewModel> transcriptList;
+    @FXML
+    private HBox partialBar;
+    @FXML
+    private Label partialLabel;
 
     // Control bar
-    @FXML private Button        btnMic;
-    @FXML private TextField     textInput;
-    @FXML private Button        btnSend;
-    @FXML private Label         micHintLabel;
+    @FXML
+    private Button btnMic;
+    @FXML
+    private TextField textInput;
+    @FXML
+    private Button btnSend;
+    @FXML
+    private Label micHintLabel;
 
     // ── Services ──────────────────────────────────────────────────────────────
-    private final UiAssistantGateway    gateway         = UiAssistantGateway.instance();
-    private final AssistantStatusService statusService  = AssistantStatusService.instance();
-    private final AssistantStatusProbe  statusProbe     = new AssistantStatusProbe();
-    private final SceneManager          sceneManager    = new SceneManager();
-    private final UiSpeechService       speechService;
+    private final UiAssistantGateway gateway = UiAssistantGateway.instance();
+    private final AssistantStatusService statusService = AssistantStatusService.instance();
+    private final AssistantStatusProbe statusProbe = new AssistantStatusProbe();
+    private final SceneManager sceneManager = new SceneManager();
+    private final UiSpeechService speechService;
 
     // ── Data ──────────────────────────────────────────────────────────────────
     private final ObservableList<ChatMessageViewModel> messages = FXCollections.observableArrayList();
 
-    /** The live audio aura canvas — created in #initialize for access to scene size. */
+    /**
+     * The live audio aura canvas — created in #initialize for access to scene
+     * size.
+     */
     private AudioAuraCanvas auraCanvas;
-
-    /** Partial (still-being-spoken) transcript text — replaced on finalisation. */
-    private ChatMessageViewModel partialMessage = null;
 
     private boolean micErrorState = false;
 
@@ -150,13 +173,13 @@ public class MainShellController {
 
     // ── State pill binding ─────────────────────────────────────────────────────
     private void wireStatePill() {
-        gateway.uiStateProperty().addListener((obs, oldState, newState) ->
-                Platform.runLater(() -> updateStatePill(newState)));
+        gateway.uiStateProperty().addListener((obs, oldState, newState)
+                -> Platform.runLater(() -> updateStatePill(newState)));
         updateStatePill(gateway.getUiState());
 
         // Also map state to left-panel card
-        gateway.uiStateProperty().addListener((obs, oldState, newState) ->
-                Platform.runLater(() -> {
+        gateway.uiStateProperty().addListener((obs, oldState, newState)
+                -> Platform.runLater(() -> {
                     stateCardLabel.setText(newState.name());
                     stateCardLabel.getStyleClass().setAll("card-value-cyan");
                 }));
@@ -166,10 +189,14 @@ public class MainShellController {
         statePillLabel.setText(state.displayLabel());
         statePillLabel.getStyleClass().setAll("state-pill");
         statePillLabel.getStyleClass().add(switch (state) {
-            case IDLE       -> "state-pill-idle";
-            case LISTENING  -> "state-pill-listening";
-            case PROCESSING -> "state-pill-processing";
-            case SPEAKING   -> "state-pill-speaking";
+            case IDLE ->
+                "state-pill-idle";
+            case LISTENING ->
+                "state-pill-listening";
+            case PROCESSING ->
+                "state-pill-processing";
+            case SPEAKING ->
+                "state-pill-speaking";
         });
     }
 
@@ -226,7 +253,9 @@ public class MainShellController {
 
     private void loadContent(String resourcePath) {
         Node content = sceneManager.loadView(resourcePath);
-        if (content == null) return;
+        if (content == null) {
+            return;
+        }
 
         contentHost.getChildren().setAll(content);
         content.setOpacity(0);
@@ -274,8 +303,8 @@ public class MainShellController {
         updateMicButton();
 
         speechService.startListening(
-            this::handleRecognisedSpeech,
-            this::handleSpeechError
+                this::handleRecognisedSpeech,
+                this::handleSpeechError
         );
     }
 
@@ -338,7 +367,9 @@ public class MainShellController {
     @FXML
     private void onTextSend() {
         String text = textInput.getText();
-        if (text == null || text.isBlank()) return;
+        if (text == null || text.isBlank()) {
+            return;
+        }
 
         String normalized = text.trim();
         textInput.clear();
@@ -349,10 +380,25 @@ public class MainShellController {
     }
 
     // ── Quick-chip handlers ───────────────────────────────────────────────────
-    @FXML private void insertWeatherChip()  { fillInput("What's the weather today?"); }
-    @FXML private void insertYoutubeChip()  { fillInput("Open YouTube"); }
-    @FXML private void insertReminderChip() { fillInput("Remind me to "); }
-    @FXML private void insertNotesChip()    { fillInput("List my notes"); }
+    @FXML
+    private void insertWeatherChip() {
+        fillInput("What's the weather today?");
+    }
+
+    @FXML
+    private void insertYoutubeChip() {
+        fillInput("Open YouTube");
+    }
+
+    @FXML
+    private void insertReminderChip() {
+        fillInput("Remind me to ");
+    }
+
+    @FXML
+    private void insertNotesChip() {
+        fillInput("List my notes");
+    }
 
     private void fillInput(String text) {
         textInput.setText(text);
@@ -397,12 +443,12 @@ public class MainShellController {
     // ── Assistant dispatch ────────────────────────────────────────────────────
     private void dispatchToAssistant(String input) {
         gateway.executeAsync(
-            input,
-            this::appendAssistantMessage,
-            err -> {
-                appendSystemMessage("Error: " + err.getMessage());
-                gateway.setIdle();
-            }
+                input,
+                this::appendAssistantMessage,
+                err -> {
+                    appendSystemMessage("Error: " + err.getMessage());
+                    gateway.setIdle();
+                }
         );
     }
 
@@ -421,7 +467,9 @@ public class MainShellController {
 
     // ── Toast notification ────────────────────────────────────────────────────
     private void showToast(String message) {
-        if (contentHost == null) return;
+        if (contentHost == null) {
+            return;
+        }
 
         Label toast = new Label(message);
         toast.getStyleClass().add("toast-label");
@@ -432,10 +480,10 @@ public class MainShellController {
         contentHost.getChildren().add(toast);
 
         Timeline in = new Timeline(
-            new KeyFrame(Duration.millis(300), new KeyValue(toast.opacityProperty(), 1.0))
+                new KeyFrame(Duration.millis(300), new KeyValue(toast.opacityProperty(), 1.0))
         );
         Timeline out = new Timeline(
-            new KeyFrame(Duration.millis(300), new KeyValue(toast.opacityProperty(), 0.0))
+                new KeyFrame(Duration.millis(300), new KeyValue(toast.opacityProperty(), 0.0))
         );
         PauseTransition hold = new PauseTransition(Duration.seconds(2.2));
         hold.setOnFinished(e -> out.play());
@@ -481,7 +529,7 @@ public class MainShellController {
                 return;
             }
 
-            boolean isUser   = "user".equalsIgnoreCase(item.getRole());
+            boolean isUser = "user".equalsIgnoreCase(item.getRole());
             boolean isSystem = item.getRole().toUpperCase().contains("SYSTEM");
 
             // ── Sender tag ────────────────────────────────────────────────────
@@ -537,8 +585,12 @@ public class MainShellController {
             if (!isUser && !isSystem) {
                 // Typewriter for EDITH responses
                 javafx.animation.Transition typewriter = new javafx.animation.Transition() {
-                    { setCycleDuration(Duration.millis(Math.min(1000, fullText.length() * 16L))); }
-                    @Override protected void interpolate(double frac) {
+                    {
+                        setCycleDuration(Duration.millis(Math.min(1000, fullText.length() * 16L)));
+                    }
+
+                    @Override
+                    protected void interpolate(double frac) {
                         int len = (int) Math.round(fullText.length() * frac);
                         msgLabel.setText(fullText.substring(0, len));
                     }

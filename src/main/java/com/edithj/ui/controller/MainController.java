@@ -20,18 +20,24 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
+@SuppressWarnings("unused")
 public class MainController {
 
-    @FXML private StackPane contentHost;
-    @FXML private Label sectionTitle;
-    @FXML private Label clockLabel;
-    @FXML private Button btnChat;
-    @FXML private Button btnNotes;
-    @FXML private Button btnReminders;
+    @FXML
+    private StackPane contentHost;
+    @FXML
+    private Label sectionTitle;
+    @FXML
+    private Label clockLabel;
+    @FXML
+    private Button btnChat;
+    @FXML
+    private Button btnNotes;
+    @FXML
+    private Button btnReminders;
 
     private final SceneManager sceneManager = new SceneManager();
     private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
-
 
     @FXML
     private void initialize() {
@@ -40,10 +46,12 @@ public class MainController {
         showChatView();
     }
 
-    /** Ticks the footer clock every second */
+    /**
+     * Ticks the footer clock every second
+     */
     private void startLiveClock() {
-        Timeline clock = new Timeline(new KeyFrame(Duration.seconds(1), e ->
-            clockLabel.setText(LocalTime.now().format(timeFormat))
+        Timeline clock = new Timeline(new KeyFrame(Duration.seconds(1), e
+                -> clockLabel.setText(LocalTime.now().format(timeFormat))
         ));
         clock.setCycleCount(Animation.INDEFINITE);
         clock.play();
@@ -51,7 +59,9 @@ public class MainController {
         clockLabel.setText(LocalTime.now().format(timeFormat));
     }
 
-    /** Gently pulses the section title to feel "alive" */
+    /**
+     * Gently pulses the section title to feel "alive"
+     */
     private void startStatusPulse() {
         FadeTransition pulse = new FadeTransition(Duration.seconds(2.5), sectionTitle);
         pulse.setFromValue(1.0);
@@ -83,7 +93,9 @@ public class MainController {
         loadContent("/fxml/reminders-view.fxml");
     }
 
-    /** Updates the sidebar active state styling */
+    /**
+     * Updates the sidebar active state styling
+     */
     private void setActiveNav(Button selected) {
         for (Button btn : new Button[]{btnChat, btnNotes, btnReminders}) {
             btn.getStyleClass().removeAll("nav-button", "nav-button-active", "nav-button-muted");
@@ -95,10 +107,14 @@ public class MainController {
         }
     }
 
-    /** Loads content with a cinematic entry transition */
+    /**
+     * Loads content with a cinematic entry transition
+     */
     private void loadContent(String resourcePath) {
         Node content = sceneManager.loadView(resourcePath);
-        if (content == null) return;
+        if (content == null) {
+            return;
+        }
 
         contentHost.getChildren().setAll(content);
 

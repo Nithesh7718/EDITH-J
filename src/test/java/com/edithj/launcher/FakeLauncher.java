@@ -1,5 +1,8 @@
 package com.edithj.launcher;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 public class FakeLauncher extends AppLauncherService {
 
     private String lastOpenedTarget = "";
@@ -26,6 +29,29 @@ public class FakeLauncher extends AppLauncherService {
 
         lastOpenedApp = normalized;
         return "Launched " + normalized + ".";
+    }
+
+    @Override
+    public String launchWhatsApp(String message) {
+        String normalized = message == null ? "" : message.trim();
+        String target = normalized.isBlank()
+                ? "whatsapp://send"
+                : "whatsapp://send?text=" + URLEncoder.encode(normalized, StandardCharsets.UTF_8).replace("+", "%20");
+        return launchApp(target);
+    }
+
+    @Override
+    public String launchWhatsAppToRecipient(String recipientPhone, String message) {
+        String normalizedPhone = recipientPhone == null ? "" : recipientPhone.trim().replaceAll("[^0-9+]", "");
+        if (normalizedPhone.startsWith("+")) {
+            normalizedPhone = normalizedPhone.substring(1);
+        }
+
+        String normalizedMessage = message == null ? "" : message.trim();
+        String target = normalizedMessage.isBlank()
+                ? "whatsapp://send?phone=" + normalizedPhone
+                : "whatsapp://send?phone=" + normalizedPhone + "&text=" + URLEncoder.encode(normalizedMessage, StandardCharsets.UTF_8).replace("+", "%20");
+        return launchApp(target);
     }
 
     public String lastOpenedTarget() {
@@ -57,10 +83,7 @@ public class FakeLauncher extends AppLauncherService {
     }
 
     private boolean isUrl(String target) {
-        return target.startsWith("http://")
-                || target.startsWith("https://")
-                || target.startsWith("mailto:")
-                || target.startsWith("file:");
+        return target.matches("(?i)^[a-z][a-z0-9+.-]*:.*");
     }
 
     private boolean isFilePath(String target) {

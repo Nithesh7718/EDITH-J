@@ -1,40 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21"
-      fx:controller="com.edithj.ui.controller.ChatController"
-      spacing="12.0" styleClass="chat-panel">
+<!--
+    Legacy chat composer removed from the home view so the shell keeps one
+    unified transcript panel and the single bottom input bar.
+-->
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+    xmlns="http://javafx.com/javafx/21" spacing="18.0" styleClass="chat-panel">
     <padding>
-        <Insets top="16.0" right="20.0" bottom="16.0" left="20.0"/>
+        <Insets top="20.0" right="24.0" bottom="20.0" left="24.0"/>
     </padding>
-    <HBox alignment="CENTER_LEFT" spacing="10.0">
-        <Label text="Assistant Chat" styleClass="panel-title"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Label text="Use Ctrl+Enter to send" styleClass="panel-hint"/>
-    </HBox>
-    <ListView fx:id="messagesList" VBox.vgrow="ALWAYS" styleClass="chat-history"/>
-    <HBox spacing="8.0" alignment="CENTER_LEFT" styleClass="quick-actions-row">
-        <Button text="Set reminder" onAction="#insertSetReminderTemplate" styleClass="quick-action-button"/>
-        <Button text="Add note" onAction="#insertAddNoteTemplate" styleClass="quick-action-button"/>
-        <Button text="Work mode" onAction="#insertWorkModeTemplate" styleClass="quick-action-button"/>
-        <Button text="Tools" onAction="#insertToolsTemplate" styleClass="quick-action-button"/>
-        <Button text="What can you do?" onAction="#insertHelpTemplate" styleClass="quick-action-button"/>
-    </HBox>
-    <HBox spacing="10.0" alignment="CENTER">
-        <TextArea fx:id="messageInput"
-                  promptText="Ask EDITH something or issue a command..."
-                  wrapText="true" prefRowCount="3"
-                  HBox.hgrow="ALWAYS" styleClass="chat-input"/>
-        <Button fx:id="btnMic" text="Mic" prefWidth="70.0"/>
-        <Label fx:id="micStatusLabel" text="Tap to speak" styleClass="mic-status-hint"/>
-        <Button text="Send" onAction="#sendMessage" prefWidth="110.0" styleClass="send-button"/>
-    </HBox>
+    <VBox spacing="16.0" maxWidth="820" VBox.vgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Label text="FRIDAY Home" styleClass="panel-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Unified shell mode" styleClass="panel-hint"/>
+        </HBox>
+
+        <Label text="Use the mic or the bottom composer to talk to EDITH. Voice and typed messages now share the single transcript panel on the right, so this center view stays focused on guidance and state." styleClass="panel-hint" wrapText="true"/>
+
+        <HBox spacing="14.0" alignment="CENTER_LEFT">
+            <VBox spacing="8.0" styleClass="info-card" HBox.hgrow="ALWAYS">
+                <Label text="VOICE" styleClass="card-label"/>
+                <Label text="Vosk + live capture" styleClass="card-value-cyan"/>
+                <Label text="The assistant listens from the shell mic control and streams results into the shared transcript." styleClass="panel-hint" wrapText="true"/>
+            </VBox>
+
+            <VBox spacing="8.0" styleClass="info-card" HBox.hgrow="ALWAYS">
+                <Label text="TEXT" styleClass="card-label"/>
+                <Label text="One bottom composer" styleClass="card-value-cyan"/>
+                <Label text="Type a request, press Enter, or hit Send. There is no duplicate chat input in the content area." styleClass="panel-hint" wrapText="true"/>
+            </VBox>
+
+            <VBox spacing="8.0" styleClass="info-card" HBox.hgrow="ALWAYS">
+                <Label text="TRANSCRIPT" styleClass="card-label"/>
+                <Label text="Single unified feed" styleClass="card-value-cyan"/>
+                <Label text="All replies, status messages, and voice results appear in the FRIDAY transcript panel." styleClass="panel-hint" wrapText="true"/>
+            </VBox>
+        </HBox>
+
+        <VBox spacing="10.0" styleClass="info-card" VBox.vgrow="ALWAYS">
+            <Label text="QUICK START" styleClass="card-label"/>
+            <Label text="Ask for weather, notes, reminders, desktop tools, or general help. The shell keeps the audio aura, status bar, and transcript visible while the center panel stays lightweight." styleClass="card-value" wrapText="true"/>
+        </VBox>
+    </VBox>
 </VBox>

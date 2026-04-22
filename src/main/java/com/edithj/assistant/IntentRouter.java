@@ -8,6 +8,9 @@ import com.edithj.commands.CommandHandler;
 
 public class IntentRouter {
 
+    private static final java.util.regex.Pattern WHATSAPP_KEYWORD_PATTERN = java.util.regex.Pattern.compile(
+            "(?i)\\b(?:whatsapp|whtsapp|whatsap|watsapp|whats\\s*app)\\b");
+
     private final Map<IntentType, CommandHandler> handlers = new EnumMap<>(IntentType.class);
 
     public record RoutedIntent(IntentType intentType, String normalizedInput, String payload) {
@@ -74,7 +77,7 @@ public class IntentRouter {
         if (isEmailCommand(input)) {
             return IntentType.EMAIL;
         }
-        if (containsAnyIgnoreCase(input, "whatsapp")) {
+        if (containsWhatsAppKeyword(input)) {
             return IntentType.WHATSAPP;
         }
         if (isExplicitDesktopCommand(input)) {
@@ -158,6 +161,10 @@ public class IntentRouter {
             }
         }
         return false;
+    }
+
+    private boolean containsWhatsAppKeyword(String input) {
+        return WHATSAPP_KEYWORD_PATTERN.matcher(input).find();
     }
 
     private boolean isEmailCommand(String input) {

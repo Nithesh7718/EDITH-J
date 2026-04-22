@@ -22,6 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 
+@SuppressWarnings("unused")
 public class DesktopToolsController {
 
     private static final Pattern TASK_PATTERN = Pattern.compile("\\[(TODO|DONE)]\\s+(\\d+)\\.\\s+(.+)");
@@ -191,6 +192,7 @@ public class DesktopToolsController {
     }
 
     private record TaskRow(int id, String text, boolean done) {
+
     }
 
     private class TaskRowCell extends ListCell<TaskRow> {

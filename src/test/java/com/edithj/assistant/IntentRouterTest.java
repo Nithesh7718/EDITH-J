@@ -3,7 +3,6 @@ package com.edithj.assistant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 import com.edithj.commands.CommandHandler;
@@ -36,6 +35,15 @@ class IntentRouterTest {
 
         assertEquals(IntentType.WHATSAPP, routed.intentType());
         assertTrue(routed.normalizedInput().contains("whatsapp"));
+    }
+
+    @Test
+    void route_classifiesWhatsAppTypoCommands() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent routed = router.route("open whtsapp and send hi to krithick");
+
+        assertEquals(IntentType.WHATSAPP, routed.intentType());
     }
 
     @Test

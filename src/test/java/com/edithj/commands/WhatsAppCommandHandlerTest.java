@@ -1,5 +1,7 @@
 package com.edithj.commands;
 
+import java.util.Properties;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,18 @@ class WhatsAppCommandHandlerTest {
     }
 
     @Test
+    void parseRequest_openAndSendExtractsCleanMessageAndContact() {
+        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(new FakeLauncher());
+
+        WhatsAppCommandHandler.ParsedWhatsAppRequest parsed
+                = handler.parseRequest("open whatsapp and send hi to krithick");
+
+        assertEquals("hi", parsed.message());
+        assertEquals("krithick", parsed.contactName());
+        assertTrue(!parsed.callIntent());
+    }
+
+    @Test
     void parseRequest_detectsWhatsappCallIntentAndContact() {
         WhatsAppCommandHandler handler = new WhatsAppCommandHandler(new FakeLauncher());
 
@@ -43,25 +57,57 @@ class WhatsAppCommandHandlerTest {
     }
 
     @Test
-    void handle_returnsClarificationWhenMessageMissingAndDoesNotLaunch() {
+    void handle_openCommandLaunchesWhatsappApp() {
         FakeLauncher launcherService = new FakeLauncher();
         WhatsAppCommandHandler handler = new WhatsAppCommandHandler(launcherService);
 
         String response = handler.handle(new CommandHandler.CommandContext("whatsapp", "whatsapp", "typed"));
 
-        assertTrue(response.contains("didn’t catch the text") || response.contains("didn't catch the text"));
-        assertTrue(launcherService.lastOpenedTarget().isBlank());
+        assertTrue(response.contains("WhatsApp"));
+        assertTrue(launcherService.lastOpenedUrl().startsWith("whatsapp://send"));
     }
 
     @Test
-    void handle_buildsWhatsAppWebUrlAndLaunchesIt() {
+    void handle_buildsWhatsAppAppTargetAndLaunchesIt() {
         FakeLauncher launcherService = new FakeLauncher();
         WhatsAppCommandHandler handler = new WhatsAppCommandHandler(launcherService);
 
         String response = handler.handle(new CommandHandler.CommandContext("whatsapp hello world", "whatsapp hello world", "typed"));
 
-        assertEquals("https://wa.me/?text=hello%20world", launcherService.lastOpenedUrl());
-        assertTrue(response.contains("Opening WhatsApp Web with your message: \"hello world\"."));
+        assertTrue(launcherService.lastOpenedUrl().startsWith("whatsapp://send?text=hello%20world"));
+        assertTrue(response.contains("Opening WhatsApp in the app with your message: \"hello world\"."));
+    }
+
+    @Test
+    void handle_typoVariantStillLaunchesWhatsApp() {
+        FakeLauncher launcherService = new FakeLauncher();
+        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(launcherService);
+
+        String response = handler.handle(new CommandHandler.CommandContext(
+                "open whtsapp and send hi to krithick",
+                "open whtsapp and send hi to krithick",
+                "typed"));
+
+        assertTrue(launcherService.lastOpenedUrl().startsWith("whatsapp://send?text=hi"));
+        assertTrue(response.contains("to krithick"));
+        assertTrue(response.contains("couldn't auto-select"));
+    }
+
+    @Test
+    void handle_withMappedRecipientLaunchesDirectChat() {
+        FakeLauncher launcherService = new FakeLauncher();
+        Properties properties = new Properties();
+        properties.setProperty("edith.whatsapp.contact.krithick", "+919876543210");
+        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(launcherService, properties);
+
+        String response = handler.handle(new CommandHandler.CommandContext(
+                "open whatsapp and send hi to krithick",
+                "open whatsapp and send hi to krithick",
+                "typed"));
+
+        assertTrue(launcherService.lastOpenedUrl().startsWith("whatsapp://send?phone=919876543210&text=hi"));
+        assertTrue(response.contains("to krithick"));
+        assertTrue(!response.contains("couldn't auto-select"));
     }
 
     @Test
@@ -80,10 +126,10 @@ class WhatsAppCommandHandlerTest {
     }
 
     @Test
-    void buildWhatsAppWebUrl_encodesSpacesAsPercentTwenty() {
+    void buildWhatsAppAppTarget_encodesSpacesAsPercentTwenty() {
         WhatsAppCommandHandler handler = new WhatsAppCommandHandler(new FakeLauncher());
 
-        assertEquals("https://wa.me/?text=hello%20world", handler.buildWhatsAppWebUrl("hello world"));
+        assertEquals("whatsapp://send?text=hello%20world", handler.buildWhatsAppAppTarget("hello world"));
     }
 
 }

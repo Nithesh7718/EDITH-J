@@ -3,30 +3,47 @@ package com.edithj.commands;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.edithj.assistant.IntentType;
+import com.edithj.config.AppConfig;
 import com.edithj.launcher.AppLauncherService;
 
 public class WhatsAppCommandHandler implements CommandHandler {
 
+    private static final String CONTACT_PROPERTY_PREFIX = "edith.whatsapp.contact.";
+
+    private static final String WHATSAPP_ALIAS_PATTERN = "(?:whatsapp|whtsapp|whatsap|watsapp|whats\\s*app)";
+
+    private static final Pattern OPEN_WHATSAPP_PATTERN = Pattern.compile(
+            "(?i)^(?:open|launch|start|run)\\s+" + WHATSAPP_ALIAS_PATTERN + "(?:\\s+app)?\\s*$|^" + WHATSAPP_ALIAS_PATTERN + "\\s*$");
+    private static final Pattern OPEN_WHATSAPP_AND_SEND_PATTERN = Pattern.compile(
+            "(?i)^(?:open|launch|start|run)\\s+" + WHATSAPP_ALIAS_PATTERN + "(?:\\s+app)?\\s+(?:and\\s+)?send\\s+(.+)$");
+
     private static final Pattern WHATSAPP_CALL_PATTERN = Pattern.compile(
-        "(?i)\\b(?:make\\s+)?(?:a\\s+)?call\\b.*\\b(?:via|on)\\s+whatsapp\\b|\\b(?:via|on)\\s+whatsapp\\b.*\\bcall\\b");
+            "(?i)\\b(?:make\\s+)?(?:a\\s+)?call\\b.*\\b(?:via|on)\\s+" + WHATSAPP_ALIAS_PATTERN + "\\b|\\b(?:via|on)\\s+" + WHATSAPP_ALIAS_PATTERN + "\\b.*\\bcall\\b");
     private static final Pattern CONTACT_PATTERN = Pattern.compile(
-            "(?i)\\b(?:message\\s+to|send\\s+to|to)\\s+(.+?)(?=\\s+(?:via\\s+)?whatsapp\\b|[.!?,;:]|$)");
+            "(?i)\\b(?:message\\s+to|send\\s+to|to)\\s+(.+?)(?=\\s+(?:via\\s+)?" + WHATSAPP_ALIAS_PATTERN + "\\b|[.!?,;:]|$)");
     private static final Pattern CALL_CONTACT_PATTERN = Pattern.compile(
-            "(?i)\\bcall\\s+(?:to\\s+)?(.+?)(?=\\s+(?:via|on)\\s+whatsapp\\b|[.!?,;:]|$)");
+            "(?i)\\bcall\\s+(?:to\\s+)?(.+?)(?=\\s+(?:via|on)\\s+" + WHATSAPP_ALIAS_PATTERN + "\\b|[.!?,;:]|$)");
     private static final Pattern QUOTED_MESSAGE_PATTERN = Pattern.compile("\"([^\"]+)\"|'([^']+)'");
 
     private final AppLauncherService launcherService;
+    private final Properties appProperties;
 
     public WhatsAppCommandHandler() {
-        this(new AppLauncherService());
+        this(new AppLauncherService(), AppConfig.load().properties());
     }
 
     public WhatsAppCommandHandler(AppLauncherService launcherService) {
+        this(launcherService, AppConfig.load().properties());
+    }
+
+    WhatsAppCommandHandler(AppLauncherService launcherService, Properties appProperties) {
         this.launcherService = Objects.requireNonNull(launcherService, "launcherService");
+        this.appProperties = Objects.requireNonNull(appProperties, "appProperties");
     }
 
     @Override
@@ -37,6 +54,11 @@ public class WhatsAppCommandHandler implements CommandHandler {
     @Override
     public String handle(CommandContext context) {
         String input = context == null ? "" : context.normalizedInput();
+
+        if (isOpenWhatsAppRequest(input)) {
+            return openWhatsAppApp();
+        }
+
         ParsedWhatsAppRequest parsedRequest = parseRequest(input);
 
         if (parsedRequest.callIntent()) {
@@ -46,25 +68,38 @@ public class WhatsAppCommandHandler implements CommandHandler {
         }
 
         if (parsedRequest.message().isBlank()) {
-            return "I can open WhatsApp with a message, but I didn’t catch the text. Try: send \"hello\" to Krithick via WhatsApp.";
+            return openWhatsAppApp();
         }
 
         try {
-            String url = buildWhatsAppWebUrl(parsedRequest.message());
-            String launchResult = launcherService.launchApp(url);
+            String recipientPhone = resolveMappedPhone(parsedRequest.contactName());
+            boolean mappedRecipient = !recipientPhone.isBlank();
+
+            String launchResult = mappedRecipient
+                    ? launcherService.launchWhatsAppToRecipient(recipientPhone, parsedRequest.message())
+                    : launcherService.launchWhatsApp(parsedRequest.message());
+            boolean openedInWeb = launchResult != null && launchResult.toLowerCase().contains("web");
 
             StringBuilder response = new StringBuilder();
-                response.append("Opening WhatsApp Web with your message")
+            response.append(openedInWeb
+                    ? "Opening WhatsApp Web with your message"
+                    : "Opening WhatsApp in the app with your message")
                     .append(!parsedRequest.contactName().isBlank() ? " to " + parsedRequest.contactName() : "")
                     .append(": \"")
                     .append(parsedRequest.message())
                     .append("\".");
-            if (!parsedRequest.contactName().isBlank()) {
-                response.append(" I’ll keep the recipient in mind.");
+            if (!parsedRequest.contactName().isBlank() && !mappedRecipient) {
+                response.append(" I couldn't auto-select that recipient yet. Add mapping in edith.properties as ")
+                        .append(CONTACT_PROPERTY_PREFIX)
+                        .append(normalizeContactKey(parsedRequest.contactName()))
+                        .append("=+<countrycode><number>.");
             }
 
-            if (launchResult != null && !launchResult.isBlank()) {
-                response.append(' ').append(launchResult.trim());
+            if (launchResult != null) {
+                String normalizedLaunchResult = launchResult.trim().toLowerCase();
+                if (normalizedLaunchResult.startsWith("could not") || normalizedLaunchResult.startsWith("error")) {
+                    response.append(' ').append(launchResult.trim());
+                }
             }
 
             return response.toString().trim();
@@ -73,10 +108,36 @@ public class WhatsAppCommandHandler implements CommandHandler {
         }
     }
 
+    private boolean isOpenWhatsAppRequest(String input) {
+        String normalized = input == null ? "" : input.trim();
+        return OPEN_WHATSAPP_PATTERN.matcher(normalized).matches();
+    }
+
+    private String openWhatsAppApp() {
+        String launchResult = launcherService.launchWhatsApp("");
+        if (launchResult == null || launchResult.isBlank()) {
+            return "Opening WhatsApp.";
+        }
+
+        String normalized = launchResult.trim().toLowerCase();
+        if (normalized.contains("web")) {
+            return "Opening WhatsApp Web.";
+        }
+        if (normalized.startsWith("could not") || normalized.startsWith("error")) {
+            return launchResult.trim();
+        }
+        return "Opening WhatsApp.";
+    }
+
     ParsedWhatsAppRequest parseRequest(String rawInput) {
         String normalized = rawInput == null ? "" : rawInput.trim();
         if (normalized.isBlank()) {
             return new ParsedWhatsAppRequest("", "", false);
+        }
+
+        Matcher openAndSendMatcher = OPEN_WHATSAPP_AND_SEND_PATTERN.matcher(normalized);
+        if (openAndSendMatcher.matches()) {
+            normalized = openAndSendMatcher.group(1).trim();
         }
 
         boolean callIntent = WHATSAPP_CALL_PATTERN.matcher(normalized).find();
@@ -99,17 +160,17 @@ public class WhatsAppCommandHandler implements CommandHandler {
             }
         }
 
-        messageCandidate = messageCandidate.replaceAll("(?i)\\bvia\\s+whatsapp\\b", " ");
-        messageCandidate = messageCandidate.replaceAll("(?i)\\bwhatsapp\\b", " ");
+        messageCandidate = messageCandidate.replaceAll("(?i)\\bvia\\s+" + WHATSAPP_ALIAS_PATTERN + "\\b", " ");
+        messageCandidate = messageCandidate.replaceAll("(?i)\\b" + WHATSAPP_ALIAS_PATTERN + "\\b", " ");
         messageCandidate = stripWrapperWords(messageCandidate);
 
         return new ParsedWhatsAppRequest(messageCandidate, contactName, false);
     }
 
-    String buildWhatsAppWebUrl(String message) {
+    String buildWhatsAppAppTarget(String message) {
         String encodedMessage = URLEncoder.encode(message == null ? "" : message, StandardCharsets.UTF_8)
                 .replace("+", "%20");
-        return "https://wa.me/?text=" + encodedMessage;
+        return encodedMessage.isBlank() ? "whatsapp://send" : "whatsapp://send?text=" + encodedMessage;
     }
 
     private String extractContactName(String input) {
@@ -150,12 +211,36 @@ public class WhatsAppCommandHandler implements CommandHandler {
 
         do {
             previous = current;
-            current = current.replaceAll("(?i)^(send|message|text|please|kindly|whatsapp|via|a|an|the|to|for)\\b[\\s,:-]*", "");
-            current = current.replaceAll("(?i)[\\s,:-]*(message|please|whatsapp|via)$", "");
+            current = current.replaceAll("(?i)^(and|open|launch|start|run|send|message|text|please|kindly|whatsapp|whtsapp|whatsap|watsapp|via|a|an|the|to|for)\\b[\\s,:-]*", "");
+            current = current.replaceAll("(?i)[\\s,:-]*(message|please|whatsapp|whtsapp|whatsap|watsapp|via)$", "");
             current = current.replaceAll("\\s+", " ").trim();
         } while (!current.equals(previous));
 
         return current;
+    }
+
+    private String resolveMappedPhone(String contactName) {
+        if (contactName == null || contactName.isBlank()) {
+            return "";
+        }
+
+        String contactKey = normalizeContactKey(contactName);
+        if (contactKey.isBlank()) {
+            return "";
+        }
+
+        String mapped = appProperties.getProperty(CONTACT_PROPERTY_PREFIX + contactKey, "").trim();
+        if (mapped.isBlank()) {
+            return "";
+        }
+
+        return mapped;
+    }
+
+    private String normalizeContactKey(String contactName) {
+        return contactName == null
+                ? ""
+                : contactName.toLowerCase().replaceAll("[^a-z0-9]", "");
     }
 
     record ParsedWhatsAppRequest(String message, String contactName, boolean callIntent) {

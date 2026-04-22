@@ -1,10 +1,9 @@
 package com.edithj.launcher;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.lang.reflect.Method;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 class CrossPlatformLauncherTest {
@@ -40,5 +39,16 @@ class CrossPlatformLauncherTest {
         boolean result = (boolean) method.invoke(launcher, "notepad");
 
         assertFalse(result);
+    }
+
+    @Test
+    void isUrl_acceptsCustomWhatsappScheme() throws Exception {
+        CrossPlatformLauncher launcher = new CrossPlatformLauncher();
+        Method method = CrossPlatformLauncher.class.getDeclaredMethod("isUrl", String.class);
+        method.setAccessible(true);
+
+        boolean result = (boolean) method.invoke(launcher, "whatsapp://send?text=hello%20world");
+
+        assertTrue(result);
     }
 }
