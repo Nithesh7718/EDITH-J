@@ -6,7 +6,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.edithj.assistant.AssistantResponse;
-import com.edithj.speech.SpeechRecognizer;
 import com.edithj.ui.model.ChatMessageViewModel;
 import com.edithj.ui.session.UiAssistantGateway;
 import com.edithj.ui.session.UiPreferencesService;
@@ -37,7 +36,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-@SuppressWarnings("unused")
 public class ChatController {
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
@@ -65,11 +63,11 @@ public class ChatController {
     private boolean micErrorState;
 
     public ChatController() {
-        this(UiAssistantGateway.instance(), new UiSpeechService(new SpeechRecognizer()));
+        this(UiAssistantGateway.instance(), UiSpeechService.instance());
     }
 
     public ChatController(UiAssistantGateway assistantGateway) {
-        this(assistantGateway, new UiSpeechService(new SpeechRecognizer()));
+        this(assistantGateway, UiSpeechService.instance());
     }
 
     public ChatController(UiAssistantGateway assistantGateway, UiSpeechService uiSpeechService) {

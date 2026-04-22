@@ -8,7 +8,6 @@ import com.edithj.assistant.AssistantResponse;
 import com.edithj.assistant.AssistantStatus;
 import com.edithj.assistant.AssistantStatusProbe;
 import com.edithj.assistant.AssistantStatusService;
-import com.edithj.speech.SpeechRecognizer;
 import com.edithj.ui.component.AudioAuraCanvas;
 import com.edithj.ui.model.AssistantUiState;
 import com.edithj.ui.model.ChatMessageViewModel;
@@ -116,7 +115,7 @@ public class MainShellController {
 
     // ── Constructor ───────────────────────────────────────────────────────────
     public MainShellController() {
-        this.speechService = new UiSpeechService(new SpeechRecognizer());
+        this.speechService = UiSpeechService.instance();
     }
 
     // ── Initialise ────────────────────────────────────────────────────────────

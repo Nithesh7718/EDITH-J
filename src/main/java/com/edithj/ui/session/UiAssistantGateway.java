@@ -153,23 +153,6 @@ public final class UiAssistantGateway {
     public void setReadyMessage(String message) {
         runOnFx(() -> statusText.set(message == null || message.isBlank() ? "Ready" : message));
     }
-
-    /** @deprecated Use {@link #setProcessing()} instead. */
-    @Deprecated(since = "2.0", forRemoval = false)
-    private void setThinking(String text) {
-        runOnFx(() -> {
-            thinking.set(true);
-            statusText.set(text);
-        });
-    }
-
-    /** @deprecated Use {@link #setIdle()} instead. */
-    @Deprecated(since = "2.0", forRemoval = false)
-    private void clearThinking() {
-        thinking.set(false);
-        statusText.set("Ready");
-    }
-
     // ── Helpers ───────────────────────────────────────────────────────────────
     private static void runOnFx(Runnable r) {
         if (Platform.isFxApplicationThread()) {

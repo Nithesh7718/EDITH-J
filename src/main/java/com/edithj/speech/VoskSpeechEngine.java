@@ -44,12 +44,10 @@ public final class VoskSpeechEngine implements SpeechRecognizer.TranscriptionEng
             return unavailable(normalizedPath, "Vosk model folder was not found at " + normalizedPath);
         }
 
-        try {
-            Model model = new Model(normalizedPath.toString());
-            return new VoskSpeechEngine(normalizedPath, model, true, "");
-        } catch (IOException | RuntimeException | UnsatisfiedLinkError exception) {
-            return unavailable(normalizedPath, "Unable to load Vosk model from " + normalizedPath + ": " + exception.getMessage());
+        if (!VoskModelHolder.isAvailable()) {
+            return unavailable(normalizedPath, "Vosk model failed to load or is not present.");
         }
+        return new VoskSpeechEngine(normalizedPath, VoskModelHolder.get(), true, "");
     }
 
     @Override

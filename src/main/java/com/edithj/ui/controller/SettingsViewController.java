@@ -10,7 +10,6 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 
-@SuppressWarnings("unused")
 public class SettingsViewController {
 
     @FXML
@@ -25,7 +24,6 @@ public class SettingsViewController {
     private final ThemeService themeService = ThemeService.instance();
     private final UiPreferencesService uiPreferencesService = UiPreferencesService.instance();
 
-    @SuppressWarnings("unused")
     @FXML
     private void initialize() {
         boolean hasApiKey = AppConfig.load().modelConfig().apiKey() != null
@@ -43,7 +41,6 @@ public class SettingsViewController {
         });
     }
 
-    @SuppressWarnings("unused")
     @FXML
     private void onToggleTheme() {
         if (themeToggleButton.getScene() == null) {
@@ -52,7 +49,6 @@ public class SettingsViewController {
         themeService.toggleTheme(themeToggleButton.getScene());
     }
 
-    @SuppressWarnings("unused")
     @FXML
     private void onVoiceAutoSendToggled() {
         uiPreferencesService.setAutoSendVoiceInputEnabled(voiceAutoSendCheckBox.isSelected());

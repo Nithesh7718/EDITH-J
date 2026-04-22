@@ -6,7 +6,6 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 
-@SuppressWarnings("unused")
 public class RemindersComingSoonController {
 
     @FXML

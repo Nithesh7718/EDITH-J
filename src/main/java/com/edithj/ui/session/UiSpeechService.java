@@ -24,7 +24,13 @@ public final class UiSpeechService {
     private volatile boolean available;
     private long activeSessionId;
 
-    public UiSpeechService(SpeechRecognizer recognizer) {
+    private static final UiSpeechService INSTANCE = new UiSpeechService(new SpeechRecognizer());
+
+    public static UiSpeechService instance() {
+        return INSTANCE;
+    }
+
+    private UiSpeechService(SpeechRecognizer recognizer) {
         this.recognizer = Objects.requireNonNull(recognizer, "recognizer");
         this.available = this.recognizer.isAvailable() && probeMicrophoneAvailability();
     }

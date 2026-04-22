@@ -202,10 +202,15 @@ public final class AudioAuraCanvas extends Canvas {
         };
 
         // ── Outer glow rings ──────────────────────────────────────────────────
+        double rComponent = barColor.getRed();
+        double gComponent = barColor.getGreen();
+        double bComponent = barColor.getBlue();
+        double baseAlpha = barColor.getOpacity();
+
         double ringR1 = AVATAR_RADIUS + INNER_RING_GAP + BAR_MAX_H * 0.5 * ringScale;
-        drawGlowRing(gc, cx, cy, ringR1, barColor.deriveColor(0, 1, 1, 0.08 + effective * 0.12), 1.5);
+        drawGlowRing(gc, cx, cy, ringR1, Color.color(rComponent, gComponent, bComponent, baseAlpha * (0.08 + effective * 0.12)), 1.5);
         double ringR2 = ringR1 + 8 * ringScale;
-        drawGlowRing(gc, cx, cy, ringR2, barColor.deriveColor(0, 1, 1, 0.05 + effective * 0.06), 1.0);
+        drawGlowRing(gc, cx, cy, ringR2, Color.color(rComponent, gComponent, bComponent, baseAlpha * (0.05 + effective * 0.06)), 1.0);
 
         // ── Aura bars ─────────────────────────────────────────────────────────
         double innerR = AVATAR_RADIUS + INNER_RING_GAP;
@@ -222,7 +227,7 @@ public final class AudioAuraCanvas extends Canvas {
 
             // Alpha varies with bar height for additional depth
             double alpha = 0.35 + 0.65 * (barH / BAR_MAX_H);
-            gc.setStroke(barColor.deriveColor(0, 1, 1, alpha));
+            gc.setStroke(Color.color(rComponent, gComponent, bComponent, baseAlpha * alpha));
             gc.setLineWidth(BAR_WIDTH);
             gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
             gc.strokeLine(x1, y1, x2, y2);
@@ -281,14 +286,14 @@ public final class AudioAuraCanvas extends Canvas {
                       AVATAR_RADIUS * 2, AVATAR_RADIUS * 2);
 
         // "E" text logo
-        gc.setFill(COLOR_CYAN.deriveColor(0, 1, 1, 0.90 + effective * 0.10));
+        gc.setFill(Color.color(COLOR_CYAN.getRed(), COLOR_CYAN.getGreen(), COLOR_CYAN.getBlue(), COLOR_CYAN.getOpacity() * (0.90 + effective * 0.10)));
         gc.setFont(javafx.scene.text.Font.font("Consolas", javafx.scene.text.FontWeight.BOLD, 34));
         gc.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
         gc.setTextBaseline(javafx.geometry.VPos.CENTER);
         gc.fillText("E", cx, cy);
 
         // State sub-label
-        gc.setFill(COLOR_CYAN.deriveColor(0, 1, 1, 0.60));
+        gc.setFill(Color.color(COLOR_CYAN.getRed(), COLOR_CYAN.getGreen(), COLOR_CYAN.getBlue(), COLOR_CYAN.getOpacity() * 0.60));
         gc.setFont(javafx.scene.text.Font.font("Consolas", javafx.scene.text.FontWeight.NORMAL, 10));
         gc.fillText(state.name(), cx, cy + AVATAR_RADIUS * 0.55);
     }
