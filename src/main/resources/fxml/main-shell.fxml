@@ -1,54 +1,230 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Rectangle?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21"
+<!--
+    EDITH-J  —  Main Shell  (FRIDAY-style premium voice console)
+    Controller: com.edithj.ui.controller.MainShellController
+    CSS:        /css/friday-theme.css
+-->
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            xmlns="http://javafx.com/javafx/17"
+            fx:id="rootPane"
             fx:controller="com.edithj.ui.controller.MainShellController"
-            styleClass="app-shell">
+            styleClass="app-shell"
+            minWidth="980" minHeight="680">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TOP  —  Status bar
+         ═══════════════════════════════════════════════════════════════════════ -->
     <top>
-        <HBox spacing="0" styleClass="app-header" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-            <padding>
-                <Insets top="14.0" right="24.0" bottom="14.0" left="24.0"/>
-            </padding>
-            <VBox spacing="2.0" alignment="CENTER_LEFT">
-                <HBox spacing="6.0" alignment="CENTER_LEFT">
-                    <Label text="EDITH" styleClass="app-title"/>
-                    <Label text="-J" styleClass="app-title-accent"/>
-                </HBox>
-                <Label text="Your desktop assistant" styleClass="app-subtitle"/>
-            </VBox>
+        <HBox styleClass="status-bar" alignment="CENTER_LEFT" spacing="14"
+              BorderPane.alignment="CENTER">
+            <padding><Insets top="10" right="24" bottom="10" left="24"/></padding>
+
+            <!-- Left: logo -->
+            <HBox spacing="2" alignment="CENTER_LEFT">
+                <Label text="EDITH" styleClass="app-title"/>
+                <Label text="-J" styleClass="app-title-accent"/>
+            </HBox>
+            <Label text="Voice Console" styleClass="app-subtitle"/>
+
             <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="statusBadgeLabel" text="Ready" styleClass="status-badge"/>
-            <Button text="Settings" onAction="#openSettingsDialog" styleClass="header-button"/>
-            <Button text="What can you do?" onAction="#openHelpDialog" styleClass="header-button-accent"/>
+
+            <!-- State pill -->
+            <Label fx:id="statePillLabel" text="● IDLE" styleClass="state-pill, state-pill-idle"/>
+
+            <!-- Connection indicator -->
+            <HBox spacing="6" alignment="CENTER" styleClass="connection-indicator">
+                <Circle fx:id="connectionDot" radius="4" styleClass="conn-dot-online"/>
+                <Label fx:id="connectionLabel" text="Online" styleClass="conn-text"/>
+            </HBox>
+
+            <!-- Model badge -->
+            <Label fx:id="modelBadgeLabel" text="MODEL: –" styleClass="model-badge"/>
+
+            <!-- Settings button -->
+            <Button fx:id="btnHeaderSettings" text="⚙" onAction="#openSettingsDialog"
+                    styleClass="icon-button" prefWidth="36" prefHeight="36">
+                <tooltip><Tooltip text="Settings"/></tooltip>
+            </Button>
         </HBox>
     </top>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LEFT  —  Info panel  (last command, model, system info cards)
+         ═══════════════════════════════════════════════════════════════════════ -->
     <left>
-        <VBox spacing="10.0" prefWidth="232.0" styleClass="sidebar" BorderPane.alignment="TOP_CENTER">
-            <padding>
-                <Insets top="24.0" right="12.0" bottom="24.0" left="12.0"/>
-            </padding>
-            <Label text="NAVIGATION" styleClass="sidebar-label"/>
-            <Button text="Home (Chat)" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
-            <Button text="Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnNotes"/>
-            <Button text="Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnReminders"/>
-            <Button text="Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
-            <Button text="Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
-            <Separator styleClass="sidebar-divider"/>
-            <Label text="Voice + typed commands share one assistant pipeline." styleClass="sidebar-tip" wrapText="true"/>
+        <VBox spacing="12" prefWidth="220" minWidth="180" maxWidth="260"
+              styleClass="info-panel" BorderPane.alignment="TOP_CENTER">
+            <padding><Insets top="24" right="14" bottom="24" left="14"/></padding>
+
+            <Label text="SYSTEM" styleClass="panel-section-label"/>
+
+            <!-- Status card -->
+            <VBox styleClass="info-card" spacing="4">
+                <Label text="ASSISTANT STATE" styleClass="card-label"/>
+                <Label fx:id="stateCardLabel" text="IDLE" styleClass="card-value-cyan"/>
+            </VBox>
+
+            <!-- Model card -->
+            <VBox styleClass="info-card" spacing="4">
+                <Label text="ACTIVE MODEL" styleClass="card-label"/>
+                <Label fx:id="modelCardLabel" text="Loading…" styleClass="card-value" wrapText="true"/>
+            </VBox>
+
+            <!-- Last command card -->
+            <VBox styleClass="info-card" spacing="4">
+                <Label text="LAST COMMAND" styleClass="card-label"/>
+                <Label fx:id="lastCommandLabel" text="–" styleClass="card-value" wrapText="true"/>
+            </VBox>
+
+            <Separator styleClass="panel-divider"/>
+            <Label text="NAVIGATION" styleClass="panel-section-label"/>
+
+            <Button text="⌂  Home" onAction="#showChatView"
+                    maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
+            <Button text="♪  Notes" onAction="#showNotesView"
+                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes"/>
+            <Button text="⏰  Reminders" onAction="#showRemindersView"
+                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders"/>
+            <Button text="⬛  Desktop Tools" onAction="#showDesktopToolsView"
+                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
+            <Button text="⚙  Settings" onAction="#showSettingsView"
+                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
+
             <Region VBox.vgrow="ALWAYS"/>
-            <Label text="BUILD v0.1.0" styleClass="sidebar-label"/>
+            <Label text="BUILD v0.1.0" styleClass="panel-section-label"/>
         </VBox>
     </left>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CENTER  —  Avatar + Audio Aura visualiser  +  content host overlay
+         ═══════════════════════════════════════════════════════════════════════ -->
     <center>
-        <StackPane fx:id="contentHost" styleClass="content-host" BorderPane.alignment="CENTER"/>
+        <BorderPane styleClass="center-pane">
+
+            <!-- Avatar panel: takes upper portion -->
+            <top>
+                <StackPane styleClass="avatar-zone" prefHeight="260" minHeight="220">
+                    <!-- AudioAuraCanvas is added programmatically by controller -->
+                    <StackPane fx:id="auraHost" styleClass="aura-host"
+                               prefWidth="340" prefHeight="260"
+                               maxWidth="340" maxHeight="260"/>
+                </StackPane>
+            </top>
+
+            <!-- Content host: takes remaining space, loads sub-views -->
+            <center>
+                <StackPane fx:id="contentHost" styleClass="content-host"/>
+            </center>
+
+        </BorderPane>
     </center>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         RIGHT  —  Transcript / Chat panel
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <right>
+        <VBox spacing="0" prefWidth="340" minWidth="280" maxWidth="420"
+              styleClass="transcript-panel" BorderPane.alignment="TOP_CENTER">
+
+            <!-- Transcript header -->
+            <HBox styleClass="transcript-header" alignment="CENTER_LEFT" spacing="10">
+                <padding><Insets top="12" right="16" bottom="12" left="16"/></padding>
+                <Label text="TRANSCRIPT" styleClass="transcript-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="btnClearChat" text="✕ Clear" onAction="#clearTranscript"
+                        styleClass="clear-button"/>
+            </HBox>
+
+            <!-- Chat ListView -->
+            <ListView fx:id="transcriptList"
+                      VBox.vgrow="ALWAYS"
+                      styleClass="transcript-list"/>
+
+            <!-- Partial / live text indicator -->
+            <HBox styleClass="partial-bar" alignment="CENTER_LEFT" spacing="8"
+                  fx:id="partialBar" managed="false" visible="false">
+                <padding><Insets top="6" right="14" bottom="6" left="14"/></padding>
+                <Circle radius="4" styleClass="partial-dot"/>
+                <Label fx:id="partialLabel" text="" styleClass="partial-text" wrapText="true"/>
+            </HBox>
+
+        </VBox>
+    </right>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         BOTTOM  —  Control bar
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <bottom>
+        <VBox styleClass="control-bar-wrap" BorderPane.alignment="CENTER">
+
+            <!-- Quick-chip suggestions row -->
+            <HBox fx:id="chipRow" spacing="8" alignment="CENTER" styleClass="chip-row">
+                <padding><Insets top="8" right="24" bottom="0" left="24"/></padding>
+                <Button text="What's the weather?" onAction="#insertWeatherChip" styleClass="chip-button"/>
+                <Button text="Open YouTube" onAction="#insertYoutubeChip" styleClass="chip-button"/>
+                <Button text="Set a reminder" onAction="#insertReminderChip" styleClass="chip-button"/>
+                <Button text="List my notes" onAction="#insertNotesChip" styleClass="chip-button"/>
+            </HBox>
+
+            <!-- Main control HBox -->
+            <HBox styleClass="control-bar" spacing="14" alignment="CENTER">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+
+                <!-- Mic toggle button (large, circular) -->
+                <Button fx:id="btnMic" text="🎙" onAction="#onMicToggle"
+                        styleClass="mic-button" prefWidth="58" prefHeight="58">
+                    <tooltip><Tooltip text="Toggle microphone (Space)"/></tooltip>
+                </Button>
+
+                <!-- Text input -->
+                <TextField fx:id="textInput"
+                           promptText="Type a command or question…"
+                           HBox.hgrow="ALWAYS"
+                           styleClass="command-input"
+                           onAction="#onTextSend"/>
+
+                <!-- Send button -->
+                <Button fx:id="btnSend" text="Send ▶" onAction="#onTextSend"
+                        styleClass="send-button"/>
+
+                <!-- Settings shortcut -->
+                <Button fx:id="btnSettings2" text="⚙" onAction="#openSettingsDialog"
+                        styleClass="icon-button" prefWidth="38" prefHeight="38">
+                    <tooltip><Tooltip text="Settings"/></tooltip>
+                </Button>
+
+            </HBox>
+
+            <!-- Mic status hint label -->
+            <HBox alignment="CENTER">
+                <padding><Insets bottom="6"/></padding>
+                <Label fx:id="micHintLabel" text="Tap 🎙 or press Space to speak"
+                       styleClass="mic-hint"/>
+            </HBox>
+        </VBox>
+    </bottom>
+
+    <!-- Toast overlay — positioned absolutely via controller -->
+    <fx:define>
+        <!-- No additional definitions needed -->
+    </fx:define>
+
 </BorderPane>
