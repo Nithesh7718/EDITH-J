@@ -8,6 +8,8 @@ import com.edithj.assistant.AssistantResponse;
 import com.edithj.assistant.AssistantStatus;
 import com.edithj.assistant.AssistantStatusProbe;
 import com.edithj.assistant.AssistantStatusService;
+import com.edithj.integration.kb.PlaceholderLocalKnowledgeClient;
+import com.edithj.integration.worldmonitor.WorldMonitorClient;
 import com.edithj.ui.component.AudioAuraCanvas;
 import com.edithj.ui.model.AssistantUiState;
 import com.edithj.ui.model.ChatMessageViewModel;
@@ -539,14 +541,8 @@ public class MainShellController {
     // ── Settings & Help dialogs ───────────────────────────────────────────────
     @FXML
     private void openSettingsDialog() {
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                javafx.scene.control.Alert.AlertType.INFORMATION);
-        alert.setTitle("EDITH-J Settings");
-        alert.setHeaderText("Configuration");
-        alert.setContentText("API key status: "
-                + (statusService.status() == AssistantStatus.ONLINE ? "Online" : "Offline / unconfigured")
-                + "\nOpen the Settings page from the left panel for full options.");
-        alert.showAndWait();
+        // Non-blocking: open Settings in the center workspace.
+        showSettingsView();
     }
 
     // ── Toast notification ────────────────────────────────────────────────────
@@ -580,6 +576,8 @@ public class MainShellController {
     private void runStartupStatusProbe() {
         CompletableFuture.runAsync(() -> {
             statusProbe.runStartupProbe();
+            WorldMonitorClient worldMonitorClient = new WorldMonitorClient();
+            PlaceholderLocalKnowledgeClient localKnowledgeClient = new PlaceholderLocalKnowledgeClient();
             Platform.runLater(() -> {
                 AssistantStatus status = statusService.status();
                 boolean online = status == AssistantStatus.ONLINE;
@@ -589,14 +587,41 @@ public class MainShellController {
                 // Update model badge
                 modelBadgeLabel.setText("MODEL: Groq / Llama");
                 modelCardLabel.setText("Groq / Llama 3");
-                if (worldMonitorStatusLabel != null) {
-                    worldMonitorCardViewModel.worldMonitorStatusProperty().set("World hub ready (polling scaffold)");
-                }
-                if (localKbStatusLabel != null) {
-                    worldMonitorCardViewModel.localKbStatusProperty().set("Local KB placeholder mode");
-                }
+
+                updateWorldHubCard(worldMonitorClient);
+                updateLocalKbCard(localKnowledgeClient);
             });
         });
+    }
+
+    private void updateWorldHubCard(WorldMonitorClient worldMonitorClient) {
+        if (worldMonitorClient == null) {
+            worldMonitorCardViewModel.worldMonitorStatusProperty().set("World Monitor: unavailable");
+            return;
+        }
+
+        if (!worldMonitorClient.isConfigured()) {
+            worldMonitorCardViewModel.worldMonitorStatusProperty().set("Unconfigured • set WORLD_MONITOR_API_KEY");
+            return;
+        }
+
+        // Configured but no polling scheduler wired yet.
+        java.time.Instant last = worldMonitorClient.lastCacheUpdate();
+        if (last == null) {
+            worldMonitorCardViewModel.worldMonitorStatusProperty().set("Configured • last update: never");
+            return;
+        }
+
+        worldMonitorCardViewModel.onWorldDataUpdated(new com.edithj.integration.worldmonitor.WorldSnapshot(last, java.util.List.of(), null, null));
+    }
+
+    private void updateLocalKbCard(PlaceholderLocalKnowledgeClient localKnowledgeClient) {
+        if (localKnowledgeClient == null) {
+            worldMonitorCardViewModel.localKbStatusProperty().set("Local KB: unavailable");
+            return;
+        }
+
+        worldMonitorCardViewModel.setLocalKbStatus(localKnowledgeClient.statusSummary());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

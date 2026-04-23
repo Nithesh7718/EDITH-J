@@ -1005,6 +1005,176 @@
     font-size: 11px;
 }
 
+/* Legacy helper class used in a few subviews */
+.cursor-pointer {
+    -fx-cursor: hand;
+    cursor: pointer;
+}
+
+/* Notes view: sidebar divider (migrated from inline styles) */
+.notes-sidebar {
+    -fx-border-color: transparent rgba(31, 213, 249, 0.18) transparent transparent;
+    border-color: transparent rgba(31, 213, 249, 0.18) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    border-width: 0 1px 0 0;
+    -fx-padding: 0 12 0 0;
+    padding: 0 12px 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SUBVIEWS — Notes / Reminders / Tools (migrated from legacy app.css)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.notes-panel,
+.reminders-panel,
+.settings-panel,
+.tools-dashboard,
+.coming-soon-panel {
+    -fx-background-color: transparent;
+    background-color: transparent;
+}
+
+.notes-list,
+.reminders-list {
+    -fx-background-color: rgba(13, 27, 46, 0.55);
+    background-color: rgba(13, 27, 46, 0.55);
+    -fx-control-inner-background: rgba(13, 27, 46, 0.55);
+    -fx-border-color: rgba(31, 213, 249, 0.18);
+    border-color: rgba(31, 213, 249, 0.18);
+    -fx-border-width: 1;
+    border-width: 1px;
+}
+
+.editor-section {
+    -fx-background-color: rgba(13, 27, 46, 0.45);
+    background-color: rgba(13, 27, 46, 0.45);
+    -fx-border-color: rgba(31, 213, 249, 0.16);
+    border-color: rgba(31, 213, 249, 0.16);
+    -fx-border-width: 1;
+    border-width: 1px;
+    -fx-border-radius: 8;
+    border-radius: 8px;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+    padding: 12px;
+}
+
+.field-label {
+    -fx-text-fill: rgba(125, 211, 252, 0.95);
+    -fx-font-size: 11px;
+    font-size: 11px;
+    -fx-font-weight: 700;
+    font-weight: 700;
+    -fx-font-family: "Consolas", monospace;
+    font-family: "Consolas", monospace;
+    -fx-letter-spacing: 1px;
+}
+
+.section-heading {
+    -fx-text-fill: #C7D2FE;
+    -fx-font-size: 14px;
+    font-size: 14px;
+    -fx-font-weight: 800;
+    font-weight: 800;
+}
+
+.action-button {
+    -fx-background-color: rgba(31, 213, 249, 0.10);
+    background-color: rgba(31, 213, 249, 0.10);
+    -fx-border-color: rgba(31, 213, 249, 0.30);
+    border-color: rgba(31, 213, 249, 0.30);
+    -fx-border-width: 1;
+    border-width: 1px;
+    -fx-border-radius: 8;
+    border-radius: 8px;
+    -fx-background-radius: 8;
+    -fx-text-fill: #A5F3FC;
+    -fx-font-size: 11px;
+    font-size: 11px;
+    -fx-font-weight: 700;
+    font-weight: 700;
+    -fx-padding: 8 14;
+    padding: 8px 14px;
+    -fx-cursor: hand;
+    cursor: pointer;
+}
+
+.action-button:hover {
+    -fx-background-color: rgba(31, 213, 249, 0.22);
+    background-color: rgba(31, 213, 249, 0.22);
+    -fx-border-color: #1FD5F9;
+    border-color: #1FD5F9;
+    -fx-text-fill: #FFFFFF;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.filter-tab-button {
+    -fx-background-color: rgba(31, 213, 249, 0.08);
+    background-color: rgba(31, 213, 249, 0.08);
+    -fx-text-fill: rgba(125, 211, 252, 0.90);
+    -fx-border-color: rgba(31, 213, 249, 0.22);
+    border-color: rgba(31, 213, 249, 0.22);
+    -fx-border-width: 1;
+    border-width: 1px;
+    -fx-border-radius: 8;
+    border-radius: 8px;
+    -fx-background-radius: 8;
+    -fx-padding: 6 12;
+    padding: 6px 12px;
+    -fx-font-size: 11px;
+    font-size: 11px;
+    -fx-font-weight: 700;
+    font-weight: 700;
+    -fx-cursor: hand;
+    cursor: pointer;
+}
+
+.filter-tab-button:hover {
+    -fx-background-color: rgba(31, 213, 249, 0.16);
+    background-color: rgba(31, 213, 249, 0.16);
+    -fx-border-color: rgba(31, 213, 249, 0.45);
+    border-color: rgba(31, 213, 249, 0.45);
+}
+
+.filter-tab-button-active {
+    -fx-background-color: rgba(31, 213, 249, 0.22);
+    background-color: rgba(31, 213, 249, 0.22);
+    -fx-border-color: #1FD5F9;
+    border-color: #1FD5F9;
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.35), 10, 0.2, 0, 0);
+}
+
+.filter-count {
+    -fx-text-fill: rgba(148, 163, 184, 0.80);
+    -fx-font-size: 11px;
+    font-size: 11px;
+}
+
+.status-text {
+    -fx-text-fill: #00FFA3;
+    -fx-font-size: 11px;
+    font-size: 11px;
+    -fx-font-weight: 700;
+    font-weight: 700;
+}
+
+.tools-output {
+    -fx-control-inner-background: rgba(5, 6, 11, 0.90);
+    -fx-text-fill: #D1FAE5;
+}
+
+.task-row {
+    -fx-alignment: center-left;
+    -fx-padding: 4 8;
+    padding: 4px 8px;
+}
+
+.task-item-label {
+    -fx-text-fill: rgba(226, 235, 245, 0.90);
+}
+
 /* Chat history list (inside chat-view.fxml) */
 .chat-history {
     -fx-background-color: rgba(5, 6, 11, 0.65);

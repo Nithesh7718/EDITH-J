@@ -19,6 +19,7 @@ import com.edithj.notes.InMemoryNoteRepository;
 import com.edithj.notes.NoteService;
 import com.edithj.reminders.InMemoryReminderRepository;
 import com.edithj.reminders.ReminderService;
+import com.edithj.ui.session.UiPreferencesService;
 
 class DesktopToolsCommandHandlerTest {
 
@@ -84,6 +85,7 @@ class DesktopToolsCommandHandlerTest {
 
     @Test
     void handle_workModeEnabled_launchesDemoTargetsWithFakeLauncher() {
+        UiPreferencesService.instance().setDevSmokeLaunchersEnabled(true);
         FakeLauncher fakeLauncher = new FakeLauncher();
         DesktopToolsCommandHandler handler = newHandler(fakeLauncher, true, new FakeClipboardService(),
                 new FakeDesktopFileService());

@@ -2,6 +2,8 @@ package com.edithj.ui.session;
 
 import java.util.prefs.Preferences;
 
+import com.edithj.config.AppConfig;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
@@ -13,12 +15,14 @@ public final class UiPreferencesService {
     private static final String KEY_PREFER_SHORTCUT_APPS = "launcher.preferShortcutApps";
     private static final String KEY_ALLOW_WEB_FALLBACK = "launcher.allowWebFallback";
     private static final String KEY_WHATSAPP_APP_FIRST = "launcher.whatsappAppFirst";
+    private static final String KEY_DEV_SMOKE_LAUNCHERS_ENABLED = "dev.smokeLaunchersEnabled";
 
     private final Preferences preferences = Preferences.userNodeForPackage(UiPreferencesService.class);
     private final BooleanProperty autoSendVoiceInput = new SimpleBooleanProperty(true);
     private final BooleanProperty preferShortcutApps = new SimpleBooleanProperty(true);
     private final BooleanProperty allowWebFallback = new SimpleBooleanProperty(true);
     private final BooleanProperty whatsappAppFirst = new SimpleBooleanProperty(true);
+    private final BooleanProperty devSmokeLaunchersEnabled = new SimpleBooleanProperty(false);
 
     private UiPreferencesService() {
         autoSendVoiceInput.set(preferences.getBoolean(KEY_AUTO_SEND_VOICE_INPUT, true));
@@ -36,6 +40,11 @@ public final class UiPreferencesService {
         whatsappAppFirst.set(preferences.getBoolean(KEY_WHATSAPP_APP_FIRST, true));
         whatsappAppFirst.addListener((obs, oldValue, newValue)
                 -> preferences.putBoolean(KEY_WHATSAPP_APP_FIRST, newValue));
+
+        boolean defaultSmokeLaunchers = AppConfig.load().isDevSmokeLaunchersEnabled();
+        devSmokeLaunchersEnabled.set(preferences.getBoolean(KEY_DEV_SMOKE_LAUNCHERS_ENABLED, defaultSmokeLaunchers));
+        devSmokeLaunchersEnabled.addListener((obs, oldValue, newValue)
+                -> preferences.putBoolean(KEY_DEV_SMOKE_LAUNCHERS_ENABLED, newValue));
     }
 
     public static UiPreferencesService instance() {
@@ -88,5 +97,17 @@ public final class UiPreferencesService {
 
     public void setWhatsAppAppFirstEnabled(boolean enabled) {
         whatsappAppFirst.set(enabled);
+    }
+
+    public BooleanProperty devSmokeLaunchersEnabledProperty() {
+        return devSmokeLaunchersEnabled;
+    }
+
+    public boolean isDevSmokeLaunchersEnabled() {
+        return devSmokeLaunchersEnabled.get();
+    }
+
+    public void setDevSmokeLaunchersEnabled(boolean enabled) {
+        devSmokeLaunchersEnabled.set(enabled);
     }
 }

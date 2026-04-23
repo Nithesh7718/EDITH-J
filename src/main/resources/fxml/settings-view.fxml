@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-    xmlns="http://javafx.com/javafx/21" fx:controller="com.edithj.ui.controller.SettingsViewController" spacing="12.0" styleClass="settings-panel">
+    xmlns="http://javafx.com/javafx/17" fx:controller="com.edithj.ui.controller.SettingsViewController" spacing="12.0" styleClass="settings-panel">
     <padding>
         <Insets top="18.0" right="18.0" bottom="18.0" left="18.0"/>
     </padding>
@@ -15,8 +15,14 @@
     <Label text="This panel exposes basic runtime toggles while core behavior stays in the assistant pipeline." styleClass="panel-hint" wrapText="true"/>
 
     <VBox spacing="8.0" styleClass="content-card">
-        <Label text="Model" styleClass="card-title"/>
+        <Label text="Model & environment" styleClass="card-title"/>
         <Label fx:id="apiKeyStatusLabel" text="Checking Groq API key..."/>
+        <Label text="Model" styleClass="card-label"/>
+        <Label fx:id="modelLabel" text="—" styleClass="card-value" wrapText="true"/>
+        <Label text="Environment" styleClass="card-label"/>
+        <Label fx:id="environmentLabel" text="—" styleClass="card-value" wrapText="true"/>
+        <Label text="Version" styleClass="card-label"/>
+        <Label fx:id="versionLabel" text="—" styleClass="card-value" wrapText="true"/>
     </VBox>
 
     <VBox spacing="8.0" styleClass="content-card">
@@ -29,6 +35,12 @@
         <Label text="WhatsApp" styleClass="card-title"/>
         <CheckBox fx:id="whatsappAppFirstCheckBox" text="Open WhatsApp in the desktop app first" onAction="#onWhatsAppAppFirstToggled"/>
         <Label text="If the app is missing, EDITH can fall back to WhatsApp Web when web fallback is enabled." styleClass="panel-hint" wrapText="true"/>
+    </VBox>
+
+    <VBox spacing="8.0" styleClass="content-card">
+        <Label text="Developer" styleClass="card-title"/>
+        <CheckBox fx:id="devSmokeLaunchersCheckBox" text="Dev smoke launchers (start work mode)" onAction="#onDevSmokeLaunchersToggled"/>
+        <Label text="When enabled, EDITH can open a small set of apps/sites to smoke-test launcher integration." styleClass="panel-hint" wrapText="true"/>
     </VBox>
 
     <VBox spacing="8.0" styleClass="content-card">
