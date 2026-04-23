@@ -2,12 +2,13 @@ package com.edithj.assistant;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.edithj.commands.CommandHandler;
 import com.edithj.commands.CalendarCommandHandler;
+import com.edithj.commands.CommandHandler;
 import com.edithj.commands.DesktopToolsCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
 import com.edithj.commands.FallbackChatHandler;
@@ -26,11 +27,14 @@ public class AssistantService {
 
     private static final Logger logger = LoggerFactory.getLogger(AssistantService.class);
     private static final int DEFAULT_MEMORY_WINDOW = 12;
+    private static final Pattern WHATSAPP_FOLLOWUP_SEND_PATTERN = Pattern.compile(
+            "(?i)^\\s*(?:(?:send|sen|snd|message|msg|text)\\b.*|(?:just|jusdt)\\s+send\\b.*)");
 
     private final SpeechService speechService;
     private final IntentRouter intentRouter;
     private final FallbackChatService fallbackChatService;
     private String lastVoiceTranscript = "";
+    private IntentType lastStructuredIntent = IntentType.FALLBACK_CHAT;
 
     public AssistantService() {
         this(new GroqClient(), new PromptBuilder(), new SpeechService(), new IntentRouter(), DEFAULT_MEMORY_WINDOW);
@@ -105,11 +109,54 @@ public class AssistantService {
 
         logger.info("Processing input from channel: {} | Input: {}", channel, normalized.substring(0, Math.min(100, normalized.length())));
         fallbackChatService.recordUserTurn(normalized);
-        AssistantResponse response = intentRouter.routeAndHandle(normalized, channel);
+        AssistantResponse response = routeWithContextRecovery(normalized, channel);
         logger.info("Intent routed to: {} | Response length: {}", response.intentType(), response.answer().length());
         fallbackChatService.recordAssistantTurn(response.answer());
 
+        if (response.intentType() != IntentType.FALLBACK_CHAT) {
+            lastStructuredIntent = response.intentType();
+        }
+
         return response;
+    }
+
+    private AssistantResponse routeWithContextRecovery(String normalizedInput, String channel) {
+        IntentRouter.RoutedIntent routedIntent = intentRouter.route(normalizedInput);
+        if (routedIntent.intentType() != IntentType.FALLBACK_CHAT) {
+            return intentRouter.routeAndHandle(routedIntent, channel);
+        }
+
+        if (shouldRecoverToWhatsApp(normalizedInput)) {
+            String recoveredInput = ensureWhatsAppPrefix(normalizedInput);
+            IntentRouter.RoutedIntent recoveredIntent = intentRouter.route(recoveredInput);
+            if (recoveredIntent.intentType() == IntentType.WHATSAPP) {
+                return intentRouter.routeAndHandle(recoveredIntent, channel);
+            }
+        }
+
+        return intentRouter.routeAndHandle(routedIntent, channel);
+    }
+
+    private boolean shouldRecoverToWhatsApp(String input) {
+        if (lastStructuredIntent != IntentType.WHATSAPP) {
+            return false;
+        }
+        String normalized = normalize(input).toLowerCase();
+        if (normalized.isBlank()) {
+            return false;
+        }
+        return WHATSAPP_FOLLOWUP_SEND_PATTERN.matcher(normalized).matches();
+    }
+
+    private String ensureWhatsAppPrefix(String input) {
+        String normalized = normalize(input);
+        if (normalized.toLowerCase().contains("whatsapp")
+                || normalized.toLowerCase().contains("whtsapp")
+                || normalized.toLowerCase().contains("whatsap")
+                || normalized.toLowerCase().contains("watsapp")) {
+            return normalized;
+        }
+        return "whatsapp " + normalized;
     }
 
     private void registerDefaultHandlers() {

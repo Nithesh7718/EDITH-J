@@ -57,6 +57,31 @@ class AssistantServiceTest {
     }
 
     @Test
+    void handleTypedInput_recoversWhatsappFollowUpTypoAfterWhatsappContext() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        FakeLauncher launcherService = new FakeLauncher();
+        service.registerCommandHandler(new WhatsAppCommandHandler(launcherService));
+
+        AssistantResponse first = service.handleTypedInput("open whtsapp");
+        AssistantResponse second = service.handleTypedInput("sen HI to krithick");
+        AssistantResponse third = service.handleTypedInput("jusdt send hello to krithick");
+
+        assertEquals(IntentType.WHATSAPP, first.intentType());
+        assertEquals(IntentType.WHATSAPP, second.intentType());
+        assertEquals(IntentType.WHATSAPP, third.intentType());
+        assertTrue(second.answer().contains("Opening WhatsApp in the app with your message"));
+        assertTrue(third.answer().contains("Opening WhatsApp in the app with your message"));
+        assertTrue(launcherService.lastOpenedUrl().startsWith("whatsapp://send?text=hello"));
+        assertFalse(fallbackChatService.wasInvoked());
+    }
+
+    @Test
     void handleTypedInput_routesEmailIntentsWithoutFallbackChat() {
         LlmClient llmClient = prompt -> "unused";
         PromptBuilder promptBuilder = new TestPromptBuilder();

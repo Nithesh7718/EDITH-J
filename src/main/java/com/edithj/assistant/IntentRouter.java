@@ -10,6 +10,8 @@ public class IntentRouter {
 
     private static final java.util.regex.Pattern WHATSAPP_KEYWORD_PATTERN = java.util.regex.Pattern.compile(
             "(?i)\\b(?:whatsapp|whtsapp|whatsap|watsapp|whats\\s*app)\\b");
+    private static final java.util.regex.Pattern WHATSAPP_DIRECT_SEND_PATTERN = java.util.regex.Pattern.compile(
+            "(?i)^\\s*(?:send|sen|snd|message|msg|text)\\b.*\\bto\\b.+");
 
     private final Map<IntentType, CommandHandler> handlers = new EnumMap<>(IntentType.class);
 
@@ -24,18 +26,25 @@ public class IntentRouter {
     }
 
     public AssistantResponse routeAndHandle(String rawInput, String channel) {
-        String safeChannel = (channel == null || channel.isBlank()) ? "typed" : channel;
         RoutedIntent routedIntent = route(rawInput);
+        return routeAndHandle(routedIntent, channel);
+    }
 
-        CommandHandler handler = handlers.get(routedIntent.intentType());
+    public AssistantResponse routeAndHandle(RoutedIntent routedIntent, String channel) {
+        String safeChannel = (channel == null || channel.isBlank()) ? "typed" : channel;
+        RoutedIntent safeIntent = routedIntent == null
+                ? new RoutedIntent(IntentType.FALLBACK_CHAT, "", "")
+                : routedIntent;
+
+        CommandHandler handler = handlers.get(safeIntent.intentType());
         String answer;
 
         if (handler == null) {
-            answer = "No handler is configured for intent: " + routedIntent.intentType() + ".";
+            answer = "No handler is configured for intent: " + safeIntent.intentType() + ".";
         } else {
             CommandHandler.CommandContext context = new CommandHandler.CommandContext(
-                    routedIntent.normalizedInput(),
-                    routedIntent.payload(),
+                    safeIntent.normalizedInput(),
+                    safeIntent.payload(),
                     safeChannel
             );
             try {
@@ -49,7 +58,7 @@ public class IntentRouter {
             answer = "I could not complete that request.";
         }
 
-        return new AssistantResponse(routedIntent.intentType(), routedIntent.normalizedInput(), answer.trim(), safeChannel);
+        return new AssistantResponse(safeIntent.intentType(), safeIntent.normalizedInput(), answer.trim(), safeChannel);
     }
 
     public RoutedIntent route(String rawInput) {
@@ -78,6 +87,9 @@ public class IntentRouter {
             return IntentType.EMAIL;
         }
         if (containsWhatsAppKeyword(input)) {
+            return IntentType.WHATSAPP;
+        }
+        if (looksLikeDirectWhatsAppMessageCommand(input)) {
             return IntentType.WHATSAPP;
         }
         if (isExplicitDesktopCommand(input)) {
@@ -124,7 +136,7 @@ public class IntentRouter {
             case CALENDAR ->
                 stripLeadingKeywordIgnoreCase(input, "add a meeting", "add meeting", "create an event", "create event", "schedule a meeting", "schedule an event", "schedule a reminder", "calendar", "add event", "create calendar event");
             case WHATSAPP ->
-                input;
+                normalizeWhatsAppPayload(input);
             case NOTES ->
                 stripLeadingKeywordIgnoreCase(input, "note", "notes", "notepad", "write down", "save this");
             case REMINDERS ->
@@ -165,6 +177,31 @@ public class IntentRouter {
 
     private boolean containsWhatsAppKeyword(String input) {
         return WHATSAPP_KEYWORD_PATTERN.matcher(input).find();
+    }
+
+    private boolean looksLikeDirectWhatsAppMessageCommand(String input) {
+        String normalized = input == null ? "" : input.trim();
+        if (normalized.isBlank()) {
+            return false;
+        }
+        if (isEmailCommand(normalized)) {
+            return false;
+        }
+        return WHATSAPP_DIRECT_SEND_PATTERN.matcher(normalized).matches();
+    }
+
+    private String normalizeWhatsAppPayload(String input) {
+        if (input == null) {
+            return "";
+        }
+
+        String normalized = input.trim();
+        normalized = normalized.replaceFirst("(?i)^sen\\b", "send");
+        normalized = normalized.replaceFirst("(?i)^snd\\b", "send");
+        normalized = normalized.replaceFirst("(?i)^jusdt\\s+send\\b", "send");
+        normalized = normalized.replaceFirst("(?i)^just\\s+send\\b", "send");
+        normalized = normalized.replaceFirst("(?i)^msg\\b", "message");
+        return normalized;
     }
 
     private boolean isEmailCommand(String input) {

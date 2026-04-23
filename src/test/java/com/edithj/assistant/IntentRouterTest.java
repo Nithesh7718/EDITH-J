@@ -47,6 +47,16 @@ class IntentRouterTest {
     }
 
     @Test
+    void route_classifiesDirectTypoSendAsWhatsApp() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent routed = router.route("sen HI to krithick");
+
+        assertEquals(IntentType.WHATSAPP, routed.intentType());
+        assertTrue(routed.payload().toLowerCase().startsWith("send "));
+    }
+
+    @Test
     void route_classifiesEmailCommands() {
         IntentRouter router = new IntentRouter();
 

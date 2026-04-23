@@ -211,7 +211,7 @@ public class WhatsAppCommandHandler implements CommandHandler {
 
         do {
             previous = current;
-            current = current.replaceAll("(?i)^(and|open|launch|start|run|send|message|text|please|kindly|whatsapp|whtsapp|whatsap|watsapp|via|a|an|the|to|for)\\b[\\s,:-]*", "");
+            current = current.replaceAll("(?i)^(and|open|launch|start|run|send|sen|snd|message|msg|text|just|jusdt|please|kindly|whatsapp|whtsapp|whatsap|watsapp|via|a|an|the|to|for)\\b[\\s,:-]*", "");
             current = current.replaceAll("(?i)[\\s,:-]*(message|please|whatsapp|whtsapp|whatsap|watsapp|via)$", "");
             current = current.replaceAll("\\s+", " ").trim();
         } while (!current.equals(previous));

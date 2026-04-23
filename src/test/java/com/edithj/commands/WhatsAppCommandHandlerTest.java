@@ -45,6 +45,18 @@ class WhatsAppCommandHandlerTest {
     }
 
     @Test
+    void parseRequest_typoSendVerbStillExtractsMessageAndContact() {
+        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(new FakeLauncher());
+
+        WhatsAppCommandHandler.ParsedWhatsAppRequest parsed
+                = handler.parseRequest("sen HI to krithick");
+
+        assertEquals("HI", parsed.message());
+        assertEquals("krithick", parsed.contactName());
+        assertTrue(!parsed.callIntent());
+    }
+
+    @Test
     void parseRequest_detectsWhatsappCallIntentAndContact() {
         WhatsAppCommandHandler handler = new WhatsAppCommandHandler(new FakeLauncher());
 
