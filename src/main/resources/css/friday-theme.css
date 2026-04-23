@@ -231,6 +231,11 @@
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.15), 12, 0, 4, 0);
 }
 
+.info-panel-shell {
+    -fx-padding: 2 0 2 0;
+    padding: 2px 0 2px 0;
+}
+
 .sidebar-scroll {
     -fx-background-color: transparent;
     background-color: transparent;
@@ -292,6 +297,11 @@
     padding: 10px 12px;
 }
 
+.info-card-hub {
+    -fx-background-color: rgba(11, 23, 40, 0.90);
+    background-color: rgba(11, 23, 40, 0.90);
+}
+
 .card-label {
     -fx-text-fill: rgba(100, 116, 139, 0.85);
     -fx-font-size: 9px;
@@ -301,6 +311,52 @@
     -fx-font-family: "Consolas", monospace;
     font-family: "Consolas", monospace;
     -fx-letter-spacing: 1px;
+}
+
+.hub-status-pill {
+    -fx-font-size: 10px;
+    font-size: 10px;
+    -fx-font-weight: 700;
+    font-weight: 700;
+    -fx-font-family: "Consolas", monospace;
+    font-family: "Consolas", monospace;
+    -fx-padding: 4 10;
+    padding: 4px 10px;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    border-radius: 999px;
+    -fx-border-width: 1;
+    border-width: 1px;
+}
+
+.hub-status-pill-muted {
+    -fx-background-color: rgba(100, 116, 139, 0.15);
+    background-color: rgba(100, 116, 139, 0.15);
+    -fx-border-color: rgba(100, 116, 139, 0.40);
+    border-color: rgba(100, 116, 139, 0.40);
+    -fx-text-fill: rgba(203, 213, 225, 0.95);
+}
+
+.hub-status-pill-ok {
+    -fx-background-color: rgba(0, 255, 163, 0.10);
+    background-color: rgba(0, 255, 163, 0.10);
+    -fx-border-color: rgba(0, 255, 163, 0.35);
+    border-color: rgba(0, 255, 163, 0.35);
+    -fx-text-fill: #00FFA3;
+}
+
+.hub-status-pill-warn {
+    -fx-background-color: rgba(245, 158, 11, 0.14);
+    background-color: rgba(245, 158, 11, 0.14);
+    -fx-border-color: rgba(245, 158, 11, 0.45);
+    border-color: rgba(245, 158, 11, 0.45);
+    -fx-text-fill: #FCD34D;
+}
+
+.hub-meta-text {
+    -fx-text-fill: rgba(148, 163, 184, 0.82);
+    -fx-font-size: 10px;
+    font-size: 10px;
 }
 
 .card-value {
@@ -412,6 +468,25 @@
     -fx-scale-y: 0.97;
 }
 
+.nav-stack {
+    -fx-padding: 2 0 2 0;
+    padding: 2px 0 2px 0;
+}
+
+.nav-button-shell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-content-display: LEFT;
+    -fx-font-family: "Segoe UI Symbol", "Segoe UI", sans-serif;
+    font-family: "Segoe UI Symbol", "Segoe UI", sans-serif;
+    -fx-padding: 11 14;
+    padding: 11px 14px;
+}
+
+.shell-build-label {
+    -fx-opacity: 0.7;
+    opacity: 0.7;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    CENTER PANE  —  avatar zone + content host
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -420,10 +495,34 @@
     background-color: transparent;
 }
 
+.center-pane-framed {
+    -fx-background-color: rgba(7, 12, 22, 0.42);
+    background-color: rgba(7, 12, 22, 0.42);
+    -fx-border-color: rgba(31, 213, 249, 0.12);
+    border-color: rgba(31, 213, 249, 0.12);
+    -fx-border-width: 1;
+    border-width: 1px;
+    -fx-border-radius: 10;
+    border-radius: 10px;
+    -fx-background-radius: 10;
+    -fx-padding: 10;
+    padding: 10px;
+}
+
 .avatar-zone {
     -fx-background-color: transparent;
     background-color: transparent;
     -fx-alignment: center;
+}
+
+.avatar-zone-framed {
+    -fx-background-color: rgba(10, 15, 28, 0.40);
+    background-color: rgba(10, 15, 28, 0.40);
+    -fx-border-color: rgba(31, 213, 249, 0.12);
+    border-color: rgba(31, 213, 249, 0.12);
+    -fx-border-width: 0 0 1 0;
+    border-width: 0 0 1px 0;
+    -fx-background-radius: 10 10 0 0;
 }
 
 .aura-host {
@@ -436,12 +535,23 @@
     background-color: transparent;
 }
 
+.workspace-host {
+    -fx-background-color: rgba(7, 12, 22, 0.32);
+    background-color: rgba(7, 12, 22, 0.32);
+    -fx-background-radius: 0 0 10 10;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    SHELL SPLIT PANE (console + transcript)
    ═══════════════════════════════════════════════════════════════════════════ */
 .shell-split {
     -fx-background-color: transparent;
     background-color: transparent;
+}
+
+.shell-split-elevated {
+    -fx-padding: 8;
+    padding: 8px;
 }
 
 .shell-split > .split-pane-divider {
@@ -472,6 +582,12 @@
     -fx-border-width: 0 0 0 1;
     border-width: 0 0 0 1px;
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.12), 10, 0, -3, 0);
+}
+
+.transcript-panel-elevated {
+    -fx-border-radius: 10;
+    border-radius: 10px;
+    -fx-background-radius: 10;
 }
 
 .transcript-header {

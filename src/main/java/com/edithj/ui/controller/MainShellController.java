@@ -95,6 +95,10 @@ public class MainShellController {
     private Label worldMonitorStatusLabel;
     @FXML
     private Label localKbStatusLabel;
+    @FXML
+    private Label worldMonitorMetaLabel;
+    @FXML
+    private Label localKbMetaLabel;
 
     // Nav buttons
     @FXML
@@ -173,9 +177,36 @@ public class MainShellController {
     private void initializeKnowledgeHubCards() {
         if (worldMonitorStatusLabel != null) {
             worldMonitorStatusLabel.textProperty().bind(worldMonitorCardViewModel.worldMonitorStatusProperty());
+            worldMonitorCardViewModel.worldMonitorStatusProperty().addListener((obs, oldVal, newVal)
+                    -> applyHubStatusStyle(worldMonitorStatusLabel, newVal));
+            applyHubStatusStyle(worldMonitorStatusLabel, worldMonitorCardViewModel.worldMonitorStatusProperty().get());
         }
         if (localKbStatusLabel != null) {
             localKbStatusLabel.textProperty().bind(worldMonitorCardViewModel.localKbStatusProperty());
+            worldMonitorCardViewModel.localKbStatusProperty().addListener((obs, oldVal, newVal)
+                    -> applyHubStatusStyle(localKbStatusLabel, newVal));
+            applyHubStatusStyle(localKbStatusLabel, worldMonitorCardViewModel.localKbStatusProperty().get());
+        }
+        if (worldMonitorMetaLabel != null) {
+            worldMonitorMetaLabel.textProperty().bind(worldMonitorCardViewModel.worldMonitorMetaProperty());
+        }
+        if (localKbMetaLabel != null) {
+            localKbMetaLabel.textProperty().bind(worldMonitorCardViewModel.localKbMetaProperty());
+        }
+    }
+
+    private void applyHubStatusStyle(Label label, String status) {
+        if (label == null) {
+            return;
+        }
+        String normalized = status == null ? "" : status.toLowerCase(java.util.Locale.ROOT);
+        label.getStyleClass().setAll("hub-status-pill");
+        if (normalized.contains("configured")) {
+            label.getStyleClass().add("hub-status-pill-ok");
+        } else if (normalized.contains("unconfigured") || normalized.contains("unavailable")) {
+            label.getStyleClass().add("hub-status-pill-warn");
+        } else {
+            label.getStyleClass().add("hub-status-pill-muted");
         }
     }
 
@@ -596,19 +627,19 @@ public class MainShellController {
 
     private void updateWorldHubCard(WorldMonitorClient worldMonitorClient) {
         if (worldMonitorClient == null) {
-            worldMonitorCardViewModel.worldMonitorStatusProperty().set("World Monitor: unavailable");
+            worldMonitorCardViewModel.setWorldStatus("Unavailable", "Last update: unavailable");
             return;
         }
 
         if (!worldMonitorClient.isConfigured()) {
-            worldMonitorCardViewModel.worldMonitorStatusProperty().set("Unconfigured • set WORLD_MONITOR_API_KEY");
+            worldMonitorCardViewModel.setWorldStatus("Unconfigured", "Set WORLD_MONITOR_API_KEY");
             return;
         }
 
         // Configured but no polling scheduler wired yet.
         java.time.Instant last = worldMonitorClient.lastCacheUpdate();
         if (last == null) {
-            worldMonitorCardViewModel.worldMonitorStatusProperty().set("Configured • last update: never");
+            worldMonitorCardViewModel.setWorldStatus("Configured", "Last update: never");
             return;
         }
 
@@ -617,11 +648,19 @@ public class MainShellController {
 
     private void updateLocalKbCard(PlaceholderLocalKnowledgeClient localKnowledgeClient) {
         if (localKnowledgeClient == null) {
-            worldMonitorCardViewModel.localKbStatusProperty().set("Local KB: unavailable");
+            worldMonitorCardViewModel.setLocalKbStatus("Unavailable");
+            worldMonitorCardViewModel.setLocalKbMeta("Last sync: unavailable");
             return;
         }
 
-        worldMonitorCardViewModel.setLocalKbStatus(localKnowledgeClient.statusSummary());
+        String statusSummary = localKnowledgeClient.statusSummary();
+        if (statusSummary.contains("not indexed yet")) {
+            worldMonitorCardViewModel.setLocalKbStatus("Placeholder mode");
+            worldMonitorCardViewModel.setLocalKbMeta("0 docs indexed • last sync pending");
+        } else {
+            worldMonitorCardViewModel.setLocalKbStatus("Configured");
+            worldMonitorCardViewModel.setLocalKbMeta(statusSummary);
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

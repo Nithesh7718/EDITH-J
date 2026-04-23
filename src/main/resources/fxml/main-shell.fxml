@@ -71,7 +71,7 @@
     <left>
         <ScrollPane fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" prefWidth="220" minWidth="180" maxWidth="280" styleClass="sidebar-scroll" BorderPane.alignment="TOP_CENTER">
             <content>
-                <VBox spacing="14" styleClass="info-panel">
+                <VBox spacing="12" styleClass="info-panel info-panel-shell">
                     <padding>
                         <Insets top="28" right="16" bottom="28" left="16"/>
                     </padding>
@@ -106,34 +106,38 @@
                     </VBox>
 
                     <!-- World Monitor card -->
-                    <VBox styleClass="info-card" spacing="6">
+                    <VBox styleClass="info-card info-card-hub" spacing="6">
                         <padding>
                             <Insets top="8" right="8" bottom="8" left="8"/>
                         </padding>
                         <Label text="WORLD MONITOR" styleClass="card-label"/>
-                        <Label fx:id="worldMonitorStatusLabel" text="Last update: pending" styleClass="card-value" wrapText="true"/>
+                        <Label fx:id="worldMonitorStatusLabel" text="Unconfigured" styleClass="hub-status-pill hub-status-pill-muted" wrapText="true"/>
+                        <Label fx:id="worldMonitorMetaLabel" text="Last update: never" styleClass="hub-meta-text" wrapText="true"/>
                     </VBox>
 
                     <!-- Local KB card -->
-                    <VBox styleClass="info-card" spacing="6">
+                    <VBox styleClass="info-card info-card-hub" spacing="6">
                         <padding>
                             <Insets top="8" right="8" bottom="8" left="8"/>
                         </padding>
                         <Label text="LOCAL KB" styleClass="card-label"/>
-                        <Label fx:id="localKbStatusLabel" text="0 docs indexed • last sync pending" styleClass="card-value" wrapText="true"/>
+                        <Label fx:id="localKbStatusLabel" text="Placeholder mode" styleClass="hub-status-pill hub-status-pill-muted" wrapText="true"/>
+                        <Label fx:id="localKbMetaLabel" text="Last sync: pending" styleClass="hub-meta-text" wrapText="true"/>
                     </VBox>
 
                     <Separator styleClass="panel-divider"/>
                     <Label text="NAVIGATION" styleClass="panel-section-label"/>
 
-                    <Button text="⌂  Home" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
-                    <Button text="♪  Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes"/>
-                    <Button text="⏰  Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders"/>
-                    <Button text="⬛  Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
-                    <Button text="⚙  Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
+                    <VBox spacing="8" styleClass="nav-stack">
+                        <Button text="⌂  Home" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button nav-button-shell" fx:id="btnChat"/>
+                        <Button text="♪  Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button-muted nav-button-shell" fx:id="btnNotes"/>
+                        <Button text="⏰  Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button-muted nav-button-shell" fx:id="btnReminders"/>
+                        <Button text="⬛  Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted nav-button-shell" fx:id="btnDesktopTools"/>
+                        <Button text="⚙  Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted nav-button-shell" fx:id="btnSettings"/>
+                    </VBox>
 
                     <Region VBox.vgrow="ALWAYS"/>
-                    <Label text="BUILD v0.1.0" styleClass="panel-section-label"/>
+                    <Label text="BUILD v0.1.0" styleClass="panel-section-label shell-build-label"/>
                 </VBox>
             </content>
         </ScrollPane>
@@ -143,14 +147,14 @@
          CENTER+RIGHT  —  Resizable console + transcript split
          ═══════════════════════════════════════════════════════════════════════ -->
     <center>
-        <SplitPane dividerPositions="0.72" styleClass="shell-split">
+        <SplitPane dividerPositions="0.72" styleClass="shell-split shell-split-elevated">
             <items>
                 <!-- Console -->
-                <BorderPane styleClass="center-pane">
+                <BorderPane styleClass="center-pane center-pane-framed">
 
                     <!-- Avatar panel: takes upper portion -->
                     <top>
-                        <StackPane styleClass="avatar-zone" prefHeight="260" minHeight="220">
+                        <StackPane styleClass="avatar-zone avatar-zone-framed" prefHeight="260" minHeight="220">
                             <!-- AudioAuraCanvas is added programmatically by controller -->
                             <StackPane fx:id="auraHost" styleClass="aura-host" prefWidth="340" prefHeight="260" maxWidth="340" maxHeight="260"/>
                         </StackPane>
@@ -158,13 +162,13 @@
 
                     <!-- Content host: takes remaining space, loads sub-views -->
                     <center>
-                        <StackPane fx:id="contentHost" styleClass="content-host"/>
+                        <StackPane fx:id="contentHost" styleClass="content-host workspace-host"/>
                     </center>
 
                 </BorderPane>
 
                 <!-- Transcript / Chat panel -->
-                <VBox spacing="0" prefWidth="380" minWidth="320" maxWidth="560" styleClass="transcript-panel">
+                <VBox spacing="0" prefWidth="380" minWidth="320" maxWidth="560" styleClass="transcript-panel transcript-panel-elevated">
 
                     <!-- Transcript header -->
                     <HBox styleClass="transcript-header" alignment="CENTER_LEFT" spacing="12">
@@ -179,7 +183,7 @@
                     </HBox>
 
                     <!-- Chat ListView -->
-                    <ListView fx:id="transcriptList" VBox.vgrow="ALWAYS" styleClass="transcript-list" style="-fx-padding: 8px;"/>
+                    <ListView fx:id="transcriptList" VBox.vgrow="ALWAYS" styleClass="transcript-list"/>
 
                     <!-- Partial / live text indicator -->
                     <HBox styleClass="partial-bar" alignment="CENTER_LEFT" spacing="8" fx:id="partialBar" managed="false" visible="false">
