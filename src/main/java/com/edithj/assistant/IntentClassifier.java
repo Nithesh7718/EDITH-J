@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +24,10 @@ public class IntentClassifier {
     private static final Logger logger = LoggerFactory.getLogger(IntentClassifier.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private static final Pattern OPEN_PREFIX = Pattern.compile("^(open|launch|start|run)\\b");
-    private static final Pattern CLOSE_PREFIX = Pattern.compile("^(close|quit|terminate|exit|stop)\\b");
+    private static final double HIGH_CONFIDENCE = 0.90d;
+    private static final double MEDIUM_CONFIDENCE = 0.78d;
+    private static final double LOW_CONFIDENCE = 0.45d;
+    private static final double LLM_REFINED_CONFIDENCE = 0.84d;
 
     private final LlmClient llmClient;
 
@@ -37,13 +38,14 @@ public class IntentClassifier {
     public Classification classify(String rawInput) {
         String normalized = normalize(rawInput);
         if (normalized.isBlank()) {
-            return new Classification(Intent.GENERAL_CHAT, List.of(), "", false, List.of(Intent.GENERAL_CHAT));
+            return new Classification(Intent.GENERAL_CHAT, List.of(), "", false, List.of(Intent.GENERAL_CHAT), LOW_CONFIDENCE);
         }
 
         RuleEvaluation ruleEvaluation = stageOneRules(normalized);
         Intent finalIntent = ruleEvaluation.primary();
         List<String> targets = new ArrayList<>(ruleEvaluation.targets());
         boolean refinedByLlm = false;
+        double confidenceScore = ruleEvaluation.confidenceScore();
 
         if (ruleEvaluation.ambiguous()) {
             LlmEvaluation llmEvaluation = stageTwoLlmRefinement(normalized);
@@ -53,10 +55,11 @@ public class IntentClassifier {
                     targets = llmEvaluation.targets();
                 }
                 refinedByLlm = true;
+                confidenceScore = LLM_REFINED_CONFIDENCE;
             }
         }
 
-        return new Classification(finalIntent, List.copyOf(targets), normalized, refinedByLlm, ruleEvaluation.candidates());
+        return new Classification(finalIntent, List.copyOf(targets), normalized, refinedByLlm, ruleEvaluation.candidates(), confidenceScore);
     }
 
     private RuleEvaluation stageOneRules(String normalized) {
@@ -64,47 +67,43 @@ public class IntentClassifier {
         Set<Intent> candidates = new LinkedHashSet<>();
         List<String> targets = new ArrayList<>();
 
-        if (OPEN_PREFIX.matcher(lower).find()) {
+        if (IntentLexicon.hasOpenVerbPrefix(lower)) {
             candidates.add(Intent.OPEN_APP);
-            String appTarget = lower.replaceFirst("^(open|launch|start|run)\\s+", "").trim();
+            String appTarget = IntentLexicon.stripOpenVerbPrefix(lower);
             if (!appTarget.isBlank()) {
                 targets.add(appTarget);
             }
         }
 
-        if (CLOSE_PREFIX.matcher(lower).find()) {
+        if (IntentLexicon.hasCloseVerbPrefix(lower)) {
             candidates.add(Intent.CLOSE_APP);
-            String appTarget = lower.replaceFirst("^(close|quit|terminate|exit|stop)\\s+", "").trim();
+            String appTarget = IntentLexicon.stripCloseVerbPrefix(lower);
             if (!appTarget.isBlank()) {
                 targets.add(appTarget);
             }
         }
 
-        if (containsAny(lower, "desktop tools", "system tools", "capabilities", "what can you do")) {
+        if (IntentLexicon.looksLikeDesktopToolsRequest(lower)) {
             candidates.add(Intent.DESKTOP_TOOLS);
         }
 
-        if (containsAny(lower, "task", "reminder", "note", "notes", "todo", "to do")) {
-            candidates.add(Intent.DESKTOP_TOOLS);
-        }
-
-        if (containsAny(lower, "markets", "market mood", "stocks", "indices", "tickers", "crypto")) {
+        if (IntentLexicon.looksLikeWorldMarketsRequest(lower)) {
             candidates.add(Intent.ASK_WORLD_MARKETS);
         }
 
-        if (containsAny(lower, "risk for", "country risk", "instability", "country instability", "geopolitical risk")) {
+        if (IntentLexicon.looksLikeWorldRiskRequest(lower)) {
             candidates.add(Intent.ASK_WORLD_RISK);
         }
 
-        if (containsAny(lower, "world news", "global situation", "conflict", "war", "global events", "world events", "geopolitics")) {
+        if (IntentLexicon.looksLikeWorldRequest(lower)) {
             candidates.add(Intent.ASK_WORLD);
         }
 
-        if (containsAny(lower, "in my docs", "in our project", "in my notes", "local kb", "knowledge base", "our documents")) {
+        if (IntentLexicon.looksLikeLocalKbRequest(lower)) {
             candidates.add(Intent.ASK_LOCAL_KB);
         }
 
-        if (containsAny(lower, "search web", "on the web", "internet", "online")) {
+        if (IntentLexicon.looksLikeWebRequest(lower)) {
             candidates.add(Intent.ASK_WEB);
         }
 
@@ -114,8 +113,20 @@ public class IntentClassifier {
 
         Intent primary = candidates.iterator().next();
         boolean ambiguous = candidates.size() > 1;
+        double confidenceScore = ambiguous ? LOW_CONFIDENCE : confidenceForPrimary(primary);
 
-        return new RuleEvaluation(primary, List.copyOf(targets), List.copyOf(candidates), ambiguous);
+        return new RuleEvaluation(primary, List.copyOf(targets), List.copyOf(candidates), ambiguous, confidenceScore);
+    }
+
+    private double confidenceForPrimary(Intent primary) {
+        return switch (primary) {
+            case OPEN_APP, CLOSE_APP ->
+                HIGH_CONFIDENCE;
+            case DESKTOP_TOOLS, ASK_WORLD, ASK_WORLD_RISK, ASK_WORLD_MARKETS, ASK_LOCAL_KB, ASK_WEB ->
+                MEDIUM_CONFIDENCE;
+            case GENERAL_CHAT ->
+                LOW_CONFIDENCE;
+        };
     }
 
     private LlmEvaluation stageTwoLlmRefinement(String normalized) {
@@ -155,7 +166,8 @@ public class IntentClassifier {
 
             return new LlmEvaluation(intent, List.copyOf(targets));
         } catch (JsonProcessingException | RuntimeException exception) {
-            logger.debug("LLM intent refinement failed; using rule-based result", exception);
+            logger.debug("LLM intent refinement failed ({}); using rule-based result",
+                    exception.getClass().getSimpleName());
             return null;
         }
     }
@@ -182,15 +194,6 @@ public class IntentClassifier {
         }
     }
 
-    private boolean containsAny(String input, String... terms) {
-        for (String term : terms) {
-            if (input.contains(term)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private String normalize(String input) {
         if (input == null) {
             return "";
@@ -202,11 +205,24 @@ public class IntentClassifier {
                 .trim();
     }
 
-    public record Classification(Intent intent, List<String> targets, String normalizedInput, boolean llmRefined, List<Intent> candidates) {
+    public record Classification(Intent intent,
+            List<String> targets,
+            String normalizedInput,
+            boolean llmRefined,
+            List<Intent> candidates,
+            double confidenceScore) {
+
+        public boolean ambiguous() {
+            return candidates != null && candidates.size() > 1;
+        }
 
     }
 
-    private record RuleEvaluation(Intent primary, List<String> targets, List<Intent> candidates, boolean ambiguous) {
+    private record RuleEvaluation(Intent primary,
+            List<String> targets,
+            List<Intent> candidates,
+            boolean ambiguous,
+            double confidenceScore) {
 
     }
 

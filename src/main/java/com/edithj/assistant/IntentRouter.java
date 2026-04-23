@@ -73,6 +73,21 @@ public class IntentRouter {
     }
 
     private IntentType classify(String input) {
+        if (IntentLexicon.looksLikeWorldMarketsRequest(input)) {
+            return IntentType.ASK_WORLD_MARKETS;
+        }
+        if (IntentLexicon.looksLikeWorldRiskRequest(input)) {
+            return IntentType.ASK_WORLD_RISK;
+        }
+        if (IntentLexicon.looksLikeWorldRequest(input)) {
+            return IntentType.ASK_WORLD;
+        }
+        if (IntentLexicon.looksLikeLocalKbRequest(input)) {
+            return IntentType.ASK_LOCAL_KB;
+        }
+        if (IntentLexicon.looksLikeWebRequest(input)) {
+            return IntentType.ASK_WEB;
+        }
         if (containsAnyIgnoreCase(input, "note", "notes", "notepad", "write down", "save this")) {
             return IntentType.NOTES;
         }
@@ -92,10 +107,10 @@ public class IntentRouter {
         if (looksLikeDirectWhatsAppMessageCommand(input)) {
             return IntentType.WHATSAPP;
         }
-        if (isExplicitDesktopCommand(input)) {
+        if (isExplicitDesktopCommand(input) || IntentLexicon.looksLikeDesktopToolsRequest(input)) {
             return IntentType.DESKTOP_TOOLS;
         }
-        if (containsAnyIgnoreCase(input, "open", "launch", "start", "run", "execute")) {
+        if (IntentLexicon.hasOpenVerbPrefix(input) || containsAnyIgnoreCase(input, "execute")) {
             return IntentType.APP_LAUNCH;
         }
         if (containsAnyIgnoreCase(input, "weather", "forecast", "temperature", "rain")) {

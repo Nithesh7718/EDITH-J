@@ -2,6 +2,10 @@ package com.edithj.assistant;
 
 import java.util.List;
 import java.util.Objects;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.edithj.integration.kb.KnowledgeChunk;
 import com.edithj.integration.kb.LocalKnowledgeClient;
@@ -19,6 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class KnowledgeRouter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final int WORLD_MONITOR_FAILURE_THRESHOLD = 3;
+    private static final Duration WORLD_MONITOR_COOLDOWN = Duration.ofSeconds(45);
 
     private final IntentRouter legacyIntentRouter;
     private final FallbackChatService fallbackChatService;
@@ -26,6 +32,9 @@ public class KnowledgeRouter {
     private final WorldMonitorClient worldMonitorClient;
     private final LocalKnowledgeClient localKnowledgeClient;
     private final com.edithj.launcher.AppNameResolver appNameResolver;
+    private final AssistantTelemetry telemetry = AssistantTelemetry.instance();
+    private final AtomicInteger worldMonitorConsecutiveFailures = new AtomicInteger(0);
+    private final AtomicReference<Instant> worldMonitorCircuitUntil = new AtomicReference<>(null);
 
     public KnowledgeRouter(IntentRouter legacyIntentRouter,
             FallbackChatService fallbackChatService,
@@ -131,6 +140,14 @@ public class KnowledgeRouter {
                     "World Monitor is not configured. Set WORLD_MONITOR_API_KEY (and optional WORLD_MONITOR_BASE_URL) to enable live world intelligence.",
                     channel);
         }
+        if (isWorldMonitorCircuitOpen()) {
+            telemetry.recordWorldCircuitOpenHit();
+            return new AssistantResponse(
+                    mapIntentType(intent),
+                    input,
+                    "World Monitor is temporarily cooling down after repeated failures. Please retry in under a minute.",
+                    channel);
+        }
 
         try {
             String answer;
@@ -138,53 +155,70 @@ public class KnowledgeRouter {
                 case ASK_WORLD_RISK -> {
                     String isoCode = targets.isEmpty() ? "GLOBAL" : targets.get(0);
                     CountryInstability instability = worldMonitorClient.getCountryInstability(isoCode);
-                    answer = synthesizeFromHub(
+                    answer = synthesizeFromHubSafely(
                             "You are EDITH, a desktop AI assistant. You have trusted world data from World Monitor (real-time global intelligence). Use it to answer this question accurately and clearly.",
                             input,
-                            toPrettyJson(instability));
+                            toPrettyJson(instability),
+                            "I received world-risk data but couldn't summarize it right now.");
                 }
                 case ASK_WORLD_MARKETS -> {
                     MarketSnapshot snapshot = worldMonitorClient.getMarketSnapshot(targets.isEmpty() ? List.of("SPY", "QQQ", "BTC-USD") : targets);
-                    answer = synthesizeFromHub(
+                    answer = synthesizeFromHubSafely(
                             "You are EDITH, a desktop AI assistant. You have trusted world data from World Monitor (real-time global intelligence). Use it to answer this question accurately and clearly.",
                             input,
-                            toPrettyJson(snapshot));
+                            toPrettyJson(snapshot),
+                            "I received market data but couldn't summarize it right now.");
                 }
                 case ASK_WORLD -> {
                     String region = targets.isEmpty() ? "global" : targets.get(0);
                     var conflicts = worldMonitorClient.getRecentConflicts(region, 10);
-                    answer = synthesizeFromHub(
+                    answer = synthesizeFromHubSafely(
                             "You are EDITH, a desktop AI assistant. You have trusted world data from World Monitor (real-time global intelligence). Use it to answer this question accurately and clearly.",
                             input,
-                            toPrettyJson(conflicts));
+                            toPrettyJson(conflicts),
+                            "I received world updates but couldn't summarize them right now.");
                 }
                 default -> {
                     String region = targets.isEmpty() ? "global" : targets.get(0);
                     var conflicts = worldMonitorClient.getRecentConflicts(region, 10);
-                    answer = synthesizeFromHub(
+                    answer = synthesizeFromHubSafely(
                             "You are EDITH, a desktop AI assistant. You have trusted world data from World Monitor (real-time global intelligence). Use it to answer this question accurately and clearly.",
                             input,
-                            toPrettyJson(conflicts));
+                            toPrettyJson(conflicts),
+                            "I received world updates but couldn't summarize them right now.");
                 }
             }
 
+            worldMonitorConsecutiveFailures.set(0);
             return new AssistantResponse(mapIntentType(intent), input, answer + "\n\nSource: World Monitor", channel);
         } catch (RuntimeException exception) {
+            openWorldMonitorCircuitIfNeeded();
             return new AssistantResponse(
                     mapIntentType(intent),
                     input,
-                    "I could not fetch World Monitor data right now: " + exception.getMessage(),
+                    "I could not fetch World Monitor data right now: " + exception.getMessage()
+                    + " Please retry shortly, or ask for a general EDITH summary without live data.",
                     channel);
         }
     }
 
     private AssistantResponse handleLocalKbIntent(String input, String channel) {
         List<KnowledgeChunk> chunks = localKnowledgeClient.semanticSearch(input, 6);
+        if (chunks == null || chunks.isEmpty()) {
+            telemetry.recordLocalKbEmptyHit();
+            return new AssistantResponse(
+                    IntentType.ASK_LOCAL_KB,
+                    input,
+                    "I couldn't find relevant local knowledge yet. Try a narrower query, or refresh the local index first.",
+                    channel);
+        }
+
         String contextJson = toPrettyJson(chunks);
-        String answer = synthesizeFromHub(
+        String answer = synthesizeFromHubSafely(
                 "You are EDITH. Use the following EDITH local knowledge base snippets to answer the user's question.",
                 input,
-                contextJson);
+                contextJson,
+                "I found local knowledge snippets, but synthesis failed. Please try a shorter query.");
 
         if (answer.isBlank()) {
             answer = "Local KB is not configured yet. I can scaffold retrieval, but document indexing/embeddings are still pending.";
@@ -201,14 +235,15 @@ public class KnowledgeRouter {
                 Provide a concise answer. If the request needs live web browsing that is unavailable,
                 say so briefly and suggest a focused query.
                 """.formatted(input);
-        String answer = llmClient.generateReply(prompt);
-        if (answer == null || answer.isBlank()) {
-            answer = fallbackChatService.runFallbackChat(channel);
+        String answer = safeGenerateReply(prompt, "");
+        if (answer.isBlank()) {
+            answer = "I couldn't complete a live web answer right now. Try a focused query like: "
+                    + "\"search web java 21 virtual threads performance\".";
         }
         return new AssistantResponse(IntentType.ASK_WEB, input, answer.trim(), channel);
     }
 
-    private String synthesizeFromHub(String systemPrompt, String userQuestion, String hubJson) {
+    private String synthesizeFromHubSafely(String systemPrompt, String userQuestion, String hubJson, String fallbackAnswer) {
         String prompt = """
                 %s
 
@@ -220,8 +255,40 @@ public class KnowledgeRouter {
 
                 Return a concise, structured answer with key points first.
                 """.formatted(systemPrompt, userQuestion, hubJson);
-        String reply = llmClient.generateReply(prompt);
+        String reply = safeGenerateReply(prompt, fallbackAnswer);
         return reply == null ? "" : reply.trim();
+    }
+
+    private String safeGenerateReply(String prompt, String fallbackAnswer) {
+        try {
+            String reply = llmClient.generateReply(prompt);
+            if (reply == null || reply.isBlank()) {
+                return fallbackAnswer == null ? "" : fallbackAnswer;
+            }
+            return reply.trim();
+        } catch (RuntimeException exception) {
+            return fallbackAnswer == null ? "" : fallbackAnswer;
+        }
+    }
+
+    private boolean isWorldMonitorCircuitOpen() {
+        Instant until = worldMonitorCircuitUntil.get();
+        if (until == null) {
+            return false;
+        }
+        if (Instant.now().isAfter(until)) {
+            worldMonitorCircuitUntil.compareAndSet(until, null);
+            worldMonitorConsecutiveFailures.set(0);
+            return false;
+        }
+        return true;
+    }
+
+    private void openWorldMonitorCircuitIfNeeded() {
+        int failures = worldMonitorConsecutiveFailures.incrementAndGet();
+        if (failures >= WORLD_MONITOR_FAILURE_THRESHOLD) {
+            worldMonitorCircuitUntil.set(Instant.now().plus(WORLD_MONITOR_COOLDOWN));
+        }
     }
 
     private IntentType mapIntentType(Intent intent) {

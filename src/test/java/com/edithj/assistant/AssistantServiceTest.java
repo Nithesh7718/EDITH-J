@@ -121,6 +121,25 @@ class AssistantServiceTest {
         assertFalse(fallbackChatService.wasInvoked());
     }
 
+    @Test
+    void handleTypedInput_returnsClarificationForLowConfidenceAmbiguousInput() {
+        AssistantTelemetry.instance().reset();
+        LlmClient llmClient = prompt -> "non-json llm output";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+
+        AssistantResponse response = service.handleTypedInput("open notes in our project");
+
+        assertEquals(IntentType.GENERAL_CHAT, response.intentType());
+        assertTrue(response.answer().contains("Did you mean"));
+        assertFalse(fallbackChatService.wasInvoked());
+        assertEquals(1L, AssistantTelemetry.instance().snapshot().clarificationPrompts());
+    }
+
     private static final class TestPromptBuilder extends PromptBuilder {
 
         @Override

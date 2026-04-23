@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import com.edithj.assistant.AssistantTelemetry;
 import com.edithj.desktop.FakeClipboardService;
 import com.edithj.desktop.FakeDesktopFileService;
 import com.edithj.desktop.session.FocusSessionState;
@@ -213,6 +214,26 @@ class DesktopToolsCommandHandlerTest {
         String response = handler.handle(context("copy hello"));
 
         assertEquals("Clipboard write commands are disabled in this configuration.", response);
+    }
+
+    @Test
+    void handle_telemetryStatus_reportsCurrentCounters() {
+        AssistantTelemetry telemetry = AssistantTelemetry.instance();
+        telemetry.reset();
+        telemetry.recordClarificationPrompt();
+        telemetry.recordClarificationPrompt();
+        telemetry.recordWorldCircuitOpenHit();
+        telemetry.recordLocalKbEmptyHit();
+
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
+
+        String response = handler.handle(context("telemetry status"));
+
+        assertTrue(response.contains("Assistant telemetry"));
+        assertTrue(response.contains("Clarification prompts: 2"));
+        assertTrue(response.contains("World circuit-open hits: 1"));
+        assertTrue(response.contains("Local KB empty hits: 1"));
     }
 
     private DesktopToolsCommandHandler newHandler(

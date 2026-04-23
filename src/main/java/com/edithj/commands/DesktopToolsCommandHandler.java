@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import com.edithj.assistant.AssistantTelemetry;
 import com.edithj.assistant.IntentType;
 import com.edithj.config.AppConfig;
 import com.edithj.desktop.ClipboardService;
@@ -201,6 +202,10 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             return handleFocus(input, lower);
         }
 
+        if (lower.equals("telemetry status") || lower.equals("assistant telemetry")) {
+            return telemetryStatus();
+        }
+
         if (isSystemInfoRequest(lower)) {
             return systemStatus();
         }
@@ -336,6 +341,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             - Weather: forecast in Pollachi today
             - Utilities: what time is it, what is today's date, calculate 245/7
             - Desktop tools: system info, search web latest Java news
+            - Telemetry: telemetry status
             - Daily briefing: good morning
             - Clipboard: show clipboard, save clipboard as note
             - Routines: start work mode
@@ -745,5 +751,18 @@ public class DesktopToolsCommandHandler implements CommandHandler {
                 usedMb,
                 totalMb,
                 maxMb);
+    }
+
+    private String telemetryStatus() {
+        AssistantTelemetry.Snapshot snapshot = AssistantTelemetry.instance().snapshot();
+        return String.format(
+                Locale.ROOT,
+                "Assistant telemetry:%n"
+                + "- Clarification prompts: %d%n"
+                + "- World circuit-open hits: %d%n"
+                + "- Local KB empty hits: %d",
+                snapshot.clarificationPrompts(),
+                snapshot.worldCircuitOpenHits(),
+                snapshot.localKbEmptyHits());
     }
 }

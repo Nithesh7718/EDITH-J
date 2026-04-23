@@ -77,6 +77,30 @@ class IntentRouterTest {
     }
 
     @Test
+    void route_classifiesWorldRequestsIntoKnowledgeIntents() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent world = router.route("world news update");
+        IntentRouter.RoutedIntent risk = router.route("country risk for japan");
+        IntentRouter.RoutedIntent markets = router.route("market mood for crypto");
+
+        assertEquals(IntentType.ASK_WORLD, world.intentType());
+        assertEquals(IntentType.ASK_WORLD_RISK, risk.intentType());
+        assertEquals(IntentType.ASK_WORLD_MARKETS, markets.intentType());
+    }
+
+    @Test
+    void route_classifiesLocalKbAndWebRequests() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent localKb = router.route("in our project how does assistant service work");
+        IntentRouter.RoutedIntent web = router.route("search web java 21 features");
+
+        assertEquals(IntentType.ASK_LOCAL_KB, localKb.intentType());
+        assertEquals(IntentType.ASK_WEB, web.intentType());
+    }
+
+    @Test
     void routeAndHandle_invokesRegisteredEmailHandler() {
         IntentRouter router = new IntentRouter();
         RecordingHandler handler = new RecordingHandler(IntentType.EMAIL, "opened");

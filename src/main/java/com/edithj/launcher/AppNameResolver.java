@@ -59,7 +59,7 @@ public final class AppNameResolver {
                 "whatsapp";
             case "youtube" ->
                 "youtube";
-            case "file_explorer" ->
+            case "file explorer" ->
                 "explorer";
             default ->
                 normalized;

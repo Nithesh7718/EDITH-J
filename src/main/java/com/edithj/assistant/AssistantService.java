@@ -3,6 +3,7 @@ package com.edithj.assistant;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ public class AssistantService {
 
     private static final Logger logger = LoggerFactory.getLogger(AssistantService.class);
     private static final int DEFAULT_MEMORY_WINDOW = 12;
+    private static final double MIN_CONFIDENCE_FOR_AUTO_ROUTE = 0.60d;
     private static final Pattern WHATSAPP_FOLLOWUP_SEND_PATTERN = Pattern.compile(
             "(?i)^\\s*(?:(?:send|sen|snd|message|msg|text)\\b.*|(?:just|jusdt)\\s+send\\b.*)");
 
@@ -39,6 +41,7 @@ public class AssistantService {
     private final KnowledgeRouter knowledgeRouter;
     private final IntentRouter intentRouter;
     private final FallbackChatService fallbackChatService;
+    private final AssistantTelemetry telemetry = AssistantTelemetry.instance();
     private String lastVoiceTranscript = "";
     private IntentType lastStructuredIntent = IntentType.FALLBACK_CHAT;
 
@@ -138,6 +141,9 @@ public class AssistantService {
         }
 
         IntentClassifier.Classification classification = intentClassifier.classify(normalizedInput);
+        if (shouldAskForClarification(classification)) {
+            return buildClarificationResponse(classification, channel);
+        }
         AssistantResponse routedResponse = knowledgeRouter.route(classification, channel);
         if (routedResponse.intentType() != IntentType.FALLBACK_CHAT
                 && routedResponse.intentType() != IntentType.GENERAL_CHAT) {
@@ -151,6 +157,57 @@ public class AssistantService {
         }
 
         return routedResponse;
+    }
+
+    private boolean shouldAskForClarification(IntentClassifier.Classification classification) {
+        if (classification == null) {
+            return false;
+        }
+        return classification.ambiguous()
+                && classification.confidenceScore() < MIN_CONFIDENCE_FOR_AUTO_ROUTE
+                && !classification.llmRefined();
+    }
+
+    private AssistantResponse buildClarificationResponse(IntentClassifier.Classification classification, String channel) {
+        telemetry.recordClarificationPrompt();
+        String options = classification.candidates().stream()
+                .limit(3)
+                .map(this::toFriendlyIntentLabel)
+                .collect(Collectors.joining(", "));
+
+        String answer = options.isBlank()
+                ? "I want to route this correctly. Could you rephrase that request with your main goal?"
+                : "I want to route this correctly. Did you mean: " + options
+                + "? Please rephrase with one main goal.";
+
+        return new AssistantResponse(
+                IntentType.GENERAL_CHAT,
+                classification.normalizedInput(),
+                answer,
+                channel);
+    }
+
+    private String toFriendlyIntentLabel(Intent intent) {
+        return switch (intent) {
+            case OPEN_APP ->
+                "open an app";
+            case CLOSE_APP ->
+                "close an app";
+            case DESKTOP_TOOLS ->
+                "desktop tools action";
+            case ASK_WORLD ->
+                "world update";
+            case ASK_WORLD_RISK ->
+                "country/geopolitical risk";
+            case ASK_WORLD_MARKETS ->
+                "market snapshot";
+            case ASK_LOCAL_KB ->
+                "local knowledge lookup";
+            case ASK_WEB ->
+                "web lookup";
+            case GENERAL_CHAT ->
+                "general chat";
+        };
     }
 
     private boolean shouldRecoverToWhatsApp(String input) {
