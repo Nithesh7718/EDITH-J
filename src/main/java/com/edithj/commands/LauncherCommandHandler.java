@@ -2,17 +2,24 @@ package com.edithj.commands;
 
 import com.edithj.assistant.IntentType;
 import com.edithj.launcher.AppLauncherService;
+import com.edithj.launcher.AppNameResolver;
 
 public class LauncherCommandHandler implements CommandHandler {
 
     private final AppLauncherService launcherService;
+    private final AppNameResolver appNameResolver;
 
     public LauncherCommandHandler() {
-        this(new AppLauncherService());
+        this(new AppLauncherService(), new AppNameResolver());
     }
 
     public LauncherCommandHandler(AppLauncherService launcherService) {
+        this(launcherService, new AppNameResolver());
+    }
+
+    public LauncherCommandHandler(AppLauncherService launcherService, AppNameResolver appNameResolver) {
         this.launcherService = launcherService;
+        this.appNameResolver = appNameResolver;
     }
 
     @Override
@@ -30,6 +37,11 @@ public class LauncherCommandHandler implements CommandHandler {
         String appName = normalizeAppName(payload);
         if (appName.isBlank()) {
             return "I could not identify the app name. Try: launch notepad.";
+        }
+
+        String resolvedApp = appNameResolver.resolveLaunchTarget(appName);
+        if (!resolvedApp.isBlank()) {
+            appName = resolvedApp;
         }
 
         try {

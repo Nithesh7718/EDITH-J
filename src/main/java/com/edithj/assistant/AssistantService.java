@@ -23,6 +23,10 @@ import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
 import com.edithj.speech.SpeechService;
 
+/**
+ * EDITH runtime orchestrator: normalizes input, classifies intent, routes to
+ * the correct hub/handler, and records conversational fallback memory.
+ */
 public class AssistantService {
 
     private static final Logger logger = LoggerFactory.getLogger(AssistantService.class);
@@ -31,6 +35,8 @@ public class AssistantService {
             "(?i)^\\s*(?:(?:send|sen|snd|message|msg|text)\\b.*|(?:just|jusdt)\\s+send\\b.*)");
 
     private final SpeechService speechService;
+    private final IntentClassifier intentClassifier;
+    private final KnowledgeRouter knowledgeRouter;
     private final IntentRouter intentRouter;
     private final FallbackChatService fallbackChatService;
     private String lastVoiceTranscript = "";
@@ -60,6 +66,8 @@ public class AssistantService {
         this.speechService = Objects.requireNonNull(speechService, "speechService");
         this.intentRouter = Objects.requireNonNull(intentRouter, "intentRouter");
         this.fallbackChatService = Objects.requireNonNull(fallbackChatService, "fallbackChatService");
+        this.intentClassifier = new IntentClassifier(llmClient);
+        this.knowledgeRouter = new KnowledgeRouter(intentRouter, fallbackChatService, llmClient);
 
         registerDefaultHandlers();
     }
@@ -121,10 +129,14 @@ public class AssistantService {
     }
 
     private AssistantResponse routeWithContextRecovery(String normalizedInput, String channel) {
-        IntentRouter.RoutedIntent routedIntent = intentRouter.route(normalizedInput);
-        if (routedIntent.intentType() != IntentType.FALLBACK_CHAT) {
-            return intentRouter.routeAndHandle(routedIntent, channel);
+        IntentClassifier.Classification classification = intentClassifier.classify(normalizedInput);
+        AssistantResponse routedResponse = knowledgeRouter.route(classification, channel);
+        if (routedResponse.intentType() != IntentType.FALLBACK_CHAT
+                && routedResponse.intentType() != IntentType.GENERAL_CHAT) {
+            return routedResponse;
         }
+
+        IntentRouter.RoutedIntent routedIntent = intentRouter.route(normalizedInput);
 
         if (shouldRecoverToWhatsApp(normalizedInput)) {
             String recoveredInput = ensureWhatsAppPrefix(normalizedInput);
@@ -134,7 +146,11 @@ public class AssistantService {
             }
         }
 
-        return intentRouter.routeAndHandle(routedIntent, channel);
+        if (routedIntent.intentType() != IntentType.FALLBACK_CHAT) {
+            return intentRouter.routeAndHandle(routedIntent, channel);
+        }
+
+        return routedResponse;
     }
 
     private boolean shouldRecoverToWhatsApp(String input) {

@@ -147,7 +147,7 @@ public class IntentRouter {
                 stripLeadingKeywordIgnoreCase(input, "calculate", "calc", "what is", "what's", "time", "date", "day");
             case DESKTOP_TOOLS ->
                 stripLeadingKeywordIgnoreCase(input, "help", "search web", "google", "browse", "open website", "open site", "system info", "device info", "memory status");
-            case FALLBACK_CHAT ->
+            case ASK_WORLD, ASK_WORLD_RISK, ASK_WORLD_MARKETS, ASK_LOCAL_KB, ASK_WEB, GENERAL_CHAT, FALLBACK_CHAT ->
                 input;
         };
     }

@@ -11,6 +11,7 @@ import com.edithj.assistant.AssistantStatusService;
 import com.edithj.ui.component.AudioAuraCanvas;
 import com.edithj.ui.model.AssistantUiState;
 import com.edithj.ui.model.ChatMessageViewModel;
+import com.edithj.ui.model.WorldMonitorCardViewModel;
 import com.edithj.ui.navigation.SceneManager;
 import com.edithj.ui.session.UiAssistantGateway;
 import com.edithj.ui.session.UiSpeechService;
@@ -35,6 +36,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -44,7 +46,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 /**
- * Controller for the FRIDAY-style main shell of EDITH-J.
+ * Controller for the EDITH main shell of EDITH-J.
  *
  * <p>
  * Architecture overview:
@@ -62,7 +64,7 @@ public class MainShellController {
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final String MIC_HINT_IDLE = "Tap 🎙 or press Space to speak";
-    private static final String MIC_HINT_LISTENING = "Listening… speak now";
+    private static final String MIC_HINT_LISTENING = "EDITH is listening… speak now";
     private static final String MIC_HINT_ERROR = "Didn't catch that — please try again";
     private static final String MIC_HINT_UNAVAILABLE = "Microphone unavailable";
 
@@ -87,6 +89,10 @@ public class MainShellController {
     private Label modelCardLabel;
     @FXML
     private Label lastCommandLabel;
+    @FXML
+    private Label worldMonitorStatusLabel;
+    @FXML
+    private Label localKbStatusLabel;
 
     // Nav buttons
     @FXML
@@ -127,6 +133,9 @@ public class MainShellController {
 
     // ── Data ──────────────────────────────────────────────────────────────────
     private final ObservableList<ChatMessageViewModel> messages = FXCollections.observableArrayList();
+    private final WorldMonitorCardViewModel worldMonitorCardViewModel = new WorldMonitorCardViewModel();
+    private boolean transcriptAutoScroll = true;
+    private ScrollBar transcriptVerticalScrollBar;
 
     /**
      * The live audio aura canvas — created in #initialize for access to scene
@@ -150,7 +159,17 @@ public class MainShellController {
         wireKeyboardShortcuts();
         showChatView();
         appendSystemMessage("EDITH Initialization Complete. All systems nominal.");
+        initializeKnowledgeHubCards();
         runStartupStatusProbe();
+    }
+
+    private void initializeKnowledgeHubCards() {
+        if (worldMonitorStatusLabel != null) {
+            worldMonitorStatusLabel.textProperty().bind(worldMonitorCardViewModel.worldMonitorStatusProperty());
+        }
+        if (localKbStatusLabel != null) {
+            localKbStatusLabel.textProperty().bind(worldMonitorCardViewModel.localKbStatusProperty());
+        }
     }
 
     // ── Aura canvas ───────────────────────────────────────────────────────────
@@ -169,6 +188,30 @@ public class MainShellController {
     private void wireTranscript() {
         transcriptList.setItems(messages);
         transcriptList.setCellFactory(lv -> new TranscriptCell());
+        Platform.runLater(this::attachTranscriptScrollTracking);
+    }
+
+    private void attachTranscriptScrollTracking() {
+        if (transcriptList == null) {
+            return;
+        }
+
+        transcriptVerticalScrollBar = transcriptList.lookupAll(".scroll-bar").stream()
+                .filter(node -> node instanceof ScrollBar)
+                .map(node -> (ScrollBar) node)
+                .filter(scrollBar -> scrollBar.getOrientation() == javafx.geometry.Orientation.VERTICAL)
+                .findFirst()
+                .orElse(null);
+
+        if (transcriptVerticalScrollBar == null) {
+            return;
+        }
+
+        transcriptVerticalScrollBar.valueProperty().addListener((obs, oldValue, newValue) -> {
+            double max = transcriptVerticalScrollBar.getMax();
+            // Auto-scroll only while user stays near the bottom.
+            transcriptAutoScroll = max <= 0.0 || newValue.doubleValue() >= (max - 0.02);
+        });
     }
 
     // ── State pill binding ─────────────────────────────────────────────────────
@@ -435,9 +478,10 @@ public class MainShellController {
     }
 
     private void scrollToBottom() {
-        if (!messages.isEmpty()) {
-            transcriptList.scrollTo(messages.size() - 1);
+        if (messages.isEmpty() || !transcriptAutoScroll) {
+            return;
         }
+        Platform.runLater(() -> transcriptList.scrollTo(messages.size() - 1));
     }
 
     // ── Assistant dispatch ────────────────────────────────────────────────────
@@ -505,6 +549,12 @@ public class MainShellController {
                 // Update model badge
                 modelBadgeLabel.setText("MODEL: Groq / Llama");
                 modelCardLabel.setText("Groq / Llama 3");
+                if (worldMonitorStatusLabel != null) {
+                    worldMonitorCardViewModel.worldMonitorStatusProperty().set("World hub ready (polling scaffold)");
+                }
+                if (localKbStatusLabel != null) {
+                    worldMonitorCardViewModel.localKbStatusProperty().set("Local KB placeholder mode");
+                }
             });
         });
     }

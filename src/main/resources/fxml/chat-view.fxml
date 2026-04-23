@@ -17,7 +17,7 @@
     </padding>
     <VBox spacing="16.0" maxWidth="820" VBox.vgrow="ALWAYS">
         <HBox alignment="CENTER_LEFT" spacing="10.0">
-            <Label text="FRIDAY Home" styleClass="panel-title"/>
+            <Label text="EDITH Home" styleClass="panel-title"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Label text="Unified shell mode" styleClass="panel-hint"/>
         </HBox>
@@ -40,7 +40,7 @@
             <VBox spacing="8.0" styleClass="info-card" HBox.hgrow="ALWAYS">
                 <Label text="TRANSCRIPT" styleClass="card-label"/>
                 <Label text="Single unified feed" styleClass="card-value-cyan"/>
-                <Label text="All replies, status messages, and voice results appear in the FRIDAY transcript panel." styleClass="panel-hint" wrapText="true"/>
+                <Label text="All replies, status messages, and voice results appear in the EDITH transcript panel." styleClass="panel-hint" wrapText="true"/>
             </VBox>
         </HBox>
 

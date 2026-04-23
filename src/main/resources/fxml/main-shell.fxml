@@ -18,24 +18,21 @@
 <?import javafx.scene.shape.Rectangle?>
 
 <!--
-    EDITH-J  —  Main Shell  (FRIDAY-style premium voice console)
+    EDITH-J  —  Main Shell  (EDITH premium voice console)
     Controller: com.edithj.ui.controller.MainShellController
     CSS:        /css/friday-theme.css
 -->
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
-            xmlns="http://javafx.com/javafx/17"
-            fx:id="rootPane"
-            fx:controller="com.edithj.ui.controller.MainShellController"
-            styleClass="app-shell"
-            minWidth="980" minHeight="680">
+    xmlns="http://javafx.com/javafx/17" fx:id="rootPane" fx:controller="com.edithj.ui.controller.MainShellController" styleClass="app-shell" minWidth="980" minHeight="680">
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          TOP  —  Status bar
          ═══════════════════════════════════════════════════════════════════════ -->
     <top>
-        <HBox styleClass="status-bar" alignment="CENTER_LEFT" spacing="14"
-              BorderPane.alignment="CENTER">
-            <padding><Insets top="10" right="24" bottom="10" left="24"/></padding>
+        <HBox styleClass="status-bar" alignment="CENTER_LEFT" spacing="14" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="10" right="24" bottom="10" left="24"/>
+            </padding>
 
             <!-- Left: logo -->
             <HBox spacing="2" alignment="CENTER_LEFT">
@@ -59,9 +56,10 @@
             <Label fx:id="modelBadgeLabel" text="MODEL: –" styleClass="model-badge"/>
 
             <!-- Settings button -->
-            <Button fx:id="btnHeaderSettings" text="⚙" onAction="#openSettingsDialog"
-                    styleClass="icon-button" prefWidth="36" prefHeight="36">
-                <tooltip><Tooltip text="Settings"/></tooltip>
+            <Button fx:id="btnHeaderSettings" text="⚙" onAction="#openSettingsDialog" styleClass="icon-button" prefWidth="36" prefHeight="36">
+                <tooltip>
+                    <Tooltip text="Settings"/>
+                </tooltip>
             </Button>
         </HBox>
     </top>
@@ -70,43 +68,66 @@
          LEFT  —  Info panel  (last command, model, system info cards)
          ═══════════════════════════════════════════════════════════════════════ -->
     <left>
-        <VBox spacing="12" prefWidth="220" minWidth="180" maxWidth="260"
-              styleClass="info-panel" BorderPane.alignment="TOP_CENTER">
-            <padding><Insets top="24" right="14" bottom="24" left="14"/></padding>
+        <VBox spacing="14" prefWidth="220" minWidth="180" maxWidth="280" styleClass="info-panel" BorderPane.alignment="TOP_CENTER">
+            <padding>
+                <Insets top="28" right="16" bottom="28" left="16"/>
+            </padding>
 
             <Label text="SYSTEM" styleClass="panel-section-label"/>
 
             <!-- Status card -->
-            <VBox styleClass="info-card" spacing="4">
+            <VBox styleClass="info-card" spacing="6">
+                <padding>
+                    <Insets top="8" right="8" bottom="8" left="8"/>
+                </padding>
                 <Label text="ASSISTANT STATE" styleClass="card-label"/>
                 <Label fx:id="stateCardLabel" text="IDLE" styleClass="card-value-cyan"/>
             </VBox>
 
             <!-- Model card -->
-            <VBox styleClass="info-card" spacing="4">
+            <VBox styleClass="info-card" spacing="6">
+                <padding>
+                    <Insets top="8" right="8" bottom="8" left="8"/>
+                </padding>
                 <Label text="ACTIVE MODEL" styleClass="card-label"/>
                 <Label fx:id="modelCardLabel" text="Loading…" styleClass="card-value" wrapText="true"/>
             </VBox>
 
             <!-- Last command card -->
-            <VBox styleClass="info-card" spacing="4">
+            <VBox styleClass="info-card" spacing="6">
+                <padding>
+                    <Insets top="8" right="8" bottom="8" left="8"/>
+                </padding>
                 <Label text="LAST COMMAND" styleClass="card-label"/>
                 <Label fx:id="lastCommandLabel" text="–" styleClass="card-value" wrapText="true"/>
+            </VBox>
+
+            <!-- World Monitor card -->
+            <VBox styleClass="info-card" spacing="6">
+                <padding>
+                    <Insets top="8" right="8" bottom="8" left="8"/>
+                </padding>
+                <Label text="WORLD MONITOR" styleClass="card-label"/>
+                <Label fx:id="worldMonitorStatusLabel" text="Last update: pending" styleClass="card-value" wrapText="true"/>
+            </VBox>
+
+            <!-- Local KB card -->
+            <VBox styleClass="info-card" spacing="6">
+                <padding>
+                    <Insets top="8" right="8" bottom="8" left="8"/>
+                </padding>
+                <Label text="LOCAL KB" styleClass="card-label"/>
+                <Label fx:id="localKbStatusLabel" text="0 docs indexed • last sync pending" styleClass="card-value" wrapText="true"/>
             </VBox>
 
             <Separator styleClass="panel-divider"/>
             <Label text="NAVIGATION" styleClass="panel-section-label"/>
 
-            <Button text="⌂  Home" onAction="#showChatView"
-                    maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
-            <Button text="♪  Notes" onAction="#showNotesView"
-                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes"/>
-            <Button text="⏰  Reminders" onAction="#showRemindersView"
-                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders"/>
-            <Button text="⬛  Desktop Tools" onAction="#showDesktopToolsView"
-                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
-            <Button text="⚙  Settings" onAction="#showSettingsView"
-                    maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
+            <Button text="⌂  Home" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
+            <Button text="♪  Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes"/>
+            <Button text="⏰  Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders"/>
+            <Button text="⬛  Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
+            <Button text="⚙  Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
 
             <Region VBox.vgrow="ALWAYS"/>
             <Label text="BUILD v0.1.0" styleClass="panel-section-label"/>
@@ -123,9 +144,7 @@
             <top>
                 <StackPane styleClass="avatar-zone" prefHeight="260" minHeight="220">
                     <!-- AudioAuraCanvas is added programmatically by controller -->
-                    <StackPane fx:id="auraHost" styleClass="aura-host"
-                               prefWidth="340" prefHeight="260"
-                               maxWidth="340" maxHeight="260"/>
+                    <StackPane fx:id="auraHost" styleClass="aura-host" prefWidth="340" prefHeight="260" maxWidth="340" maxHeight="260"/>
                 </StackPane>
             </top>
 
@@ -141,27 +160,26 @@
          RIGHT  —  Transcript / Chat panel
          ═══════════════════════════════════════════════════════════════════════ -->
     <right>
-        <VBox spacing="0" prefWidth="340" minWidth="280" maxWidth="420"
-              styleClass="transcript-panel" BorderPane.alignment="TOP_CENTER">
+        <VBox spacing="0" prefWidth="360" minWidth="300" maxWidth="460" styleClass="transcript-panel" BorderPane.alignment="TOP_CENTER">
 
             <!-- Transcript header -->
-            <HBox styleClass="transcript-header" alignment="CENTER_LEFT" spacing="10">
-                <padding><Insets top="12" right="16" bottom="12" left="16"/></padding>
+            <HBox styleClass="transcript-header" alignment="CENTER_LEFT" spacing="12">
+                <padding>
+                    <Insets top="14" right="18" bottom="14" left="18"/>
+                </padding>
                 <Label text="TRANSCRIPT" styleClass="transcript-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <Button fx:id="btnClearChat" text="✕ Clear" onAction="#clearTranscript"
-                        styleClass="clear-button"/>
+                <Button fx:id="btnClearChat" text="✕ Clear" onAction="#clearTranscript" styleClass="clear-button"/>
             </HBox>
 
             <!-- Chat ListView -->
-            <ListView fx:id="transcriptList"
-                      VBox.vgrow="ALWAYS"
-                      styleClass="transcript-list"/>
+            <ListView fx:id="transcriptList" VBox.vgrow="ALWAYS" styleClass="transcript-list" style="-fx-padding: 8px;"/>
 
             <!-- Partial / live text indicator -->
-            <HBox styleClass="partial-bar" alignment="CENTER_LEFT" spacing="8"
-                  fx:id="partialBar" managed="false" visible="false">
-                <padding><Insets top="6" right="14" bottom="6" left="14"/></padding>
+            <HBox styleClass="partial-bar" alignment="CENTER_LEFT" spacing="8" fx:id="partialBar" managed="false" visible="false">
+                <padding>
+                    <Insets top="6" right="14" bottom="6" left="14"/>
+                </padding>
                 <Circle radius="4" styleClass="partial-dot"/>
                 <Label fx:id="partialLabel" text="" styleClass="partial-text" wrapText="true"/>
             </HBox>
@@ -177,7 +195,9 @@
 
             <!-- Quick-chip suggestions row -->
             <HBox fx:id="chipRow" spacing="8" alignment="CENTER" styleClass="chip-row">
-                <padding><Insets top="8" right="24" bottom="0" left="24"/></padding>
+                <padding>
+                    <Insets top="8" right="24" bottom="0" left="24"/>
+                </padding>
                 <Button text="What's the weather?" onAction="#insertWeatherChip" styleClass="chip-button"/>
                 <Button text="Open YouTube" onAction="#insertYoutubeChip" styleClass="chip-button"/>
                 <Button text="Set a reminder" onAction="#insertReminderChip" styleClass="chip-button"/>
@@ -186,38 +206,38 @@
 
             <!-- Main control HBox -->
             <HBox styleClass="control-bar" spacing="14" alignment="CENTER">
-                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <padding>
+                    <Insets top="14" right="24" bottom="14" left="24"/>
+                </padding>
 
                 <!-- Mic toggle button (large, circular) -->
-                <Button fx:id="btnMic" text="🎙" onAction="#onMicToggle"
-                        styleClass="mic-button" prefWidth="58" prefHeight="58">
-                    <tooltip><Tooltip text="Toggle microphone (Space)"/></tooltip>
+                <Button fx:id="btnMic" text="🎙" onAction="#onMicToggle" styleClass="mic-button" prefWidth="58" prefHeight="58">
+                    <tooltip>
+                        <Tooltip text="Toggle microphone (Space)"/>
+                    </tooltip>
                 </Button>
 
                 <!-- Text input -->
-                <TextField fx:id="textInput"
-                           promptText="Type a command or question…"
-                           HBox.hgrow="ALWAYS"
-                           styleClass="command-input"
-                           onAction="#onTextSend"/>
+                <TextField fx:id="textInput" promptText="Type a command or question…" HBox.hgrow="ALWAYS" styleClass="command-input" onAction="#onTextSend"/>
 
                 <!-- Send button -->
-                <Button fx:id="btnSend" text="Send ▶" onAction="#onTextSend"
-                        styleClass="send-button"/>
+                <Button fx:id="btnSend" text="Send ▶" onAction="#onTextSend" styleClass="send-button"/>
 
                 <!-- Settings shortcut -->
-                <Button fx:id="btnSettings2" text="⚙" onAction="#openSettingsDialog"
-                        styleClass="icon-button" prefWidth="38" prefHeight="38">
-                    <tooltip><Tooltip text="Settings"/></tooltip>
+                <Button fx:id="btnSettings2" text="⚙" onAction="#openSettingsDialog" styleClass="icon-button" prefWidth="38" prefHeight="38">
+                    <tooltip>
+                        <Tooltip text="Settings"/>
+                    </tooltip>
                 </Button>
 
             </HBox>
 
             <!-- Mic status hint label -->
             <HBox alignment="CENTER">
-                <padding><Insets bottom="6"/></padding>
-                <Label fx:id="micHintLabel" text="Tap 🎙 or press Space to speak"
-                       styleClass="mic-hint"/>
+                <padding>
+                    <Insets bottom="6"/>
+                </padding>
+                <Label fx:id="micHintLabel" text="Tap 🎙 or press Space to speak" styleClass="mic-hint"/>
             </HBox>
         </VBox>
     </bottom>

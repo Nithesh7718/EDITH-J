@@ -1,21 +1,22 @@
 package com.edithj.ui.navigation;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Objects;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Objects;
-
 /**
  * Manages scene creation and view loading for EDITH-J.
  *
- * <p>The main shell is loaded from {@code /fxml/main-shell.fxml} with the
- * FRIDAY theme ({@code /css/friday-theme.css}) as the primary stylesheet.
- * The legacy {@code app.css} is also loaded as a secondary sheet so that
- * all existing sub-view styles remain intact.
+ * <p>
+ * The main shell is loaded from {@code /fxml/main-shell.fxml} with the EDITH
+ * shell theme ({@code /css/friday-theme.css}) as the primary stylesheet. The
+ * legacy {@code app.css} is also loaded as a secondary sheet so that all
+ * existing sub-view styles remain intact.
  */
 public class SceneManager {
 
@@ -25,10 +26,10 @@ public class SceneManager {
         Parent root = loadView(MAIN_VIEW);
         Scene scene = new Scene(root, 1280, 800);
 
-        // Primary FRIDAY theme
-        URL fridayCss = getClass().getResource("/css/friday-theme.css");
-        if (fridayCss != null) {
-            scene.getStylesheets().add(fridayCss.toExternalForm());
+        // Primary EDITH shell theme (file name retained for compatibility)
+        URL shellThemeCss = getClass().getResource("/css/friday-theme.css");
+        if (shellThemeCss != null) {
+            scene.getStylesheets().add(shellThemeCss.toExternalForm());
         }
 
         // Legacy stylesheet (retains sub-view styles: notes, reminders, tools, settings)
@@ -47,7 +48,8 @@ public class SceneManager {
     /**
      * Loads a JavaFX Parent from the given classpath resource path.
      *
-     * @param resourcePath absolute classpath path, e.g. {@code /fxml/chat-view.fxml}
+     * @param resourcePath absolute classpath path, e.g.
+     * {@code /fxml/chat-view.fxml}
      * @return loaded Parent node
      * @throws IllegalStateException if the resource is missing or invalid
      */
