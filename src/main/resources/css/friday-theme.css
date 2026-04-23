@@ -42,7 +42,7 @@
     -edith-accent-warning: #F0B857;
     -edith-accent-error: #FF5C7A;
 
-    -edith-border-soft: rgba(255, 255, 255, 0.06);
+    -edith-border-soft: rgba(58, 72, 94, 0.42);
     -edith-border-strong: rgba(67, 179, 255, 0.65);
 }
 
@@ -1765,8 +1765,8 @@
 }
 
 .nav-button-muted {
-    -fx-background-color: rgba(255, 255, 255, 0.03);
-    background-color: rgba(255, 255, 255, 0.03);
+    -fx-background-color: rgba(33, 43, 58, 0.62);
+    background-color: rgba(33, 43, 58, 0.62);
     -fx-border-color: -edith-border-soft;
     border-color: -edith-border-soft;
     -fx-text-fill: -edith-text-secondary;
@@ -1807,4 +1807,26 @@
     -fx-border-color: -edith-border-strong;
     border-color: -edith-border-strong;
     -fx-effect: dropshadow(gaussian, rgba(67, 179, 255, 0.24), 14, 0, 0, 0);
+}
+
+/* Ensure dark-mode hover states avoid pure white */
+.send-button:hover,
+.icon-button:hover,
+.toggle-button:hover,
+.chip-button:hover,
+.action-button:hover,
+.quick-action-button:hover,
+.nav-button:hover,
+.nav-button-active:hover,
+.nav-button-muted:hover,
+.header-button:hover,
+.header-button-accent:hover,
+.mini-action-button:hover,
+.filter-tab-button:hover,
+.filter-tab-button-active,
+.clear-button:hover,
+.mic-button:hover {
+    -fx-text-fill: -edith-text-primary;
+    -fx-border-color: -edith-border-strong;
+    border-color: -edith-border-strong;
 }

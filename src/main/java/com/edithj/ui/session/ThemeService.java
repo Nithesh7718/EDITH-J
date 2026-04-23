@@ -10,13 +10,11 @@ import javafx.scene.Scene;
 public final class ThemeService {
 
     public enum Theme {
-        DARK,
-        LIGHT
+        DARK
     }
 
     private static final ThemeService INSTANCE = new ThemeService();
     private static final String DARK_THEME_STYLESHEET = "/css/friday-theme.css";
-    private static final String LIGHT_THEME_STYLESHEET = "/css/app-light.css";
 
     private final ObjectProperty<Theme> themeProperty = new SimpleObjectProperty<>(Theme.DARK);
 
@@ -36,28 +34,21 @@ public final class ThemeService {
     }
 
     public void toggleTheme(Scene scene) {
-        if (currentTheme() == Theme.DARK) {
-            applyTheme(scene, Theme.LIGHT);
-        } else {
-            applyTheme(scene, Theme.DARK);
-        }
+        // Light mode removed: keep EDITH on dark theme.
+        applyTheme(scene, Theme.DARK);
     }
 
     public void applyTheme(Scene scene, Theme theme) {
         Objects.requireNonNull(scene, "scene");
 
         URL dark = ThemeService.class.getResource(DARK_THEME_STYLESHEET);
-        URL light = ThemeService.class.getResource(LIGHT_THEME_STYLESHEET);
-        if (dark == null || light == null) {
+        if (dark == null) {
             return;
         }
 
         String darkCss = dark.toExternalForm();
-        String lightCss = light.toExternalForm();
-
         scene.getStylesheets().remove(darkCss);
-        scene.getStylesheets().remove(lightCss);
-        scene.getStylesheets().add(theme == Theme.DARK ? darkCss : lightCss);
-        themeProperty.set(theme);
+        scene.getStylesheets().add(darkCss);
+        themeProperty.set(Theme.DARK);
     }
 }

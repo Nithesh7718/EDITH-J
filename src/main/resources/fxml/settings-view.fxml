@@ -4,7 +4,6 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.VBox?>
 
 <ScrollPane xmlns:fx="http://javafx.com/fxml/1"
@@ -44,12 +43,6 @@
                 <Label text="Developer" styleClass="card-title"/>
                 <CheckBox fx:id="devSmokeLaunchersCheckBox" text="Dev smoke launchers (start work mode)" onAction="#onDevSmokeLaunchersToggled"/>
                 <Label text="When enabled, EDITH can open a small set of apps/sites to smoke-test launcher integration." styleClass="panel-hint" wrapText="true"/>
-            </VBox>
-
-            <VBox spacing="8.0" styleClass="content-card">
-                <Label text="Theme" styleClass="card-title"/>
-                <Label fx:id="themeStatusLabel" text="Current theme: Dark"/>
-                <ToggleButton fx:id="themeToggleButton" text="Switch to Light Mode" onAction="#onToggleTheme" styleClass="mini-action-button"/>
             </VBox>
 
             <VBox spacing="8.0" styleClass="content-card">

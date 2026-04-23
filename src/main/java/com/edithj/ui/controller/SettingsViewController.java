@@ -2,14 +2,11 @@ package com.edithj.ui.controller;
 
 import com.edithj.config.AppConfig;
 import com.edithj.config.ModelConfig;
-import com.edithj.ui.session.ThemeService;
-import com.edithj.ui.session.ThemeService.Theme;
 import com.edithj.ui.session.UiPreferencesService;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ToggleButton;
 
 @SuppressWarnings("unused")
 public class SettingsViewController {
@@ -31,13 +28,8 @@ public class SettingsViewController {
     @FXML
     private CheckBox devSmokeLaunchersCheckBox;
     @FXML
-    private Label themeStatusLabel;
-    @FXML
-    private ToggleButton themeToggleButton;
-    @FXML
     private CheckBox voiceAutoSendCheckBox;
 
-    private final ThemeService themeService = ThemeService.instance();
     private final UiPreferencesService uiPreferencesService = UiPreferencesService.instance();
 
     @FXML
@@ -101,11 +93,6 @@ public class SettingsViewController {
             }
         });
 
-        if (themeToggleButton != null && themeStatusLabel != null) {
-            updateThemeLabels(themeService.currentTheme());
-            themeService.themeProperty().addListener((obs, oldValue, newValue) -> updateThemeLabels(newValue));
-        }
-
         if (voiceAutoSendCheckBox != null) {
             voiceAutoSendCheckBox.setSelected(uiPreferencesService.isAutoSendVoiceInputEnabled());
         }
@@ -114,14 +101,6 @@ public class SettingsViewController {
                 voiceAutoSendCheckBox.setSelected(newValue);
             }
         });
-    }
-
-    @FXML
-    private void onToggleTheme() {
-        if (themeToggleButton == null || themeToggleButton.getScene() == null) {
-            return;
-        }
-        themeService.toggleTheme(themeToggleButton.getScene());
     }
 
     @FXML
@@ -160,13 +139,4 @@ public class SettingsViewController {
         uiPreferencesService.setDevSmokeLaunchersEnabled(devSmokeLaunchersCheckBox.isSelected());
     }
 
-    private void updateThemeLabels(Theme theme) {
-        if (themeToggleButton == null || themeStatusLabel == null) {
-            return;
-        }
-        boolean dark = theme == Theme.DARK;
-        themeToggleButton.setSelected(!dark);
-        themeToggleButton.setText(dark ? "Switch to Light Mode" : "Switch to Dark Mode");
-        themeStatusLabel.setText(dark ? "Current theme: Dark" : "Current theme: Light");
-    }
 }
