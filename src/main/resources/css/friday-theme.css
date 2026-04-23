@@ -231,6 +231,37 @@
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.15), 12, 0, 4, 0);
 }
 
+.sidebar-scroll {
+    -fx-background-color: transparent;
+    background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    border-color: transparent;
+}
+
+.sidebar-scroll > .viewport {
+    -fx-background-color: transparent;
+    background-color: transparent;
+}
+
+.sidebar-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    background-color: transparent;
+    -fx-pref-width: 7;
+}
+
+.sidebar-scroll .scroll-bar:vertical .track {
+    -fx-background-color: rgba(15, 23, 42, 0.40);
+    background-color: rgba(15, 23, 42, 0.40);
+    -fx-background-radius: 4;
+}
+
+.sidebar-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(31, 213, 249, 0.48);
+    background-color: rgba(31, 213, 249, 0.48);
+    -fx-background-radius: 4;
+}
+
 .panel-section-label {
     -fx-text-fill: rgba(100, 116, 139, 0.75);
     -fx-font-size: 9px;

@@ -129,6 +129,14 @@ public class AssistantService {
     }
 
     private AssistantResponse routeWithContextRecovery(String normalizedInput, String channel) {
+        if (shouldRecoverToWhatsApp(normalizedInput)) {
+            String recoveredInput = ensureWhatsAppPrefix(normalizedInput);
+            IntentRouter.RoutedIntent recoveredIntent = intentRouter.route(recoveredInput);
+            if (recoveredIntent.intentType() == IntentType.WHATSAPP) {
+                return intentRouter.routeAndHandle(recoveredIntent, channel);
+            }
+        }
+
         IntentClassifier.Classification classification = intentClassifier.classify(normalizedInput);
         AssistantResponse routedResponse = knowledgeRouter.route(classification, channel);
         if (routedResponse.intentType() != IntentType.FALLBACK_CHAT
@@ -137,14 +145,6 @@ public class AssistantService {
         }
 
         IntentRouter.RoutedIntent routedIntent = intentRouter.route(normalizedInput);
-
-        if (shouldRecoverToWhatsApp(normalizedInput)) {
-            String recoveredInput = ensureWhatsAppPrefix(normalizedInput);
-            IntentRouter.RoutedIntent recoveredIntent = intentRouter.route(recoveredInput);
-            if (recoveredIntent.intentType() == IntentType.WHATSAPP) {
-                return intentRouter.routeAndHandle(recoveredIntent, channel);
-            }
-        }
 
         if (routedIntent.intentType() != IntentType.FALLBACK_CHAT) {
             return intentRouter.routeAndHandle(routedIntent, channel);

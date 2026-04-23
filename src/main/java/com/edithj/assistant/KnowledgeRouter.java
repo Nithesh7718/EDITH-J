@@ -96,12 +96,31 @@ public class KnowledgeRouter {
         String candidate = targets.isEmpty() ? input : targets.get(0);
         String launchTarget = appNameResolver.resolveLaunchTarget(candidate);
 
+        if (isWhatsAppAlias(launchTarget)) {
+            IntentRouter.RoutedIntent whatsappRouted = new IntentRouter.RoutedIntent(
+                    IntentType.WHATSAPP,
+                    input,
+                    input);
+            return legacyIntentRouter.routeAndHandle(whatsappRouted, channel);
+        }
+
         IntentRouter.RoutedIntent routed = new IntentRouter.RoutedIntent(
                 IntentType.APP_LAUNCH,
                 input,
                 launchTarget);
 
         return legacyIntentRouter.routeAndHandle(routed, channel);
+    }
+
+    private boolean isWhatsAppAlias(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().toLowerCase();
+        return normalized.contains("whatsapp")
+                || normalized.contains("whtsapp")
+                || normalized.contains("whatsap")
+                || normalized.contains("watsapp");
     }
 
     private AssistantResponse handleWorldIntent(Intent intent, String input, List<String> targets, String channel) {

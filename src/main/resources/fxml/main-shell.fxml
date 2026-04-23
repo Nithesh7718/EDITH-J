@@ -68,70 +68,74 @@
          LEFT  —  Info panel  (last command, model, system info cards)
          ═══════════════════════════════════════════════════════════════════════ -->
     <left>
-        <VBox spacing="14" prefWidth="220" minWidth="180" maxWidth="280" styleClass="info-panel" BorderPane.alignment="TOP_CENTER">
-            <padding>
-                <Insets top="28" right="16" bottom="28" left="16"/>
-            </padding>
+        <ScrollPane fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" prefWidth="220" minWidth="180" maxWidth="280" styleClass="sidebar-scroll" BorderPane.alignment="TOP_CENTER">
+            <content>
+                <VBox spacing="14" styleClass="info-panel">
+                    <padding>
+                        <Insets top="28" right="16" bottom="28" left="16"/>
+                    </padding>
 
-            <Label text="SYSTEM" styleClass="panel-section-label"/>
+                    <Label text="SYSTEM" styleClass="panel-section-label"/>
 
-            <!-- Status card -->
-            <VBox styleClass="info-card" spacing="6">
-                <padding>
-                    <Insets top="8" right="8" bottom="8" left="8"/>
-                </padding>
-                <Label text="ASSISTANT STATE" styleClass="card-label"/>
-                <Label fx:id="stateCardLabel" text="IDLE" styleClass="card-value-cyan"/>
-            </VBox>
+                    <!-- Status card -->
+                    <VBox styleClass="info-card" spacing="6">
+                        <padding>
+                            <Insets top="8" right="8" bottom="8" left="8"/>
+                        </padding>
+                        <Label text="ASSISTANT STATE" styleClass="card-label"/>
+                        <Label fx:id="stateCardLabel" text="IDLE" styleClass="card-value-cyan"/>
+                    </VBox>
 
-            <!-- Model card -->
-            <VBox styleClass="info-card" spacing="6">
-                <padding>
-                    <Insets top="8" right="8" bottom="8" left="8"/>
-                </padding>
-                <Label text="ACTIVE MODEL" styleClass="card-label"/>
-                <Label fx:id="modelCardLabel" text="Loading…" styleClass="card-value" wrapText="true"/>
-            </VBox>
+                    <!-- Model card -->
+                    <VBox styleClass="info-card" spacing="6">
+                        <padding>
+                            <Insets top="8" right="8" bottom="8" left="8"/>
+                        </padding>
+                        <Label text="ACTIVE MODEL" styleClass="card-label"/>
+                        <Label fx:id="modelCardLabel" text="Loading…" styleClass="card-value" wrapText="true"/>
+                    </VBox>
 
-            <!-- Last command card -->
-            <VBox styleClass="info-card" spacing="6">
-                <padding>
-                    <Insets top="8" right="8" bottom="8" left="8"/>
-                </padding>
-                <Label text="LAST COMMAND" styleClass="card-label"/>
-                <Label fx:id="lastCommandLabel" text="–" styleClass="card-value" wrapText="true"/>
-            </VBox>
+                    <!-- Last command card -->
+                    <VBox styleClass="info-card" spacing="6">
+                        <padding>
+                            <Insets top="8" right="8" bottom="8" left="8"/>
+                        </padding>
+                        <Label text="LAST COMMAND" styleClass="card-label"/>
+                        <Label fx:id="lastCommandLabel" text="–" styleClass="card-value" wrapText="true"/>
+                    </VBox>
 
-            <!-- World Monitor card -->
-            <VBox styleClass="info-card" spacing="6">
-                <padding>
-                    <Insets top="8" right="8" bottom="8" left="8"/>
-                </padding>
-                <Label text="WORLD MONITOR" styleClass="card-label"/>
-                <Label fx:id="worldMonitorStatusLabel" text="Last update: pending" styleClass="card-value" wrapText="true"/>
-            </VBox>
+                    <!-- World Monitor card -->
+                    <VBox styleClass="info-card" spacing="6">
+                        <padding>
+                            <Insets top="8" right="8" bottom="8" left="8"/>
+                        </padding>
+                        <Label text="WORLD MONITOR" styleClass="card-label"/>
+                        <Label fx:id="worldMonitorStatusLabel" text="Last update: pending" styleClass="card-value" wrapText="true"/>
+                    </VBox>
 
-            <!-- Local KB card -->
-            <VBox styleClass="info-card" spacing="6">
-                <padding>
-                    <Insets top="8" right="8" bottom="8" left="8"/>
-                </padding>
-                <Label text="LOCAL KB" styleClass="card-label"/>
-                <Label fx:id="localKbStatusLabel" text="0 docs indexed • last sync pending" styleClass="card-value" wrapText="true"/>
-            </VBox>
+                    <!-- Local KB card -->
+                    <VBox styleClass="info-card" spacing="6">
+                        <padding>
+                            <Insets top="8" right="8" bottom="8" left="8"/>
+                        </padding>
+                        <Label text="LOCAL KB" styleClass="card-label"/>
+                        <Label fx:id="localKbStatusLabel" text="0 docs indexed • last sync pending" styleClass="card-value" wrapText="true"/>
+                    </VBox>
 
-            <Separator styleClass="panel-divider"/>
-            <Label text="NAVIGATION" styleClass="panel-section-label"/>
+                    <Separator styleClass="panel-divider"/>
+                    <Label text="NAVIGATION" styleClass="panel-section-label"/>
 
-            <Button text="⌂  Home" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
-            <Button text="♪  Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes"/>
-            <Button text="⏰  Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders"/>
-            <Button text="⬛  Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
-            <Button text="⚙  Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
+                    <Button text="⌂  Home" onAction="#showChatView" maxWidth="Infinity" styleClass="nav-button" fx:id="btnChat"/>
+                    <Button text="♪  Notes" onAction="#showNotesView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnNotes"/>
+                    <Button text="⏰  Reminders" onAction="#showRemindersView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnReminders"/>
+                    <Button text="⬛  Desktop Tools" onAction="#showDesktopToolsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnDesktopTools"/>
+                    <Button text="⚙  Settings" onAction="#showSettingsView" maxWidth="Infinity" styleClass="nav-button-muted" fx:id="btnSettings"/>
 
-            <Region VBox.vgrow="ALWAYS"/>
-            <Label text="BUILD v0.1.0" styleClass="panel-section-label"/>
-        </VBox>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Label text="BUILD v0.1.0" styleClass="panel-section-label"/>
+                </VBox>
+            </content>
+        </ScrollPane>
     </left>
 
     <!-- ═══════════════════════════════════════════════════════════════════════

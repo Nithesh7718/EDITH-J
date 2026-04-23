@@ -39,9 +39,11 @@ public class LauncherCommandHandler implements CommandHandler {
             return "I could not identify the app name. Try: launch notepad.";
         }
 
-        String resolvedApp = appNameResolver.resolveLaunchTarget(appName);
-        if (!resolvedApp.isBlank()) {
-            appName = resolvedApp;
+        if (!isLikelyUrl(appName)) {
+            String resolvedApp = appNameResolver.resolveLaunchTarget(appName);
+            if (!resolvedApp.isBlank()) {
+                appName = resolvedApp;
+            }
         }
 
         try {
@@ -57,5 +59,9 @@ public class LauncherCommandHandler implements CommandHandler {
             appName = appName.substring(4).trim();
         }
         return appName;
+    }
+
+    private boolean isLikelyUrl(String value) {
+        return value != null && value.matches("(?i)^[a-z][a-z0-9+.-]*:.*");
     }
 }
