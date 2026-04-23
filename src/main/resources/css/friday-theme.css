@@ -32,9 +32,9 @@
     -edith-bg-panel-alt: #151C26;
     -edith-bg-card: #1A2230;
 
-    -edith-text-primary: #E8EDF5;
-    -edith-text-secondary: rgba(232, 237, 245, 0.72);
-    -edith-text-muted: rgba(232, 237, 245, 0.48);
+    -edith-text-primary: #C9D3E1;
+    -edith-text-secondary: rgba(201, 211, 225, 0.74);
+    -edith-text-muted: rgba(201, 211, 225, 0.50);
 
     -edith-accent-primary: #43B3FF;
     -edith-accent-secondary: #A375FF;
@@ -127,7 +127,7 @@
     background-color: rgba(31, 213, 249, 0.22);
     -fx-border-color: #1FD5F9;
     border-color: #1FD5F9;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.90), 16, 0.2, 0, 0);
 }
 
@@ -411,7 +411,7 @@
     -fx-border-radius: 4;
     border-radius: 4px;
     -fx-background-radius: 4;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-font-size: 12px;
     font-size: 12px;
     -fx-font-weight: 700;
@@ -478,7 +478,7 @@
     background-color: rgba(31, 213, 249, 0.22);
     -fx-border-color: #1FD5F9;
     border-color: #1FD5F9;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.55), 14, 0.15, 0, 0);
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
@@ -690,7 +690,7 @@
     background-color: rgba(31, 213, 249, 0.18);
     -fx-border-color: rgba(31, 213, 249, 0.55);
     border-color: rgba(31, 213, 249, 0.55);
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-scale-x: 1.03;
     -fx-scale-y: 1.03;
 }
@@ -972,7 +972,7 @@
     background-color: rgba(31, 213, 249, 0.20);
     -fx-border-color: #1FD5F9;
     border-color: #1FD5F9;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-scale-x: 1.04;
     -fx-scale-y: 1.04;
 }
@@ -1004,9 +1004,9 @@
 .mic-button:hover {
     -fx-background-color: rgba(31, 213, 249, 0.30);
     background-color: rgba(31, 213, 249, 0.30);
-    -fx-border-color: #FFFFFF;
-    border-color: #FFFFFF;
-    -fx-text-fill: #FFFFFF;
+    -fx-border-color: -edith-border-strong;
+    border-color: -edith-border-strong;
+    -fx-text-fill: -edith-text-primary;
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.90), 22, 0.3, 0, 0);
     -fx-scale-x: 1.06;
     -fx-scale-y: 1.06;
@@ -1022,7 +1022,7 @@
     background-color: rgba(31, 213, 249, 0.35);
     -fx-border-color: #1FD5F9;
     border-color: #1FD5F9;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 1.0), 28, 0.4, 0, 0);
 }
 
@@ -1088,7 +1088,7 @@
 .send-button:hover {
     -fx-background-color: rgba(31, 213, 249, 0.35);
     background-color: rgba(31, 213, 249, 0.35);
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.80), 18, 0.25, 0, 0);
     -fx-scale-x: 1.03;
     -fx-scale-y: 1.03;
@@ -1252,7 +1252,7 @@
     background-color: rgba(31, 213, 249, 0.22);
     -fx-border-color: #1FD5F9;
     border-color: #1FD5F9;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
 }
@@ -1290,7 +1290,7 @@
     background-color: rgba(31, 213, 249, 0.22);
     -fx-border-color: #1FD5F9;
     border-color: #1FD5F9;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -edith-text-primary;
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.35), 10, 0.2, 0, 0);
 }
 
@@ -1829,4 +1829,27 @@
     -fx-text-fill: -edith-text-primary;
     -fx-border-color: -edith-border-strong;
     border-color: -edith-border-strong;
+}
+
+/* Remove remaining bright-white emphasis in dark mode */
+.state-pill-listening,
+.nav-button-active,
+.nav-button:hover,
+.send-button:hover,
+.icon-button:hover,
+.toggle-button:hover,
+.chip-button:hover,
+.action-button:hover,
+.quick-action-button:hover,
+.header-button:hover,
+.header-button-accent:hover,
+.mini-action-button:hover,
+.filter-tab-button:hover,
+.filter-tab-button-active,
+.clear-button:hover,
+.mic-button:hover,
+.msg-text-ai,
+.msg-text-user,
+.msg-text-system {
+    -fx-text-fill: -edith-text-primary;
 }
