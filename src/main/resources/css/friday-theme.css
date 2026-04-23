@@ -1,30 +1,52 @@
 /*
  * ╔══════════════════════════════════════════════════════════════════════════╗
- * ║   EDITH-J   —   EDITH Voice Console Theme   v4.1                       ║
- * ║   Dark cinematic, cyan/purple neon, glassmorphism + glow aesthetics     ║
+ * ║   EDITH-J   —   EDITH Voice Console Theme   v4.4                       ║
+ * ║   Calm dark productivity palette with tokenized color system            ║
  * ║   Border rules below use JavaFX-compatible -fx-border-color/-width only ║
  * ║   Every -fx-* property is paired with its standard web CSS counterpart  ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  *
- * Design tokens
- *   bg-deep:    #05060B    (near-black base)
- *   bg-mid:     #0A0F1C    (panel backgrounds)
- *   bg-surface: #0D1B2E    (card surfaces)
- *   accent-cyan:#1FD5F9
- *   accent-cyan-dim: rgba(31,213,249,0.20)
- *   accent-purple:#7B61FF
- *   accent-green:#00FFA3
- *   text-primary:#E2EBF5
- *   text-dim:   rgba(148,163,184,0.75)
+ * Palette tokens are defined in `.root, .app-shell` near the top of file.
+ *
+ * Section map
+ *   1) Shell core (top bar, side panel, center/transcript, composer)
+ *   2) Shared subview components (notes/reminders/tools/chat subviews)
+ *   3) Legacy compatibility selectors (main-view.fxml and older views)
  */
 
-/* ── Global font override ────────────────────────────────────────────────── */
+/* ─────────────────────────────
+   SHELL CORE
+   ───────────────────────────── */
+
+/* Global font override */
 * {
     -fx-font-family: "Segoe UI", "Arial", sans-serif;
     font-family: "Segoe UI", "Arial", sans-serif;
 }
 
-/* ── Root shell ──────────────────────────────────────────────────────────── */
+/* EDITH calm dark productivity palette tokens */
+.root,
+.app-shell {
+    -edith-bg-root: #070B10;
+    -edith-bg-panel: #111720;
+    -edith-bg-panel-alt: #151C26;
+    -edith-bg-card: #1A2230;
+
+    -edith-text-primary: #E8EDF5;
+    -edith-text-secondary: rgba(232, 237, 245, 0.72);
+    -edith-text-muted: rgba(232, 237, 245, 0.48);
+
+    -edith-accent-primary: #43B3FF;
+    -edith-accent-secondary: #A375FF;
+    -edith-accent-success: #41D69C;
+    -edith-accent-warning: #F0B857;
+    -edith-accent-error: #FF5C7A;
+
+    -edith-border-soft: rgba(255, 255, 255, 0.06);
+    -edith-border-strong: rgba(67, 179, 255, 0.65);
+}
+
+/* Root shell */
 .app-shell {
     -fx-background-color: #05060B;
     background-color: #05060B;
@@ -74,7 +96,7 @@
     font-weight: 400;
 }
 
-/* ── State pill ──────────────────────────────────────────────────────────── */
+/* State pill */
 .state-pill {
     -fx-font-size: 10px;
     font-size: 10px;
@@ -127,7 +149,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 255, 163, 0.75), 14, 0.2, 0, 0);
 }
 
-/* ── Connection indicator ────────────────────────────────────────────────── */
+/* Connection indicator */
 .connection-indicator {
     -fx-background-color: rgba(31, 213, 249, 0.07);
     background-color: rgba(31, 213, 249, 0.07);
@@ -165,7 +187,7 @@
     font-size: 10px;
 }
 
-/* ── Model badge ─────────────────────────────────────────────────────────── */
+/* Model badge */
 .model-badge {
     -fx-text-fill: rgba(196, 181, 253, 0.80);
     -fx-font-size: 9px;
@@ -185,7 +207,7 @@
     -fx-background-radius: 4;
 }
 
-/* ── Icon button (small, circular / square) ──────────────────────────────── */
+/* Icon button (small, circular / square) */
 .icon-button {
     -fx-background-color: rgba(31, 213, 249, 0.08);
     background-color: rgba(31, 213, 249, 0.08);
@@ -282,7 +304,7 @@
     opacity: 0.30;
 }
 
-/* ── Info cards ──────────────────────────────────────────────────────────── */
+/* Info cards */
 .info-card {
     -fx-background-color: rgba(13, 27, 46, 0.80);
     background-color: rgba(13, 27, 46, 0.80);
@@ -378,7 +400,7 @@
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.60), 8, 0, 0, 0);
 }
 
-/* ── Navigation buttons ──────────────────────────────────────────────────── */
+/* Navigation buttons */
 .nav-button-active {
     -fx-background-color: rgba(31, 213, 249, 0.18);
     background-color: rgba(31, 213, 249, 0.18);
@@ -488,7 +510,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CENTER PANE  —  avatar zone + content host
+   CENTER PANE (avatar zone + content host)
    ═══════════════════════════════════════════════════════════════════════════ */
 .center-pane {
     -fx-background-color: transparent;
@@ -706,7 +728,7 @@
     -fx-scale-y: 1.04;
 }
 
-/* ── Chat transcript list ─────────────────────────────────────────────────── */
+/* Chat transcript list */
 .transcript-list {
     -fx-background-color: transparent;
     background-color: transparent;
@@ -715,7 +737,8 @@
     padding: 10px 8px;
 }
 
-.transcript-list .list-cell {
+.transcript-list .list-cell,
+.chat-history .list-cell {
     -fx-background-color: transparent;
     background-color: transparent;
     -fx-padding: 0;
@@ -723,47 +746,56 @@
 }
 
 .transcript-list .list-cell:filled:selected,
-.transcript-list .list-cell:filled:selected:focused {
+.transcript-list .list-cell:filled:selected:focused,
+.chat-history .list-cell:filled:selected,
+.chat-history .list-cell:filled:selected:focused {
     -fx-background-color: rgba(31, 213, 249, 0.06);
     background-color: rgba(31, 213, 249, 0.06);
 }
 
-.transcript-list .list-cell:empty {
+.transcript-list .list-cell:empty,
+.chat-history .list-cell:empty {
     -fx-background-color: transparent;
     background-color: transparent;
 }
 
-.transcript-list .scroll-bar:vertical {
+.transcript-list .scroll-bar:vertical,
+.chat-history .scroll-bar:vertical {
     -fx-background-color: transparent;
     background-color: transparent;
     -fx-pref-width: 5;
 }
 
-.transcript-list .scroll-bar:vertical .track {
+.transcript-list .scroll-bar:vertical .track,
+.chat-history .scroll-bar:vertical .track {
     -fx-background-color: rgba(15, 23, 42, 0.40);
     background-color: rgba(15, 23, 42, 0.40);
     -fx-background-radius: 3;
 }
 
-.transcript-list .scroll-bar:vertical .thumb {
+.transcript-list .scroll-bar:vertical .thumb,
+.chat-history .scroll-bar:vertical .thumb {
     -fx-background-color: rgba(31, 213, 249, 0.40);
     background-color: rgba(31, 213, 249, 0.40);
     -fx-background-radius: 3;
 }
 
-.transcript-list .scroll-bar:vertical .thumb:hover {
+.transcript-list .scroll-bar:vertical .thumb:hover,
+.chat-history .scroll-bar:vertical .thumb:hover {
     -fx-background-color: rgba(31, 213, 249, 0.70);
     background-color: rgba(31, 213, 249, 0.70);
 }
 
 .transcript-list .scroll-bar .increment-button,
-.transcript-list .scroll-bar .decrement-button {
+.transcript-list .scroll-bar .decrement-button,
+.chat-history .scroll-bar .increment-button,
+.chat-history .scroll-bar .decrement-button {
     -fx-background-color: transparent;
     background-color: transparent;
     -fx-pref-height: 0;
 }
 
-/* ── Message bubbles ─────────────────────────────────────────────────────── */
+/* Message bubbles */
 .msg-user-bubble {
     -fx-background-color: rgba(31, 213, 249, 0.15);
     background-color: rgba(31, 213, 249, 0.15);
@@ -868,7 +900,7 @@
     font-family: "Consolas", monospace;
 }
 
-/* ── Partial text bar ─────────────────────────────────────────────────────── */
+/* Partial text bar */
 .partial-bar {
     -fx-background-color: rgba(31, 213, 249, 0.07);
     background-color: rgba(31, 213, 249, 0.07);
@@ -910,7 +942,7 @@
     background-color: transparent;
 }
 
-/* ── Quick-chip row ──────────────────────────────────────────────────────── */
+/* Quick-chip row */
 .chip-row {
     -fx-background-color: transparent;
     background-color: transparent;
@@ -950,7 +982,7 @@
     -fx-scale-y: 0.97;
 }
 
-/* ── Mic button ──────────────────────────────────────────────────────────── */
+/* Mic button */
 .mic-button {
     -fx-background-color: rgba(31, 213, 249, 0.15);
     background-color: rgba(31, 213, 249, 0.15);
@@ -1005,7 +1037,7 @@
 
 /* .mic-button-idle inherits all .mic-button defaults — no overrides needed */
 
-/* ── Command text input ──────────────────────────────────────────────────── */
+/* Command text input */
 .command-input {
     -fx-background-color: rgba(10, 15, 28, 0.90);
     background-color: rgba(10, 15, 28, 0.90);
@@ -1030,7 +1062,7 @@
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.35), 16, 0, 0, 0);
 }
 
-/* ── Send button ──────────────────────────────────────────────────────────── */
+/* Send button */
 .send-button {
     -fx-background-color: rgba(31, 213, 249, 0.18);
     background-color: rgba(31, 213, 249, 0.18);
@@ -1067,7 +1099,7 @@
     -fx-scale-y: 0.97;
 }
 
-/* ── Mic hint label ──────────────────────────────────────────────────────── */
+/* Mic hint label */
 .mic-hint {
     -fx-text-fill: rgba(100, 116, 139, 0.65);
     -fx-font-size: 10px;
@@ -1097,9 +1129,11 @@
     -fx-effect: dropshadow(gaussian, rgba(31, 213, 249, 0.50), 14, 0, 0, 0);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SHARED INNER-PANEL ELEMENTS  (used by chat-view, notes-view, etc.)
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ─────────────────────────────
+   SHARED SUBVIEW COMPONENTS
+   ───────────────────────────── */
+
+/* Shared inner-panel elements (chat-view, notes-view, reminders, tools, settings) */
 
 /* Chat panel (chat-view.fxml) */
 .chat-panel {
@@ -1127,7 +1161,7 @@
     cursor: pointer;
 }
 
-/* Notes view: sidebar divider (migrated from inline styles) */
+/* Notes view: sidebar divider */
 .notes-sidebar {
     -fx-border-color: transparent rgba(31, 213, 249, 0.18) transparent transparent;
     border-color: transparent rgba(31, 213, 249, 0.18) transparent transparent;
@@ -1137,9 +1171,7 @@
     padding: 0 12px 0 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SUBVIEWS — Notes / Reminders / Tools (migrated from legacy app.css)
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Subviews — Notes / Reminders / Tools */
 
 .notes-panel,
 .reminders-panel,
@@ -1291,7 +1323,7 @@
     -fx-text-fill: rgba(226, 235, 245, 0.90);
 }
 
-/* Chat history list (inside chat-view.fxml) */
+/* Chat history list (chat-view.fxml) */
 .chat-history {
     -fx-background-color: rgba(5, 6, 11, 0.65);
     background-color: rgba(5, 6, 11, 0.65);
@@ -1306,54 +1338,6 @@
     -fx-background-radius: 8;
     -fx-padding: 8 0;
     padding: 8px 0;
-}
-
-.chat-history .list-cell {
-    -fx-background-color: transparent;
-    background-color: transparent;
-    -fx-padding: 0;
-    padding: 0;
-}
-
-.chat-history .list-cell:filled:selected,
-.chat-history .list-cell:filled:selected:focused {
-    -fx-background-color: rgba(31, 213, 249, 0.06);
-    background-color: rgba(31, 213, 249, 0.06);
-}
-
-.chat-history .list-cell:empty {
-    -fx-background-color: transparent;
-    background-color: transparent;
-}
-
-.chat-history .scroll-bar:vertical {
-    -fx-background-color: transparent;
-    background-color: transparent;
-    -fx-pref-width: 5;
-}
-
-.chat-history .scroll-bar:vertical .track {
-    -fx-background-color: rgba(15, 23, 42, 0.40);
-    background-color: rgba(15, 23, 42, 0.40);
-    -fx-background-radius: 3;
-}
-
-.chat-history .scroll-bar:vertical .thumb {
-    -fx-background-color: rgba(31, 213, 249, 0.40);
-    background-color: rgba(31, 213, 249, 0.40);
-    -fx-background-radius: 3;
-}
-
-.chat-history .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: rgba(31, 213, 249, 0.65);
-    background-color: rgba(31, 213, 249, 0.65);
-}
-
-.chat-history .scroll-bar .increment-button,
-.chat-history .scroll-bar .decrement-button {
-    -fx-background-color: transparent;
-    background-color: transparent;
-    -fx-pref-height: 0;
 }
 
 /* Quick action chips (chat-view.fxml) */
@@ -1429,13 +1413,13 @@
     font-size: 10px;
 }
 
-/* ── Separator line ──────────────────────────────────────────────────────── */
+/* Separator line */
 .separator .line {
     -fx-border-color: rgba(31, 213, 249, 0.18);
     border-color: rgba(31, 213, 249, 0.18);
 }
 
-/* ── Scrollbar global (secondary panels) ────────────────────────────────── */
+/* Scrollbar global (secondary panels) */
 .scroll-pane {
     -fx-background-color: transparent;
     background-color: transparent;
@@ -1447,7 +1431,11 @@
     background-color: transparent;
 }
 
-/* Status badge (kept for backward compat) */
+/* ─────────────────────────────
+   LEGACY COMPATIBILITY
+   ───────────────────────────── */
+
+/* Status badge */
 .status-badge {
     -fx-background-color: rgba(16, 185, 129, 0.15);
     background-color: rgba(16, 185, 129, 0.15);
@@ -1601,4 +1589,222 @@
     -fx-text-fill: rgba(100, 116, 139, 0.60);
     -fx-font-size: 10px;
     font-size: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CALM DARK RETHEME (v4.4)
+   Uses EDITH tokens above; only color + subtle shadow overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Shell core */
+.app-shell {
+    -fx-background-color: -edith-bg-root;
+    background-color: -edith-bg-root;
+}
+
+.status-bar,
+.info-panel,
+.transcript-panel,
+.control-bar-wrap {
+    -fx-background-color: -edith-bg-panel;
+    background-color: -edith-bg-panel;
+    -fx-border-color: -edith-border-soft;
+    border-color: -edith-border-soft;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 16, 0, 0, 4);
+}
+
+.center-pane-framed,
+.avatar-zone-framed,
+.workspace-host,
+.transcript-header,
+.footer-bar {
+    -fx-background-color: -edith-bg-panel-alt;
+    background-color: -edith-bg-panel-alt;
+    -fx-border-color: -edith-border-soft;
+    border-color: -edith-border-soft;
+}
+
+.app-title,
+.panel-title,
+.card-title,
+.card-value,
+.msg-text-user,
+.msg-text-ai,
+.msg-text-system,
+.transcript-title {
+    -fx-text-fill: -edith-text-primary;
+}
+
+.app-subtitle,
+.conn-text,
+.panel-hint,
+.msg-sender-user,
+.msg-sender-ai,
+.hub-meta-text,
+.mic-hint,
+.transcript-list .list-cell {
+    -fx-text-fill: -edith-text-secondary;
+}
+
+.footer-meta,
+.panel-section-label,
+.card-label,
+.model-badge,
+.conn-text-offline,
+.partial-text {
+    -fx-text-fill: -edith-text-muted;
+}
+
+.app-title-accent,
+.card-value-cyan,
+.footer-status,
+.model-badge,
+.partial-dot {
+    -fx-text-fill: -edith-accent-primary;
+    -fx-fill: -edith-accent-primary;
+    fill: -edith-accent-primary;
+}
+
+/* Transcript + cards */
+.info-card,
+.info-card-hub,
+.content-card,
+.editor-section,
+.msg-user-bubble,
+.msg-ai-bubble,
+.msg-system-bubble,
+.chat-history,
+.notes-list,
+.reminders-list {
+    -fx-background-color: -edith-bg-card;
+    background-color: -edith-bg-card;
+    -fx-border-color: -edith-border-soft;
+    border-color: -edith-border-soft;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.38), 10, 0, 0, 2);
+}
+
+.transcript-list .list-cell:filled:selected,
+.transcript-list .list-cell:filled:selected:focused,
+.chat-history .list-cell:filled:selected,
+.chat-history .list-cell:filled:selected:focused {
+    -fx-background-color: rgba(67, 179, 255, 0.14);
+    background-color: rgba(67, 179, 255, 0.14);
+}
+
+/* Hubs and state pills */
+.state-pill-idle,
+.transcript-state-pill-live,
+.hub-status-pill-muted {
+    -fx-background-color: rgba(67, 179, 255, 0.14);
+    background-color: rgba(67, 179, 255, 0.14);
+    -fx-border-color: -edith-border-strong;
+    border-color: -edith-border-strong;
+    -fx-text-fill: -edith-accent-primary;
+}
+
+.state-pill-listening,
+.state-pill-speaking,
+.hub-status-pill-ok,
+.conn-dot-online {
+    -fx-background-color: rgba(65, 214, 156, 0.16);
+    background-color: rgba(65, 214, 156, 0.16);
+    -fx-border-color: rgba(65, 214, 156, 0.58);
+    border-color: rgba(65, 214, 156, 0.58);
+    -fx-text-fill: -edith-accent-success;
+    -fx-fill: -edith-accent-success;
+    fill: -edith-accent-success;
+}
+
+.state-pill-processing {
+    -fx-background-color: rgba(163, 117, 255, 0.18);
+    background-color: rgba(163, 117, 255, 0.18);
+    -fx-border-color: rgba(163, 117, 255, 0.55);
+    border-color: rgba(163, 117, 255, 0.55);
+    -fx-text-fill: -edith-accent-secondary;
+}
+
+.transcript-state-pill-paused,
+.hub-status-pill-warn,
+.soon-badge,
+.msg-sender-system {
+    -fx-background-color: rgba(240, 184, 87, 0.16);
+    background-color: rgba(240, 184, 87, 0.16);
+    -fx-border-color: rgba(240, 184, 87, 0.58);
+    border-color: rgba(240, 184, 87, 0.58);
+    -fx-text-fill: -edith-accent-warning;
+}
+
+.conn-dot-offline,
+.clear-button {
+    -fx-background-color: rgba(255, 92, 122, 0.14);
+    background-color: rgba(255, 92, 122, 0.14);
+    -fx-border-color: rgba(255, 92, 122, 0.60);
+    border-color: rgba(255, 92, 122, 0.60);
+    -fx-text-fill: -edith-accent-error;
+    -fx-fill: -edith-accent-error;
+    fill: -edith-accent-error;
+}
+
+/* Buttons + inputs */
+.icon-button,
+.toggle-button,
+.send-button,
+.chip-button,
+.action-button,
+.quick-action-button,
+.header-button,
+.nav-button,
+.nav-button-active,
+.mini-action-button,
+.filter-tab-button {
+    -fx-background-color: rgba(67, 179, 255, 0.10);
+    background-color: rgba(67, 179, 255, 0.10);
+    -fx-border-color: rgba(67, 179, 255, 0.38);
+    border-color: rgba(67, 179, 255, 0.38);
+    -fx-text-fill: -edith-text-primary;
+}
+
+.nav-button-muted {
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+    background-color: rgba(255, 255, 255, 0.03);
+    -fx-border-color: -edith-border-soft;
+    border-color: -edith-border-soft;
+    -fx-text-fill: -edith-text-secondary;
+}
+
+.icon-button:hover,
+.toggle-button:hover,
+.send-button:hover,
+.chip-button:hover,
+.action-button:hover,
+.quick-action-button:hover,
+.header-button:hover,
+.header-button-accent:hover,
+.nav-button:hover,
+.nav-button-muted:hover,
+.mini-action-button:hover,
+.filter-tab-button:hover,
+.filter-tab-button-active {
+    -fx-border-color: -edith-border-strong;
+    border-color: -edith-border-strong;
+    -fx-effect: dropshadow(gaussian, rgba(67, 179, 255, 0.28), 12, 0, 0, 0);
+}
+
+.command-input,
+.chat-input,
+.tools-output {
+    -fx-background-color: -edith-bg-panel-alt;
+    background-color: -edith-bg-panel-alt;
+    -fx-control-inner-background: -edith-bg-panel-alt;
+    -fx-text-fill: -edith-text-primary;
+    -fx-prompt-text-fill: -edith-text-muted;
+    -fx-border-color: -edith-border-soft;
+    border-color: -edith-border-soft;
+}
+
+.command-input:focused,
+.chat-input:focused {
+    -fx-border-color: -edith-border-strong;
+    border-color: -edith-border-strong;
+    -fx-effect: dropshadow(gaussian, rgba(67, 179, 255, 0.24), 14, 0, 0, 0);
 }

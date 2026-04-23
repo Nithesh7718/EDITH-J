@@ -3,55 +3,60 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns:fx="http://javafx.com/fxml/1"
-    xmlns="http://javafx.com/javafx/17" fx:controller="com.edithj.ui.controller.SettingsViewController" spacing="12.0" styleClass="settings-panel">
-    <padding>
-        <Insets top="18.0" right="18.0" bottom="18.0" left="18.0"/>
-    </padding>
-    <Label text="Settings" styleClass="panel-title"/>
-    <Label text="This panel exposes basic runtime toggles while core behavior stays in the assistant pipeline." styleClass="panel-hint" wrapText="true"/>
+<ScrollPane xmlns:fx="http://javafx.com/fxml/1"
+    xmlns="http://javafx.com/javafx/17" fx:controller="com.edithj.ui.controller.SettingsViewController" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="sidebar-scroll, settings-scroll">
+    <content>
+        <VBox spacing="12.0" styleClass="settings-panel">
+            <padding>
+                <Insets top="18.0" right="18.0" bottom="18.0" left="18.0"/>
+            </padding>
+            <Label text="Settings" styleClass="panel-title"/>
+            <Label text="This panel exposes basic runtime toggles while core behavior stays in the assistant pipeline." styleClass="panel-hint" wrapText="true"/>
 
-    <VBox spacing="8.0" styleClass="content-card">
-        <Label text="Model & environment" styleClass="card-title"/>
-        <Label fx:id="apiKeyStatusLabel" text="Checking Groq API key..."/>
-        <Label text="Model" styleClass="card-label"/>
-        <Label fx:id="modelLabel" text="—" styleClass="card-value" wrapText="true"/>
-        <Label text="Environment" styleClass="card-label"/>
-        <Label fx:id="environmentLabel" text="—" styleClass="card-value" wrapText="true"/>
-        <Label text="Version" styleClass="card-label"/>
-        <Label fx:id="versionLabel" text="—" styleClass="card-value" wrapText="true"/>
-    </VBox>
+            <VBox spacing="8.0" styleClass="content-card">
+                <Label text="Model &amp; environment" styleClass="card-title"/>
+                <Label fx:id="apiKeyStatusLabel" text="Checking Groq API key..."/>
+                <Label text="Model" styleClass="card-label"/>
+                <Label fx:id="modelLabel" text="—" styleClass="card-value" wrapText="true"/>
+                <Label text="Environment" styleClass="card-label"/>
+                <Label fx:id="environmentLabel" text="—" styleClass="card-value" wrapText="true"/>
+                <Label text="Version" styleClass="card-label"/>
+                <Label fx:id="versionLabel" text="—" styleClass="card-value" wrapText="true"/>
+            </VBox>
 
-    <VBox spacing="8.0" styleClass="content-card">
-        <Label text="Launcher behavior" styleClass="card-title"/>
-        <CheckBox fx:id="preferShortcutAppsCheckBox" text="Prefer installed apps for shortcuts like YouTube" onAction="#onPreferShortcutAppsToggled"/>
-        <CheckBox fx:id="allowWebFallbackCheckBox" text="Fallback to web when an app is unavailable" onAction="#onAllowWebFallbackToggled"/>
-    </VBox>
+            <VBox spacing="8.0" styleClass="content-card">
+                <Label text="Launcher behavior" styleClass="card-title"/>
+                <CheckBox fx:id="preferShortcutAppsCheckBox" text="Prefer installed apps for shortcuts like YouTube" onAction="#onPreferShortcutAppsToggled"/>
+                <CheckBox fx:id="allowWebFallbackCheckBox" text="Fallback to web when an app is unavailable" onAction="#onAllowWebFallbackToggled"/>
+            </VBox>
 
-    <VBox spacing="8.0" styleClass="content-card">
-        <Label text="WhatsApp" styleClass="card-title"/>
-        <CheckBox fx:id="whatsappAppFirstCheckBox" text="Open WhatsApp in the desktop app first" onAction="#onWhatsAppAppFirstToggled"/>
-        <Label text="If the app is missing, EDITH can fall back to WhatsApp Web when web fallback is enabled." styleClass="panel-hint" wrapText="true"/>
-    </VBox>
+            <VBox spacing="8.0" styleClass="content-card">
+                <Label text="WhatsApp" styleClass="card-title"/>
+                <CheckBox fx:id="whatsappAppFirstCheckBox" text="Open WhatsApp in the desktop app first" onAction="#onWhatsAppAppFirstToggled"/>
+                <Label text="If the app is missing, EDITH can fall back to WhatsApp Web when web fallback is enabled." styleClass="panel-hint" wrapText="true"/>
+            </VBox>
 
-    <VBox spacing="8.0" styleClass="content-card">
-        <Label text="Developer" styleClass="card-title"/>
-        <CheckBox fx:id="devSmokeLaunchersCheckBox" text="Dev smoke launchers (start work mode)" onAction="#onDevSmokeLaunchersToggled"/>
-        <Label text="When enabled, EDITH can open a small set of apps/sites to smoke-test launcher integration." styleClass="panel-hint" wrapText="true"/>
-    </VBox>
+            <VBox spacing="8.0" styleClass="content-card">
+                <Label text="Developer" styleClass="card-title"/>
+                <CheckBox fx:id="devSmokeLaunchersCheckBox" text="Dev smoke launchers (start work mode)" onAction="#onDevSmokeLaunchersToggled"/>
+                <Label text="When enabled, EDITH can open a small set of apps/sites to smoke-test launcher integration." styleClass="panel-hint" wrapText="true"/>
+            </VBox>
 
-    <VBox spacing="8.0" styleClass="content-card">
-        <Label text="Theme" styleClass="card-title"/>
-        <Label fx:id="themeStatusLabel" text="Current theme: Dark"/>
-        <ToggleButton fx:id="themeToggleButton" text="Switch to Light Mode" onAction="#onToggleTheme" styleClass="mini-action-button"/>
-    </VBox>
+            <VBox spacing="8.0" styleClass="content-card">
+                <Label text="Theme" styleClass="card-title"/>
+                <Label fx:id="themeStatusLabel" text="Current theme: Dark"/>
+                <ToggleButton fx:id="themeToggleButton" text="Switch to Light Mode" onAction="#onToggleTheme" styleClass="mini-action-button"/>
+            </VBox>
 
-    <VBox spacing="8.0" styleClass="content-card">
-        <Label text="Voice input" styleClass="card-title"/>
-        <CheckBox fx:id="voiceAutoSendCheckBox" text="Automatically send recognized voice input" onAction="#onVoiceAutoSendToggled"/>
-        <Label text="You can say: send a &quot;hello&quot; msg to Krithick via WhatsApp, or send a email reg &quot;project update&quot; to krithick." styleClass="panel-hint" wrapText="true"/>
-    </VBox>
-</VBox>
+            <VBox spacing="8.0" styleClass="content-card">
+                <Label text="Voice input" styleClass="card-title"/>
+                <CheckBox fx:id="voiceAutoSendCheckBox" text="Automatically send recognized voice input" onAction="#onVoiceAutoSendToggled"/>
+                <Label text="You can say: send a &quot;hello&quot; msg to Krithick via WhatsApp, or send a email reg &quot;project update&quot; to krithick." styleClass="panel-hint" wrapText="true"/>
+            </VBox>
+        </VBox>
+    </content>
+</ScrollPane>

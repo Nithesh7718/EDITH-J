@@ -133,3 +133,53 @@
     -fx-text-fill: #475569;
     -fx-font-size: 11px;
 }
+
+/* Keep light mode visually aligned with shell structure */
+.status-bar,
+.info-panel,
+.transcript-panel,
+.control-bar-wrap,
+.center-pane-framed {
+    -fx-background-color: rgba(255, 255, 255, 0.96);
+    background-color: rgba(255, 255, 255, 0.96);
+}
+
+.state-pill,
+.hub-status-pill,
+.transcript-state-pill {
+    -fx-background-color: rgba(14, 165, 233, 0.12);
+    background-color: rgba(14, 165, 233, 0.12);
+    -fx-border-color: rgba(14, 165, 233, 0.55);
+    border-color: rgba(14, 165, 233, 0.55);
+    -fx-text-fill: #075985;
+}
+
+.msg-user-bubble,
+.msg-ai-bubble,
+.msg-system-bubble,
+.info-card,
+.content-card {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    background-color: rgba(255, 255, 255, 0.92);
+    -fx-border-color: rgba(14, 165, 233, 0.35);
+    border-color: rgba(14, 165, 233, 0.35);
+}
+
+/* Light token lock: keep same semantic mapping */
+.panel-hint,
+.mic-status-hint,
+.conn-text,
+.footer-meta {
+    -fx-text-fill: #64748b;
+}
+
+.clear-button,
+.transcript-state-pill-paused,
+.state-pill-processing,
+.state-pill-speaking {
+    -fx-background-color: rgba(245, 158, 11, 0.14);
+    background-color: rgba(245, 158, 11, 0.14);
+    -fx-border-color: rgba(245, 158, 11, 0.55);
+    border-color: rgba(245, 158, 11, 0.55);
+    -fx-text-fill: #92400e;
+}

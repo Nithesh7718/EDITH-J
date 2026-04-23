@@ -46,7 +46,9 @@ public class SettingsViewController {
         ModelConfig modelConfig = config.modelConfig();
 
         boolean hasApiKey = modelConfig.apiKey() != null && !modelConfig.apiKey().isBlank();
-        apiKeyStatusLabel.setText(hasApiKey ? "Groq API key detected" : "Groq API key missing");
+        if (apiKeyStatusLabel != null) {
+            apiKeyStatusLabel.setText(hasApiKey ? "Groq API key detected" : "Groq API key missing");
+        }
 
         if (modelLabel != null) {
             modelLabel.setText(modelConfig.model());
@@ -63,9 +65,15 @@ public class SettingsViewController {
             versionLabel.setText(implVersion == null || implVersion.isBlank() ? "dev" : implVersion.trim());
         }
 
-        preferShortcutAppsCheckBox.setSelected(uiPreferencesService.isPreferShortcutAppsEnabled());
-        allowWebFallbackCheckBox.setSelected(uiPreferencesService.isWebFallbackAllowed());
-        whatsappAppFirstCheckBox.setSelected(uiPreferencesService.isWhatsAppAppFirstEnabled());
+        if (preferShortcutAppsCheckBox != null) {
+            preferShortcutAppsCheckBox.setSelected(uiPreferencesService.isPreferShortcutAppsEnabled());
+        }
+        if (allowWebFallbackCheckBox != null) {
+            allowWebFallbackCheckBox.setSelected(uiPreferencesService.isWebFallbackAllowed());
+        }
+        if (whatsappAppFirstCheckBox != null) {
+            whatsappAppFirstCheckBox.setSelected(uiPreferencesService.isWhatsAppAppFirstEnabled());
+        }
         if (devSmokeLaunchersCheckBox != null) {
             // Master-gated by app config; user can only disable if config allows.
             devSmokeLaunchersCheckBox.setDisable(!config.isDevSmokeLaunchersEnabled());
@@ -73,17 +81,17 @@ public class SettingsViewController {
         }
 
         uiPreferencesService.preferShortcutAppsProperty().addListener((obs, oldValue, newValue) -> {
-            if (preferShortcutAppsCheckBox.isSelected() != newValue) {
+            if (preferShortcutAppsCheckBox != null && preferShortcutAppsCheckBox.isSelected() != newValue) {
                 preferShortcutAppsCheckBox.setSelected(newValue);
             }
         });
         uiPreferencesService.allowWebFallbackProperty().addListener((obs, oldValue, newValue) -> {
-            if (allowWebFallbackCheckBox.isSelected() != newValue) {
+            if (allowWebFallbackCheckBox != null && allowWebFallbackCheckBox.isSelected() != newValue) {
                 allowWebFallbackCheckBox.setSelected(newValue);
             }
         });
         uiPreferencesService.whatsappAppFirstProperty().addListener((obs, oldValue, newValue) -> {
-            if (whatsappAppFirstCheckBox.isSelected() != newValue) {
+            if (whatsappAppFirstCheckBox != null && whatsappAppFirstCheckBox.isSelected() != newValue) {
                 whatsappAppFirstCheckBox.setSelected(newValue);
             }
         });
@@ -93,12 +101,16 @@ public class SettingsViewController {
             }
         });
 
-        updateThemeLabels(themeService.currentTheme());
-        themeService.themeProperty().addListener((obs, oldValue, newValue) -> updateThemeLabels(newValue));
+        if (themeToggleButton != null && themeStatusLabel != null) {
+            updateThemeLabels(themeService.currentTheme());
+            themeService.themeProperty().addListener((obs, oldValue, newValue) -> updateThemeLabels(newValue));
+        }
 
-        voiceAutoSendCheckBox.setSelected(uiPreferencesService.isAutoSendVoiceInputEnabled());
+        if (voiceAutoSendCheckBox != null) {
+            voiceAutoSendCheckBox.setSelected(uiPreferencesService.isAutoSendVoiceInputEnabled());
+        }
         uiPreferencesService.autoSendVoiceInputProperty().addListener((obs, oldValue, newValue) -> {
-            if (voiceAutoSendCheckBox.isSelected() != newValue) {
+            if (voiceAutoSendCheckBox != null && voiceAutoSendCheckBox.isSelected() != newValue) {
                 voiceAutoSendCheckBox.setSelected(newValue);
             }
         });
@@ -106,7 +118,7 @@ public class SettingsViewController {
 
     @FXML
     private void onToggleTheme() {
-        if (themeToggleButton.getScene() == null) {
+        if (themeToggleButton == null || themeToggleButton.getScene() == null) {
             return;
         }
         themeService.toggleTheme(themeToggleButton.getScene());
@@ -114,22 +126,30 @@ public class SettingsViewController {
 
     @FXML
     private void onVoiceAutoSendToggled() {
-        uiPreferencesService.setAutoSendVoiceInputEnabled(voiceAutoSendCheckBox.isSelected());
+        if (voiceAutoSendCheckBox != null) {
+            uiPreferencesService.setAutoSendVoiceInputEnabled(voiceAutoSendCheckBox.isSelected());
+        }
     }
 
     @FXML
     private void onPreferShortcutAppsToggled() {
-        uiPreferencesService.setPreferShortcutAppsEnabled(preferShortcutAppsCheckBox.isSelected());
+        if (preferShortcutAppsCheckBox != null) {
+            uiPreferencesService.setPreferShortcutAppsEnabled(preferShortcutAppsCheckBox.isSelected());
+        }
     }
 
     @FXML
     private void onAllowWebFallbackToggled() {
-        uiPreferencesService.setWebFallbackAllowed(allowWebFallbackCheckBox.isSelected());
+        if (allowWebFallbackCheckBox != null) {
+            uiPreferencesService.setWebFallbackAllowed(allowWebFallbackCheckBox.isSelected());
+        }
     }
 
     @FXML
     private void onWhatsAppAppFirstToggled() {
-        uiPreferencesService.setWhatsAppAppFirstEnabled(whatsappAppFirstCheckBox.isSelected());
+        if (whatsappAppFirstCheckBox != null) {
+            uiPreferencesService.setWhatsAppAppFirstEnabled(whatsappAppFirstCheckBox.isSelected());
+        }
     }
 
     @FXML
@@ -141,6 +161,9 @@ public class SettingsViewController {
     }
 
     private void updateThemeLabels(Theme theme) {
+        if (themeToggleButton == null || themeStatusLabel == null) {
+            return;
+        }
         boolean dark = theme == Theme.DARK;
         themeToggleButton.setSelected(!dark);
         themeToggleButton.setText(dark ? "Switch to Light Mode" : "Switch to Dark Mode");

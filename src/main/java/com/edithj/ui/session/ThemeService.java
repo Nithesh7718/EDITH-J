@@ -15,6 +15,8 @@ public final class ThemeService {
     }
 
     private static final ThemeService INSTANCE = new ThemeService();
+    private static final String DARK_THEME_STYLESHEET = "/css/friday-theme.css";
+    private static final String LIGHT_THEME_STYLESHEET = "/css/app-light.css";
 
     private final ObjectProperty<Theme> themeProperty = new SimpleObjectProperty<>(Theme.DARK);
 
@@ -44,8 +46,8 @@ public final class ThemeService {
     public void applyTheme(Scene scene, Theme theme) {
         Objects.requireNonNull(scene, "scene");
 
-        URL dark = ThemeService.class.getResource("/css/app.css");
-        URL light = ThemeService.class.getResource("/css/app-light.css");
+        URL dark = ThemeService.class.getResource(DARK_THEME_STYLESHEET);
+        URL light = ThemeService.class.getResource(LIGHT_THEME_STYLESHEET);
         if (dark == null || light == null) {
             return;
         }

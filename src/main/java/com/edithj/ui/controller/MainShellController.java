@@ -361,8 +361,12 @@ public class MainShellController {
     }
 
     private void loadContent(String resourcePath) {
-        Node content = sceneManager.loadView(resourcePath);
-        if (content == null) {
+        Node content;
+        try {
+            content = sceneManager.loadView(resourcePath);
+        } catch (RuntimeException exception) {
+            appendSystemMessage("Unable to open view: " + resourcePath);
+            showToast("Unable to open view. Check logs for details.");
             return;
         }
 
