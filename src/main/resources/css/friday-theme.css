@@ -437,6 +437,31 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   SHELL SPLIT PANE (console + transcript)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.shell-split {
+    -fx-background-color: transparent;
+    background-color: transparent;
+}
+
+.shell-split > .split-pane-divider {
+    -fx-padding: 0 1 0 1;
+    padding: 0 1px 0 1px;
+    -fx-background-color: rgba(31, 213, 249, 0.10);
+    background-color: rgba(31, 213, 249, 0.10);
+}
+
+.shell-split > .split-pane-divider:hover {
+    -fx-background-color: rgba(31, 213, 249, 0.22);
+    background-color: rgba(31, 213, 249, 0.22);
+}
+
+.shell-split > .split-pane-divider:pressed {
+    -fx-background-color: rgba(31, 213, 249, 0.30);
+    background-color: rgba(31, 213, 249, 0.30);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    RIGHT TRANSCRIPT PANEL
    ═══════════════════════════════════════════════════════════════════════════ */
 .transcript-panel {
@@ -467,6 +492,74 @@
     -fx-font-family: "Consolas", monospace;
     font-family: "Consolas", monospace;
     -fx-letter-spacing: 1px;
+}
+
+.transcript-state-pill {
+    -fx-font-size: 9px;
+    font-size: 9px;
+    -fx-font-weight: 800;
+    font-weight: 800;
+    -fx-font-family: "Consolas", monospace;
+    font-family: "Consolas", monospace;
+    -fx-padding: 3 10;
+    padding: 3px 10px;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    border-radius: 999px;
+    -fx-border-width: 1;
+    border-width: 1px;
+}
+
+.transcript-state-pill-live {
+    -fx-background-color: rgba(0, 255, 163, 0.10);
+    background-color: rgba(0, 255, 163, 0.10);
+    -fx-border-color: rgba(0, 255, 163, 0.35);
+    border-color: rgba(0, 255, 163, 0.35);
+    -fx-text-fill: #00FFA3;
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 163, 0.28), 10, 0.2, 0, 0);
+}
+
+.transcript-state-pill-paused {
+    -fx-background-color: rgba(245, 158, 11, 0.10);
+    background-color: rgba(245, 158, 11, 0.10);
+    -fx-border-color: rgba(245, 158, 11, 0.38);
+    border-color: rgba(245, 158, 11, 0.38);
+    -fx-text-fill: #FCD34D;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.20), 10, 0.2, 0, 0);
+}
+
+.toggle-button {
+    -fx-background-color: rgba(31, 213, 249, 0.08);
+    background-color: rgba(31, 213, 249, 0.08);
+    -fx-border-color: rgba(31, 213, 249, 0.30);
+    border-color: rgba(31, 213, 249, 0.30);
+    -fx-border-width: 1;
+    border-width: 1px;
+    -fx-border-radius: 6;
+    border-radius: 6px;
+    -fx-background-radius: 6;
+    -fx-text-fill: rgba(226, 235, 245, 0.85);
+    -fx-font-size: 10px;
+    font-size: 10px;
+    -fx-padding: 4 10;
+    padding: 4px 10px;
+    -fx-cursor: hand;
+    cursor: pointer;
+}
+
+.toggle-button:hover {
+    -fx-background-color: rgba(31, 213, 249, 0.18);
+    background-color: rgba(31, 213, 249, 0.18);
+    -fx-border-color: rgba(31, 213, 249, 0.55);
+    border-color: rgba(31, 213, 249, 0.55);
+    -fx-text-fill: #FFFFFF;
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+.toggle-button:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
 }
 
 .clear-button {

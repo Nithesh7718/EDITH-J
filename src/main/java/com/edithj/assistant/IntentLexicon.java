@@ -32,7 +32,8 @@ public final class IntentLexicon {
 
     public static boolean looksLikeDesktopToolsRequest(String input) {
         return containsAny(input, "desktop tools", "system tools", "capabilities", "what can you do")
-                || containsAny(input, "task", "reminder", "note", "notes", "todo", "to do");
+                || containsAny(input, "task", "reminder", "note", "notes", "todo", "to do")
+                || containsAny(input, "telemetry", "assistant telemetry");
     }
 
     public static boolean looksLikeWorldMarketsRequest(String input) {

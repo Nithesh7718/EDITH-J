@@ -236,6 +236,26 @@ class DesktopToolsCommandHandlerTest {
         assertTrue(response.contains("Local KB empty hits: 1"));
     }
 
+    @Test
+    void handle_telemetryReset_clearsCounters() {
+        AssistantTelemetry telemetry = AssistantTelemetry.instance();
+        telemetry.reset();
+        telemetry.recordClarificationPrompt();
+        telemetry.recordWorldCircuitOpenHit();
+        telemetry.recordLocalKbEmptyHit();
+
+        DesktopToolsCommandHandler handler = newHandler(new FakeLauncher(), false, new FakeClipboardService(),
+                new FakeDesktopFileService());
+
+        String resetResponse = handler.handle(context("telemetry reset"));
+        String statusResponse = handler.handle(context("telemetry status"));
+
+        assertEquals("Assistant telemetry reset.", resetResponse);
+        assertTrue(statusResponse.contains("Clarification prompts: 0"));
+        assertTrue(statusResponse.contains("World circuit-open hits: 0"));
+        assertTrue(statusResponse.contains("Local KB empty hits: 0"));
+    }
+
     private DesktopToolsCommandHandler newHandler(
             FakeLauncher fakeLauncher,
             boolean smokeLaunchersEnabled,

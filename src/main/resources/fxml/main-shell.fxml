@@ -8,6 +8,7 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -139,57 +140,60 @@
     </left>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
-         CENTER  —  Avatar + Audio Aura visualiser  +  content host overlay
+         CENTER+RIGHT  —  Resizable console + transcript split
          ═══════════════════════════════════════════════════════════════════════ -->
     <center>
-        <BorderPane styleClass="center-pane">
+        <SplitPane dividerPositions="0.72" styleClass="shell-split">
+            <items>
+                <!-- Console -->
+                <BorderPane styleClass="center-pane">
 
-            <!-- Avatar panel: takes upper portion -->
-            <top>
-                <StackPane styleClass="avatar-zone" prefHeight="260" minHeight="220">
-                    <!-- AudioAuraCanvas is added programmatically by controller -->
-                    <StackPane fx:id="auraHost" styleClass="aura-host" prefWidth="340" prefHeight="260" maxWidth="340" maxHeight="260"/>
-                </StackPane>
-            </top>
+                    <!-- Avatar panel: takes upper portion -->
+                    <top>
+                        <StackPane styleClass="avatar-zone" prefHeight="260" minHeight="220">
+                            <!-- AudioAuraCanvas is added programmatically by controller -->
+                            <StackPane fx:id="auraHost" styleClass="aura-host" prefWidth="340" prefHeight="260" maxWidth="340" maxHeight="260"/>
+                        </StackPane>
+                    </top>
 
-            <!-- Content host: takes remaining space, loads sub-views -->
-            <center>
-                <StackPane fx:id="contentHost" styleClass="content-host"/>
-            </center>
+                    <!-- Content host: takes remaining space, loads sub-views -->
+                    <center>
+                        <StackPane fx:id="contentHost" styleClass="content-host"/>
+                    </center>
 
-        </BorderPane>
+                </BorderPane>
+
+                <!-- Transcript / Chat panel -->
+                <VBox spacing="0" prefWidth="380" minWidth="320" maxWidth="560" styleClass="transcript-panel">
+
+                    <!-- Transcript header -->
+                    <HBox styleClass="transcript-header" alignment="CENTER_LEFT" spacing="12">
+                        <padding>
+                            <Insets top="14" right="18" bottom="14" left="18"/>
+                        </padding>
+                        <Label text="TRANSCRIPT" styleClass="transcript-title"/>
+                        <Label fx:id="autoScrollStateLabel" text="LIVE" styleClass="transcript-state-pill, transcript-state-pill-live"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="btnAutoScroll" text="Auto-scroll: ON" onAction="#onToggleTranscriptAutoScroll" styleClass="toggle-button"/>
+                        <Button fx:id="btnClearChat" text="✕ Clear" onAction="#clearTranscript" styleClass="clear-button"/>
+                    </HBox>
+
+                    <!-- Chat ListView -->
+                    <ListView fx:id="transcriptList" VBox.vgrow="ALWAYS" styleClass="transcript-list" style="-fx-padding: 8px;"/>
+
+                    <!-- Partial / live text indicator -->
+                    <HBox styleClass="partial-bar" alignment="CENTER_LEFT" spacing="8" fx:id="partialBar" managed="false" visible="false">
+                        <padding>
+                            <Insets top="6" right="14" bottom="6" left="14"/>
+                        </padding>
+                        <Circle radius="4" styleClass="partial-dot"/>
+                        <Label fx:id="partialLabel" text="" styleClass="partial-text" wrapText="true"/>
+                    </HBox>
+
+                </VBox>
+            </items>
+        </SplitPane>
     </center>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         RIGHT  —  Transcript / Chat panel
-         ═══════════════════════════════════════════════════════════════════════ -->
-    <right>
-        <VBox spacing="0" prefWidth="360" minWidth="300" maxWidth="460" styleClass="transcript-panel" BorderPane.alignment="TOP_CENTER">
-
-            <!-- Transcript header -->
-            <HBox styleClass="transcript-header" alignment="CENTER_LEFT" spacing="12">
-                <padding>
-                    <Insets top="14" right="18" bottom="14" left="18"/>
-                </padding>
-                <Label text="TRANSCRIPT" styleClass="transcript-title"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Button fx:id="btnClearChat" text="✕ Clear" onAction="#clearTranscript" styleClass="clear-button"/>
-            </HBox>
-
-            <!-- Chat ListView -->
-            <ListView fx:id="transcriptList" VBox.vgrow="ALWAYS" styleClass="transcript-list" style="-fx-padding: 8px;"/>
-
-            <!-- Partial / live text indicator -->
-            <HBox styleClass="partial-bar" alignment="CENTER_LEFT" spacing="8" fx:id="partialBar" managed="false" visible="false">
-                <padding>
-                    <Insets top="6" right="14" bottom="6" left="14"/>
-                </padding>
-                <Circle radius="4" styleClass="partial-dot"/>
-                <Label fx:id="partialLabel" text="" styleClass="partial-text" wrapText="true"/>
-            </HBox>
-
-        </VBox>
-    </right>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          BOTTOM  —  Control bar

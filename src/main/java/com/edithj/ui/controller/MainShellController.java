@@ -110,6 +110,10 @@ public class MainShellController {
     @FXML
     private ListView<ChatMessageViewModel> transcriptList;
     @FXML
+    private Button btnAutoScroll;
+    @FXML
+    private Label autoScrollStateLabel;
+    @FXML
     private HBox partialBar;
     @FXML
     private Label partialLabel;
@@ -136,6 +140,7 @@ public class MainShellController {
     private final WorldMonitorCardViewModel worldMonitorCardViewModel = new WorldMonitorCardViewModel();
     private boolean transcriptAutoScroll = true;
     private ScrollBar transcriptVerticalScrollBar;
+    private boolean autoScrollUserOverride = false;
 
     /**
      * The live audio aura canvas — created in #initialize for access to scene
@@ -187,8 +192,9 @@ public class MainShellController {
     // ── Transcript wiring ──────────────────────────────────────────────────────
     private void wireTranscript() {
         transcriptList.setItems(messages);
-        transcriptList.setCellFactory(lv -> new TranscriptCell());
+        transcriptList.setCellFactory(lv -> new TranscriptCell(lv));
         Platform.runLater(this::attachTranscriptScrollTracking);
+        updateAutoScrollUi();
     }
 
     private void attachTranscriptScrollTracking() {
@@ -210,8 +216,35 @@ public class MainShellController {
         transcriptVerticalScrollBar.valueProperty().addListener((obs, oldValue, newValue) -> {
             double max = transcriptVerticalScrollBar.getMax();
             // Auto-scroll only while user stays near the bottom.
-            transcriptAutoScroll = max <= 0.0 || newValue.doubleValue() >= (max - 0.02);
+            boolean nearBottom = max <= 0.0 || newValue.doubleValue() >= (max - 0.02);
+            if (!autoScrollUserOverride) {
+                transcriptAutoScroll = nearBottom;
+            }
+            updateAutoScrollUi();
         });
+    }
+
+    @FXML
+    private void onToggleTranscriptAutoScroll() {
+        boolean next = !transcriptAutoScroll;
+        transcriptAutoScroll = next;
+        autoScrollUserOverride = true;
+        updateAutoScrollUi();
+        if (transcriptAutoScroll) {
+            scrollToBottomForce();
+        }
+    }
+
+    private void updateAutoScrollUi() {
+        if (btnAutoScroll == null || autoScrollStateLabel == null) {
+            return;
+        }
+        btnAutoScroll.setText(transcriptAutoScroll ? "Auto-scroll: ON" : "Auto-scroll: OFF");
+        autoScrollStateLabel.setText(transcriptAutoScroll ? "LIVE" : "PAUSED");
+        autoScrollStateLabel.getStyleClass().setAll("transcript-state-pill");
+        autoScrollStateLabel.getStyleClass().add(transcriptAutoScroll
+                ? "transcript-state-pill-live"
+                : "transcript-state-pill-paused");
     }
 
     // ── State pill binding ─────────────────────────────────────────────────────
@@ -484,6 +517,13 @@ public class MainShellController {
         Platform.runLater(() -> transcriptList.scrollTo(messages.size() - 1));
     }
 
+    private void scrollToBottomForce() {
+        if (messages.isEmpty()) {
+            return;
+        }
+        Platform.runLater(() -> transcriptList.scrollTo(messages.size() - 1));
+    }
+
     // ── Assistant dispatch ────────────────────────────────────────────────────
     private void dispatchToAssistant(String input) {
         gateway.executeAsync(
@@ -568,6 +608,18 @@ public class MainShellController {
     // Inner class: TranscriptCell
     // ═══════════════════════════════════════════════════════════════════════════
     private static class TranscriptCell extends ListCell<ChatMessageViewModel> {
+        private static final double ROW_HORIZONTAL_PADDING = 20.0;
+        private static final double BUBBLE_MAX_WIDTH_RATIO = 0.82;
+        private static final int TYPEWRITER_MAX_CHARS = 520;
+        private static final long TYPEWRITER_MS_PER_CHAR = 14L;
+        private static final long TYPEWRITER_MIN_MS = 220L;
+        private static final long TYPEWRITER_MAX_MS = 900L;
+
+        private final ListView<ChatMessageViewModel> owner;
+
+        private TranscriptCell(ListView<ChatMessageViewModel> owner) {
+            this.owner = owner;
+        }
 
         @Override
         protected void updateItem(ChatMessageViewModel item, boolean empty) {
@@ -593,7 +645,6 @@ public class MainShellController {
             final String fullText = item.getMessage();
             Label msgLabel = new Label(isUser || isSystem ? fullText : "");
             msgLabel.setWrapText(true);
-            msgLabel.setMaxWidth(300);
             msgLabel.getStyleClass().add(isSystem ? "msg-text-system"
                     : isUser ? "msg-text-user" : "msg-text-ai");
 
@@ -601,11 +652,15 @@ public class MainShellController {
             VBox bubble = new VBox(4, senderLabel, msgLabel);
             bubble.getStyleClass().add(isSystem ? "msg-system-bubble"
                     : isUser ? "msg-user-bubble" : "msg-ai-bubble");
-            bubble.setMaxWidth(310);
 
             // ── Row layout ────────────────────────────────────────────────────
             HBox row = new HBox();
             row.setPadding(new Insets(5, 10, 5, 10));
+
+            double listWidth = owner == null ? 420.0 : owner.getWidth();
+            double bubbleMaxWidth = Math.max(260.0, (listWidth - ROW_HORIZONTAL_PADDING) * BUBBLE_MAX_WIDTH_RATIO);
+            msgLabel.setMaxWidth(bubbleMaxWidth);
+            bubble.setMaxWidth(bubbleMaxWidth);
 
             if (isSystem) {
                 row.setAlignment(Pos.CENTER);
@@ -633,20 +688,27 @@ public class MainShellController {
             slide.setInterpolator(Interpolator.EASE_OUT);
 
             if (!isUser && !isSystem) {
-                // Typewriter for EDITH responses
-                javafx.animation.Transition typewriter = new javafx.animation.Transition() {
-                    {
-                        setCycleDuration(Duration.millis(Math.min(1000, fullText.length() * 16L)));
-                    }
+                // Typewriter for EDITH responses (skip for long messages for responsiveness)
+                if (fullText != null && fullText.length() <= TYPEWRITER_MAX_CHARS) {
+                    long durationMs = Math.min(TYPEWRITER_MAX_MS,
+                            Math.max(TYPEWRITER_MIN_MS, fullText.length() * TYPEWRITER_MS_PER_CHAR));
+                    javafx.animation.Transition typewriter = new javafx.animation.Transition() {
+                        {
+                            setCycleDuration(Duration.millis(durationMs));
+                        }
 
-                    @Override
-                    protected void interpolate(double frac) {
-                        int len = (int) Math.round(fullText.length() * frac);
-                        msgLabel.setText(fullText.substring(0, len));
-                    }
-                };
-                typewriter.setInterpolator(Interpolator.LINEAR);
-                new ParallelTransition(fade, slide, typewriter).play();
+                        @Override
+                        protected void interpolate(double frac) {
+                            int len = (int) Math.round(fullText.length() * frac);
+                            msgLabel.setText(fullText.substring(0, Math.min(fullText.length(), len)));
+                        }
+                    };
+                    typewriter.setInterpolator(Interpolator.LINEAR);
+                    new ParallelTransition(fade, slide, typewriter).play();
+                } else {
+                    msgLabel.setText(fullText);
+                    new ParallelTransition(fade, slide).play();
+                }
             } else {
                 new ParallelTransition(fade, slide).play();
             }

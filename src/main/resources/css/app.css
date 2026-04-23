@@ -5,11 +5,10 @@
  * ╚══════════════════════════════════════════════════════════╝
  */
 
-/* ── Global ─────────────────────────────────────────────── */
-* {
-    -fx-font-family: "Consolas", "Courier New", monospace;
-    font-family: "Consolas", "Courier New", monospace;
-}
+/* ── Global ───────────────────────────────────────────────
+ * NOTE: Legacy stylesheet.
+ * Avoid global overrides here; the EDITH shell theme is authoritative.
+ */
 
 /* ── Root Shell ─────────────────────────────────────────── */
 .app-shell {

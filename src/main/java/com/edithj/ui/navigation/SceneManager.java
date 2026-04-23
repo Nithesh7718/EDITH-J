@@ -26,16 +26,17 @@ public class SceneManager {
         Parent root = loadView(MAIN_VIEW);
         Scene scene = new Scene(root, 1280, 800);
 
-        // Primary EDITH shell theme (file name retained for compatibility)
-        URL shellThemeCss = getClass().getResource("/css/friday-theme.css");
-        if (shellThemeCss != null) {
-            scene.getStylesheets().add(shellThemeCss.toExternalForm());
-        }
-
         // Legacy stylesheet (retains sub-view styles: notes, reminders, tools, settings)
         URL appCss = getClass().getResource("/css/app.css");
         if (appCss != null) {
             scene.getStylesheets().add(appCss.toExternalForm());
+        }
+
+        // Primary EDITH shell theme (file name retained for compatibility)
+        // Loaded last so it can unify the overall shell look.
+        URL shellThemeCss = getClass().getResource("/css/friday-theme.css");
+        if (shellThemeCss != null) {
+            scene.getStylesheets().add(shellThemeCss.toExternalForm());
         }
 
         stage.setTitle("EDITH-J  —  Voice Console");

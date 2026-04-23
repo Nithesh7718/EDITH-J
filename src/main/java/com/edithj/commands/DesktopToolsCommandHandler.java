@@ -205,6 +205,9 @@ public class DesktopToolsCommandHandler implements CommandHandler {
         if (lower.equals("telemetry status") || lower.equals("assistant telemetry")) {
             return telemetryStatus();
         }
+        if (lower.equals("telemetry reset") || lower.equals("reset telemetry") || lower.equals("assistant telemetry reset")) {
+            return telemetryReset();
+        }
 
         if (isSystemInfoRequest(lower)) {
             return systemStatus();
@@ -342,6 +345,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
             - Utilities: what time is it, what is today's date, calculate 245/7
             - Desktop tools: system info, search web latest Java news
             - Telemetry: telemetry status
+            - Telemetry reset: telemetry reset
             - Daily briefing: good morning
             - Clipboard: show clipboard, save clipboard as note
             - Routines: start work mode
@@ -764,5 +768,10 @@ public class DesktopToolsCommandHandler implements CommandHandler {
                 snapshot.clarificationPrompts(),
                 snapshot.worldCircuitOpenHits(),
                 snapshot.localKbEmptyHits());
+    }
+
+    private String telemetryReset() {
+        AssistantTelemetry.instance().reset();
+        return "Assistant telemetry reset.";
     }
 }

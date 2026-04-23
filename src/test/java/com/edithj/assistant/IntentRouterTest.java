@@ -101,6 +101,17 @@ class IntentRouterTest {
     }
 
     @Test
+    void route_classifiesTelemetryCommandsAsDesktopTools() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent status = router.route("telemetry status");
+        IntentRouter.RoutedIntent reset = router.route("telemetry reset");
+
+        assertEquals(IntentType.DESKTOP_TOOLS, status.intentType());
+        assertEquals(IntentType.DESKTOP_TOOLS, reset.intentType());
+    }
+
+    @Test
     void routeAndHandle_invokesRegisteredEmailHandler() {
         IntentRouter router = new IntentRouter();
         RecordingHandler handler = new RecordingHandler(IntentType.EMAIL, "opened");
