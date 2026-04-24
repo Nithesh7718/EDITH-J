@@ -1,7 +1,7 @@
 package com.edithj.config;
 
 import java.util.prefs.Preferences;
-import com.edithj.config.AppConfig;
+
 
 public final class PreferencesService {
 

@@ -25,7 +25,7 @@ public class WhatsAppCommandHandler implements CommandHandler {
     private static final Pattern WHATSAPP_CALL_PATTERN = Pattern.compile(
             "(?i)\\b(?:make\\s+)?(?:a\\s+)?call\\b.*\\b(?:via|on)\\s+" + WHATSAPP_ALIAS_PATTERN + "\\b|\\b(?:via|on)\\s+" + WHATSAPP_ALIAS_PATTERN + "\\b.*\\bcall\\b");
     private static final Pattern CONTACT_PATTERN = Pattern.compile(
-            "(?i)\\b(?:message\\s+to|send\\s+to|to)\\s+(.+?)(?=\\s+(?:via\\s+)?" + WHATSAPP_ALIAS_PATTERN + "\\b|[.!?,;:]|$)");
+            "(?i)\\b(?:message\\s+to|send\\s+to|to)\\s+(.+?)(?=\\s+(?:(?:via|on)\\s+)?" + WHATSAPP_ALIAS_PATTERN + "\\b|[.!?,;:]|$)");
     private static final Pattern CALL_CONTACT_PATTERN = Pattern.compile(
             "(?i)\\bcall\\s+(?:to\\s+)?(.+?)(?=\\s+(?:via|on)\\s+" + WHATSAPP_ALIAS_PATTERN + "\\b|[.!?,;:]|$)");
     private static final Pattern QUOTED_MESSAGE_PATTERN = Pattern.compile("\"([^\"]+)\"|'([^']+)'");
@@ -73,6 +73,16 @@ public class WhatsAppCommandHandler implements CommandHandler {
 
         try {
             String recipientPhone = resolveMappedPhone(parsedRequest.contactName());
+
+            // If not in contacts, check if the contact name itself IS a phone number
+            if (recipientPhone.isBlank() && looksLikePhoneNumber(parsedRequest.contactName())) {
+                recipientPhone = parsedRequest.contactName().replaceAll("[^0-9+]", "");
+                // Ensure Indian numbers without country code get +91 prefixed
+                if (!recipientPhone.startsWith("+") && recipientPhone.length() == 10) {
+                    recipientPhone = "+91" + recipientPhone;
+                }
+            }
+
             boolean mappedRecipient = !recipientPhone.isBlank();
 
             String launchResult = mappedRecipient
@@ -212,7 +222,7 @@ public class WhatsAppCommandHandler implements CommandHandler {
         do {
             previous = current;
             current = current.replaceAll("(?i)^(and|open|launch|start|run|send|sen|snd|message|msg|text|just|jusdt|please|kindly|whatsapp|whtsapp|whatsap|watsapp|via|a|an|the|to|for)\\b[\\s,:-]*", "");
-            current = current.replaceAll("(?i)[\\s,:-]*(message|please|whatsapp|whtsapp|whatsap|watsapp|via)$", "");
+            current = current.replaceAll("(?i)[\\s,:-]*(message|please|whatsapp|whtsapp|whatsap|watsapp|via|on)$", "");
             current = current.replaceAll("\\s+", " ").trim();
         } while (!current.equals(previous));
 
@@ -235,6 +245,15 @@ public class WhatsAppCommandHandler implements CommandHandler {
         }
 
         return mapped;
+    }
+
+    private boolean looksLikePhoneNumber(String contactName) {
+        if (contactName == null || contactName.isBlank()) {
+            return false;
+        }
+        // Strip spaces, dashes, and parens — what remains must be only digits and optionally a leading +
+        String stripped = contactName.replaceAll("[\\s\\-().+]", "");
+        return stripped.matches("[0-9]{7,15}");
     }
 
     private String normalizeContactKey(String contactName) {
