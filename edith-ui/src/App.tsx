@@ -24,11 +24,7 @@ function App() {
   return (
     <div className="min-h-screen bg-edith-dark text-white font-edith overflow-hidden flex flex-col items-center justify-center relative">
       {/* Background Grid */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{
-        backgroundImage: `linear-gradient(rgba(0, 243, 255, 0.2) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 243, 255, 0.2) 1px, transparent 1px)`,
-        backgroundSize: '50px 50px'
-      }}></div>
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-edith-grid"></div>
 
       {/* Top Bar */}
       <header className="absolute top-0 w-full p-6 flex justify-between items-center z-10">
@@ -126,7 +122,7 @@ function App() {
                     {/* Simulated Voice Waveform */}
                     <div className="flex gap-1 items-center h-16">
                       {[1, 2, 3, 4, 5, 4, 3, 2, 1].map((val, i) => (
-                        <div key={i} className="w-1 bg-edith-cyan animate-pulse" style={{ height: `${val * 10}px`, animationDelay: `${i * 0.1}s` }}></div>
+                        <div key={i} className={`w-1 bg-edith-cyan waveform-bar waveform-height-${val} waveform-delay-${i}`}></div>
                       ))}
                     </div>
                  </div>
@@ -153,7 +149,11 @@ function App() {
                 placeholder="Awaiting command..." 
                 className="w-full bg-transparent border-none outline-none text-white font-mono tracking-wide placeholder-gray-500"
               />
-              <button className="ml-4 p-3 bg-edith-cyan/10 hover:bg-edith-cyan/30 text-edith-cyan border border-edith-cyan/50 transition-colors">
+              <button 
+                className="ml-4 p-3 bg-edith-cyan/10 hover:bg-edith-cyan/30 text-edith-cyan border border-edith-cyan/50 transition-colors"
+                aria-label="Send command"
+                title="Send command"
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
               </button>
             </div>

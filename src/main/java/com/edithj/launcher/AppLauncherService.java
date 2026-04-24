@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.edithj.ui.session.UiPreferencesService;
+import com.edithj.config.PreferencesService;
 import com.edithj.util.ValidationUtils;
 
 /**
@@ -24,17 +24,17 @@ public class AppLauncherService {
     private static final String WHATSAPP_WEB_MESSAGE_URL = "https://wa.me/?text=";
 
     private final CrossPlatformLauncher launcher;
-    private final UiPreferencesService preferences;
+    private final PreferencesService preferences;
 
     public AppLauncherService() {
-        this(new CrossPlatformLauncher(), UiPreferencesService.instance());
+        this(new CrossPlatformLauncher(), PreferencesService.instance());
     }
 
     public AppLauncherService(CrossPlatformLauncher launcher) {
-        this(launcher, UiPreferencesService.instance());
+        this(launcher, PreferencesService.instance());
     }
 
-    public AppLauncherService(CrossPlatformLauncher launcher, UiPreferencesService preferences) {
+    public AppLauncherService(CrossPlatformLauncher launcher, PreferencesService preferences) {
         this.launcher = Objects.requireNonNull(launcher, "launcher cannot be null");
         this.preferences = Objects.requireNonNull(preferences, "preferences cannot be null");
     }

@@ -1,7 +1,0 @@
-/*
- * Legacy stylesheet shim.
- *
- * The EDITH shell theme lives in `/css/friday-theme.css` and is loaded last.
- * Keep this file minimal to avoid style conflicts; migrate any remaining
- * selectors into the shell theme instead of expanding this file.
- */

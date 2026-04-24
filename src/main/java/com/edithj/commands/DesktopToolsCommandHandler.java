@@ -35,7 +35,7 @@ import com.edithj.notes.NoteService;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
 import com.edithj.storage.RepositoryFactory;
-import com.edithj.ui.session.UiPreferencesService;
+import com.edithj.config.PreferencesService;
 
 public class DesktopToolsCommandHandler implements CommandHandler {
 
@@ -59,7 +59,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
     private final boolean smokeLaunchersEnabled;
     private final boolean fileOpenEnabled;
     private final boolean clipboardWriteEnabled;
-    private final UiPreferencesService uiPreferencesService;
+    private final PreferencesService preferencesService;
 
     public DesktopToolsCommandHandler() {
         this(new AppLauncherService(),
@@ -140,7 +140,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
         this.smokeLaunchersEnabled = smokeLaunchersEnabled;
         this.fileOpenEnabled = fileOpenEnabled;
         this.clipboardWriteEnabled = clipboardWriteEnabled;
-        this.uiPreferencesService = UiPreferencesService.instance();
+        this.preferencesService = PreferencesService.instance();
     }
 
     public DesktopToolsCommandHandler(AppLauncherService launcherService,
@@ -415,7 +415,7 @@ public class DesktopToolsCommandHandler implements CommandHandler {
 
     private String handleRoutine(String lower) {
         if (lower.startsWith("start work mode") || lower.equals("work mode")) {
-            boolean effectiveSmokeLaunchersEnabled = smokeLaunchersEnabled && uiPreferencesService.isDevSmokeLaunchersEnabled();
+            boolean effectiveSmokeLaunchersEnabled = smokeLaunchersEnabled && preferencesService.isDevSmokeLaunchersEnabled();
             if (!effectiveSmokeLaunchersEnabled) {
                 return "Launcher demo commands are disabled in this configuration.";
             }
