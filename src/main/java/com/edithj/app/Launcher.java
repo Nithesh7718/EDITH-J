@@ -8,6 +8,9 @@ import io.javalin.Javalin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.Desktop;
+import java.net.URI;
+
 public final class Launcher {
 
     private static final Logger logger = LoggerFactory.getLogger(Launcher.class);
@@ -23,9 +26,27 @@ public final class Launcher {
         new JsonToSqliteMigrationService(databaseManager).migrateOnce();
 
         Javalin app = new EdithApiServer().createApp();
-        app.start(8080);
+        try {
+            app.start(8080);
+            logger.info("EDITH-J is ready. Visit http://localhost:8080 to open the UI.");
+        } catch (Exception e) {
+            logger.warn("Server failed to start on port 8080. It might already be running: {}", e.getMessage());
+        }
 
-        logger.info("EDITH-J is ready. Visit http://localhost:8080 to open the UI.");
+        openBrowser("http://localhost:8080");
+    }
+
+    private static void openBrowser(String url) {
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(url));
+            } else {
+                // Fallback for some Windows environments if Desktop API fails
+                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to open browser", e);
+        }
     }
 }
 
