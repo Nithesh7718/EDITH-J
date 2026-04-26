@@ -316,8 +316,15 @@
                                         <argument>--java-options</argument>
                                         <argument>-Xmx512m</argument>
 
-                                        <!-- WiX Toolset must be on PATH for type=exe.
-                                             Add its bin dir so jpackage can find candle/light. -->
+                                        <argument>--add-modules</argument>
+                                        <argument>java.base,java.desktop,java.sql,java.naming,java.management,java.instrument,jdk.unsupported,jdk.httpserver,java.net.http,jdk.crypto.ec</argument>
+
+                                        <argument>--jlink-options</argument>
+                                        <argument>--no-header-files --no-man-pages --strip-debug</argument>
+
+                                        <argument>--type</argument>
+                                        <argument>exe</argument>
+
                                         <argument>--win-menu</argument>
                                         <argument>--win-shortcut</argument>
                                         <argument>--win-dir-chooser</argument>
@@ -325,9 +332,6 @@
                                         <argument>EDITH-J</argument>
                                         <argument>--win-upgrade-uuid</argument>
                                         <argument>7f3e2c1a-4b8d-4f9e-a2c3-1d5e6f7a8b9c</argument>
-
-                                        <argument>--type</argument>
-                                        <argument>exe</argument>
 
                                         <argument>--icon</argument>
                                         <argument>${project.basedir}/src/main/packaging/edith-j.ico</argument>
