@@ -316,14 +316,32 @@
                                         <argument>--java-options</argument>
                                         <argument>-Xmx512m</argument>
 
-                                        <!-- Portable folder (no WiX required). -->
-                                        <!-- Change to exe or msi if WiX v3 is installed. -->
+                                        <!-- WiX Toolset must be on PATH for type=exe.
+                                             Add its bin dir so jpackage can find candle/light. -->
+                                        <argument>--win-menu</argument>
+                                        <argument>--win-shortcut</argument>
+                                        <argument>--win-dir-chooser</argument>
+                                        <argument>--win-menu-group</argument>
+                                        <argument>EDITH-J</argument>
+                                        <argument>--win-upgrade-uuid</argument>
+                                        <argument>7f3e2c1a-4b8d-4f9e-a2c3-1d5e6f7a8b9c</argument>
+
                                         <argument>--type</argument>
-                                        <argument>app-image</argument>
+                                        <argument>exe</argument>
 
                                         <argument>--icon</argument>
                                         <argument>${project.basedir}/src/main/packaging/edith-j.ico</argument>
+
+                                        <argument>--vendor</argument>
+                                        <argument>EDITH-J Project</argument>
+
+                                        <argument>--description</argument>
+                                        <argument>Extended Digital Intelligence and Threat Handler</argument>
                                     </arguments>
+                                    <!-- Add WiX bin to PATH so jpackage can find candle + light -->
+                                    <environmentVariables>
+                                        <PATH>${env.ProgramFiles(x86)}\WiX Toolset v3.14\bin;${env.PATH}</PATH>
+                                    </environmentVariables>
                                 </configuration>
                             </execution>
                         </executions>

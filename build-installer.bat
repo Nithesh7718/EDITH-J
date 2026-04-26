@@ -81,12 +81,13 @@ if exist "%ICON%" (
     set "JPACKAGE_ARGS=%JPACKAGE_ARGS% --icon "%ICON%""
 )
 
-:: Windows-specific extras for installer types
 if /i "%TYPE%"=="exe" (
-    set "JPACKAGE_ARGS=%JPACKAGE_ARGS% --win-menu --win-shortcut --win-dir-chooser --win-menu-group "EDITH-J""
+    set "JPACKAGE_ARGS=%JPACKAGE_ARGS% --win-menu --win-shortcut --win-dir-chooser --win-menu-group "EDITH-J" --win-upgrade-uuid 7f3e2c1a-4b8d-4f9e-a2c3-1d5e6f7a8b9c"
+    set "PATH=%ProgramFiles(x86)%\WiX Toolset v3.14\bin;%PATH%"
 )
 if /i "%TYPE%"=="msi" (
-    set "JPACKAGE_ARGS=%JPACKAGE_ARGS% --win-menu --win-shortcut --win-dir-chooser --win-menu-group "EDITH-J""
+    set "JPACKAGE_ARGS=%JPACKAGE_ARGS% --win-menu --win-shortcut --win-dir-chooser --win-menu-group "EDITH-J" --win-upgrade-uuid 7f3e2c1a-4b8d-4f9e-a2c3-1d5e6f7a8b9c"
+    set "PATH=%ProgramFiles(x86)%\WiX Toolset v3.14\bin;%PATH%"
 )
 
 jpackage %JPACKAGE_ARGS%
