@@ -336,7 +336,7 @@
                                         <argument>EDITH-J Project</argument>
 
                                         <argument>--description</argument>
-                                        <argument>Extended Digital Intelligence and Threat Handler</argument>
+                                        <argument>Enhanced Desktop Intelligent Task Helper</argument>
                                     </arguments>
                                     <!-- Add WiX bin to PATH so jpackage can find candle + light -->
                                     <environmentVariables>
