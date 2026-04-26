@@ -41,7 +41,7 @@ public class WhatsAppCommandHandler implements CommandHandler {
         this(launcherService, AppConfig.load().properties());
     }
 
-    WhatsAppCommandHandler(AppLauncherService launcherService, Properties appProperties) {
+    public WhatsAppCommandHandler(AppLauncherService launcherService, Properties appProperties) {
         this.launcherService = Objects.requireNonNull(launcherService, "launcherService");
         this.appProperties = Objects.requireNonNull(appProperties, "appProperties");
     }

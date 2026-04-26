@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import java.util.Properties;
+
 import com.edithj.commands.CalendarCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
 import com.edithj.commands.WhatsAppCommandHandler;
@@ -66,7 +68,7 @@ class AssistantServiceTest {
 
         AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
         FakeLauncher launcherService = new FakeLauncher();
-        service.registerCommandHandler(new WhatsAppCommandHandler(launcherService));
+        service.registerCommandHandler(new WhatsAppCommandHandler(launcherService, new Properties()));
 
         AssistantResponse first = service.handleTypedInput("open whtsapp");
         AssistantResponse second = service.handleTypedInput("sen HI to krithick");

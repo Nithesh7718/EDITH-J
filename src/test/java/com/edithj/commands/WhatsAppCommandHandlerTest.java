@@ -93,7 +93,8 @@ class WhatsAppCommandHandlerTest {
     @Test
     void handle_typoVariantStillLaunchesWhatsApp() {
         FakeLauncher launcherService = new FakeLauncher();
-        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(launcherService);
+        // Use empty Properties so real edith.properties contact mappings don't interfere.
+        WhatsAppCommandHandler handler = new WhatsAppCommandHandler(launcherService, new Properties());
 
         String response = handler.handle(new CommandHandler.CommandContext(
                 "open whtsapp and send hi to krithick",
