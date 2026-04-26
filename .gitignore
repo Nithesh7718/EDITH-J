@@ -8,3 +8,7 @@ src/main/resources/application-local.properties
 src/main/resources/application-dev.properties
 .env
 .env.*
+
+# jpackage / installer build artefacts
+target/jpackage-input/
+target/installer/

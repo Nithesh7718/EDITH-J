@@ -1,6 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.edithj</groupId>
@@ -8,42 +7,24 @@
     <version>0.1.0-SNAPSHOT</version>
     <name>EDITH-J</name>
     <description>EDITH-J application scaffold</description>
+    <!-- Workspace refresh trigger for Java tooling --> 
 
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javafx.version>21.0.2</javafx.version>
+        <javafx.version>17.0.12</javafx.version>
         <jackson.version>2.21.1</jackson.version>
-        <junit.version>5.10.2</junit.version>
-        <mockito.version>5.12.0</mockito.version>
+        <junit.version>5.11.4</junit.version>
+        <mockito.version>5.14.2</mockito.version>
         <app.main.class>com.edithj.app.Launcher</app.main.class>
     </properties>
 
     <dependencies>
-        <!-- JavaFX -->
+        <!-- Javalin for REST/WebSocket Backend -->
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>
-            <version>${javafx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${javafx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>${javafx.version}</version>
-            <classifier>win</classifier>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>6.1.3</version>
         </dependency>
 
         <!-- Jackson -->
@@ -82,6 +63,13 @@
             <version>3.46.1.3</version>
         </dependency>
 
+        <!-- Vosk offline speech recognition -->
+        <dependency>
+            <groupId>com.alphacephei</groupId>
+            <artifactId>vosk</artifactId>
+            <version>0.3.45</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -101,14 +89,54 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.17.8</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>1.17.8</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>exec-maven-plugin</artifactId>
+                                        <versionRange>[1.0,)</versionRange>
+                                        <goals>
+                                            <goal>exec</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
                 </configuration>
@@ -117,17 +145,73 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.5.1</version>
             </plugin>
 
+            <!-- Build React Frontend -->
             <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>npm-install</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${project.basedir}/edith-ui</workingDirectory>
+                            <executable>npm.cmd</executable>
+                            <arguments>
+                                <argument>install</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-run-build</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${project.basedir}/edith-ui</workingDirectory>
+                            <executable>npm.cmd</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>build</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
                     <mainClass>${app.main.class}</mainClass>
                 </configuration>
             </plugin>
+
+            <!-- Copy React build to target/classes/public -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-react-build</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/classes/public</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/edith-ui/dist</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -153,6 +237,122 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
-</project>
+
+    <!-- Windows installer profile
+         Activate with: mvn package -P windows-installer
+         Produces a self-contained .exe in target/installer/
+         Requires WiX Toolset v3 for type exe or msi; omit for app-image.
+    -->
+    <profiles>
+        <profile>
+            <id>windows-installer</id>
+            <build>
+                <plugins>
+                    <!-- 1. Copy shaded JAR into a clean staging directory.
+                         pre-integration-test runs AFTER shade (package phase),
+                         so the -all.jar is guaranteed to exist. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>stage-jar-for-jpackage</id>
+                                <phase>pre-integration-test</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <mkdir dir="${project.build.directory}/jpackage-input"/>
+                                        <copy overwrite="true"
+                                              file="${project.build.directory}/${project.artifactId}-${project.version}-all.jar"
+                                              todir="${project.build.directory}/jpackage-input"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 2. Run jpackage to build the native Windows app -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-windows</id>
+                                <!-- integration-test runs after pre-integration-test -->
+                                <phase>integration-test</phase>
+                                <goals><goal>exec</goal></goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.build.directory}/jpackage-input</argument>
+
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.artifactId}-${project.version}-all.jar</argument>
+
+                                        <argument>--main-class</argument>
+                                        <argument>${app.main.class}</argument>
+
+                                        <argument>--name</argument>
+                                        <argument>EDITH-J</argument>
+
+                                        <argument>--app-version</argument>
+                                        <!-- jpackage requires x.y.z -->
+                                        <argument>0.1.0</argument>
+
+                                        <argument>--dest</argument>
+                                        <argument>${project.build.directory}/installer</argument>
+
+                                        <!-- JVM flags passed to the bundled JRE -->
+                                        <argument>--java-options</argument>
+                                        <argument>--enable-native-access=ALL-UNNAMED</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>-Xms128m</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>-Xmx512m</argument>
+
+                                        <argument>--add-modules</argument>
+                                        <argument>java.base,java.desktop,java.sql,java.naming,java.management,java.instrument,jdk.unsupported,jdk.httpserver,java.net.http,jdk.crypto.ec</argument>
+
+                                        <argument>--jlink-options</argument>
+                                        <argument>--no-header-files --no-man-pages --strip-debug</argument>
+
+                                        <argument>--type</argument>
+                                        <argument>exe</argument>
+
+                                        <argument>--win-menu</argument>
+                                        <argument>--win-shortcut</argument>
+                                        <argument>--win-dir-chooser</argument>
+                                        <argument>--win-menu-group</argument>
+                                        <argument>EDITH-J</argument>
+                                        <argument>--win-upgrade-uuid</argument>
+                                        <argument>7f3e2c1a-4b8d-4f9e-a2c3-1d5e6f7a8b9c</argument>
+
+                                        <argument>--icon</argument>
+                                        <argument>${project.basedir}/src/main/packaging/edith-j.ico</argument>
+
+                                        <argument>--vendor</argument>
+                                        <argument>EDITH-J Project</argument>
+
+                                        <argument>--description</argument>
+                                        <argument>Enhanced Desktop Intelligent Task Helper</argument>
+                                    </arguments>
+                                    <!-- Add WiX bin to PATH so jpackage can find candle + light -->
+                                    <environmentVariables>
+                                        <PATH>${env.ProgramFiles(x86)}\WiX Toolset v3.14\bin;${env.PATH}</PATH>
+                                    </environmentVariables>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
