@@ -240,4 +240,97 @@
 
         </plugins>
     </build>
-</project>
+
+    <!-- Windows installer profile
+         Activate with: mvn package -P windows-installer
+         Produces a self-contained .exe in target/installer/
+         Requires WiX Toolset v3 for type exe or msi; omit for app-image.
+    -->
+    <profiles>
+        <profile>
+            <id>windows-installer</id>
+            <build>
+                <plugins>
+                    <!-- 1. Copy shaded JAR into a clean staging directory.
+                         pre-integration-test runs AFTER shade (package phase),
+                         so the -all.jar is guaranteed to exist. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>stage-jar-for-jpackage</id>
+                                <phase>pre-integration-test</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <mkdir dir="${project.build.directory}/jpackage-input"/>
+                                        <copy overwrite="true"
+                                              file="${project.build.directory}/${project.artifactId}-${project.version}-all.jar"
+                                              todir="${project.build.directory}/jpackage-input"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 2. Run jpackage to build the native Windows app -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-windows</id>
+                                <!-- integration-test runs after pre-integration-test -->
+                                <phase>integration-test</phase>
+                                <goals><goal>exec</goal></goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.build.directory}/jpackage-input</argument>
+
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.artifactId}-${project.version}-all.jar</argument>
+
+                                        <argument>--main-class</argument>
+                                        <argument>${app.main.class}</argument>
+
+                                        <argument>--name</argument>
+                                        <argument>EDITH-J</argument>
+
+                                        <argument>--app-version</argument>
+                                        <!-- jpackage requires x.y.z -->
+                                        <argument>0.1.0</argument>
+
+                                        <argument>--dest</argument>
+                                        <argument>${project.build.directory}/installer</argument>
+
+                                        <!-- JVM flags passed to the bundled JRE -->
+                                        <argument>--java-options</argument>
+                                        <argument>--enable-native-access=ALL-UNNAMED</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>-Xms128m</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>-Xmx512m</argument>
+
+                                        <!-- Portable folder (no WiX required). -->
+                                        <!-- Change to exe or msi if WiX v3 is installed. -->
+                                        <argument>--type</argument>
+                                        <argument>app-image</argument>
+
+                                        <argument>--icon</argument>
+                                        <argument>${project.basedir}/src/main/packaging/edith-j.ico</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
