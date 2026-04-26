@@ -42,7 +42,7 @@ public final class Launcher {
                 Desktop.getDesktop().browse(new URI(url));
             } else {
                 // Fallback for some Windows environments if Desktop API fails
-                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
+                new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
             }
         } catch (Exception e) {
             logger.error("Failed to open browser", e);
