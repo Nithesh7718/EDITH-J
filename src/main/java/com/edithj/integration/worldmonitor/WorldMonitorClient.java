@@ -52,12 +52,11 @@ public class WorldMonitorClient {
     WorldMonitorClient(EnvConfig envConfig, java.util.Properties properties) {
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(12)).build();
 
-        String configuredBaseUrl = envConfig.get("WORLD_MONITOR_BASE_URL")
-                .orElseGet(() -> properties.getProperty("worldmonitor.base-url", DEFAULT_BASE_URL));
-        this.baseUrl = stripTrailingSlash(configuredBaseUrl);
+        this.baseUrl = stripTrailingSlash(envConfig.get("WORLD_MONITOR_BASE_URL")
+                .orElseGet(() -> AppConfig.resolve(envConfig, properties, "worldmonitor.base-url", DEFAULT_BASE_URL)));
 
         this.apiKey = envConfig.get("WORLD_MONITOR_API_KEY")
-                .orElseGet(() -> properties.getProperty("worldmonitor.api-key", ""));
+                .orElseGet(() -> AppConfig.resolve(envConfig, properties, "worldmonitor.api-key", ""));
     }
 
     public boolean isConfigured() {

@@ -78,14 +78,8 @@ public final class AiConfig {
     }
 
     public String property(String key, String defaultValue) {
-        if (key == null || key.isBlank()) {
-            return defaultValue;
-        }
-        String value = properties.getProperty(key);
-        if (value == null || value.isBlank()) {
-            return defaultValue;
-        }
-        return value.trim();
+        // Use static resolution to avoid circular dependencies
+        return AppConfig.resolve(this.envConfig, this.properties, key, defaultValue);
     }
 
     public Path workspaceDir() {

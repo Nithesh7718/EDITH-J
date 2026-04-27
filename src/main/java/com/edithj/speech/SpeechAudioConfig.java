@@ -17,7 +17,7 @@ public final class SpeechAudioConfig {
         String configured = firstNonBlank(
                 System.getProperty(SYSTEM_PROPERTY_INPUT_DEVICE_NAME),
                 System.getenv(ENV_INPUT_DEVICE_NAME),
-                AppConfig.load().properties().getProperty(APP_PROPERTY_INPUT_DEVICE_NAME));
+                AppConfig.load().get(APP_PROPERTY_INPUT_DEVICE_NAME, null));
         return Optional.ofNullable(configured);
     }
 

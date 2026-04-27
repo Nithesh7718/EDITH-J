@@ -19,8 +19,7 @@ public final class VoskSpeechConfig {
         String configured = firstNonBlank(
                 System.getProperty(SYSTEM_PROPERTY_MODEL_PATH),
                 System.getenv(ENV_MODEL_PATH),
-                AppConfig.load().properties().getProperty(APP_PROPERTY_MODEL_PATH),
-                DEFAULT_MODEL_PATH);
+                AppConfig.load().get(APP_PROPERTY_MODEL_PATH, DEFAULT_MODEL_PATH));
         return Path.of(Objects.requireNonNull(configured, "configured")).toAbsolutePath().normalize();
     }
 

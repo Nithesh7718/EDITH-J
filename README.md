@@ -86,11 +86,39 @@ Upon launch, the application will start the backend server and automatically ope
 
 ## Configuration
 
-Secrets are managed via environment variables:
+EDITH-J uses a unified configuration system with the following precedence (highest first):
+1. **Environment Variables**: Keys are normalized (e.g., `edith.ai.provider` becomes `EDITH_AI_PROVIDER`).
+2. **Local Properties**: Values defined in `edith.properties` in the project root.
+3. **Hardcoded Defaults**: Built-in fallback values.
 
-- `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SARVAM_API_KEY`
+### `edith.properties` Template
 
-Optional overrides can be placed in `edith.properties` at the root.
+Create an `edith.properties` file in the root directory (this file is ignored by git):
+
+```properties
+# AI Configuration
+edith.ai.provider=groq
+edith.ai.workspaceDir=C:/path/to/workspace
+
+# Provider API Keys (Or set as ENV vars: GROQ_API_KEY, etc.)
+edith.ai.groq.apiKey=gsk_...
+edith.ai.gemini.apiKey=
+edith.ai.openai.apiKey=
+edith.ai.sarvam.apiKey=
+
+# Automation
+edith.automation.musicUrl=https://music.youtube.com
+
+# Desktop Automation Toggles
+edith.desktop.fileOpenEnabled=true
+edith.desktop.clipboardWriteEnabled=true
+
+# Launcher Overrides (Alias to Path)
+edith.launch.notepad=C:/Windows/System32/notepad.exe
+
+# Voice Support
+speech.vosk.model-path=models/vosk-model-small-en-us-0.15
+```
 
 ## Release
 

@@ -30,10 +30,34 @@ class AppConfigTest {
         assertFalse(appConfig.isDesktopClipboardWriteEnabled());
     }
 
+    @Test
+    void precedence_envVarTakesPriority() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("app.name", "FromProperties");
+
+        AppConfig appConfig = createAppConfig(Map.of("APP_NAME", "FromEnv"), properties);
+
+        assertTrue(appConfig.appName().equals("FromEnv"));
+    }
+
+    @Test
+    void precedence_propertyTakesPriorityOverDefault() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("app.name", "FromProperties");
+
+        AppConfig appConfig = createAppConfig(Map.of(), properties);
+
+        assertTrue(appConfig.appName().equals("FromProperties"));
+    }
+
     private AppConfig createAppConfig(Properties properties) throws Exception {
+        return createAppConfig(Map.of(), properties);
+    }
+
+    private AppConfig createAppConfig(Map<String, String> env, Properties properties) throws Exception {
         Constructor<EnvConfig> envConfigConstructor = EnvConfig.class.getDeclaredConstructor(Map.class);
         envConfigConstructor.setAccessible(true);
-        EnvConfig envConfig = envConfigConstructor.newInstance(Map.of());
+        EnvConfig envConfig = envConfigConstructor.newInstance(env);
 
         Constructor<AppConfig> appConfigConstructor = AppConfig.class.getDeclaredConstructor(EnvConfig.class,
                 Properties.class);
