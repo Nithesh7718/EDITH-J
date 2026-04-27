@@ -1,6 +1,6 @@
 # EDITH-J
 
-EDITH-J is a Java 17 JavaFX desktop assistant. It routes typed and voice input through a single assistant service so notes, reminders, launch commands, utilities, weather, and fallback chat all use the same intent pipeline.
+EDITH-J is a Java 21 JavaFX desktop assistant. It routes typed and voice input through a single assistant service so notes, reminders, launch commands, utilities, weather, and fallback chat all use the same intent pipeline.
 
 ## What it does
 
@@ -26,7 +26,7 @@ EDITH-J is a Java 17 JavaFX desktop assistant. It routes typed and voice input t
 
 ## Requirements
 
-- Java 17
+- Java 21 LTS
 - Maven 3.9+
 - Optional: `GROQ_API_KEY` for chat fallback
 
@@ -34,8 +34,29 @@ EDITH-J is a Java 17 JavaFX desktop assistant. It routes typed and voice input t
 
 Secrets should stay out of tracked files.
 
-- Set `GROQ_API_KEY` in your environment for Groq chat replies.
-- Optional overrides can be placed in `edith.properties`, which is ignored by git.
+- Supported providers: `groq`, `gemini`, `openai`, `sarvam`
+- Select the active provider with `edith.ai.provider` (defaults to `groq` when unset).
+- API key lookup precedence is always:
+
+ 1. Environment variable (`GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SARVAM_API_KEY`)
+ 2. Optional `edith.properties` override (`edith.ai.groq.apiKey`, `edith.ai.gemini.apiKey`, `edith.ai.openai.apiKey`, `edith.ai.sarvam.apiKey`)
+
+Example `edith.properties` template (placeholders only):
+
+```properties
+# edith.ai.provider=groq
+# edith.ai.workspaceDir=C:/Users/Me/Documents/EDITH
+# edith.launch.chrome=C:/Program Files/Google/Chrome/Application/chrome.exe
+# edith.launch.vscode=C:/Program Files/Microsoft VS Code/Code.exe
+
+# Optional API key overrides (examples ONLY, never real keys)
+# edith.ai.groq.apiKey=YOUR_GROQ_KEY_HERE
+# edith.ai.gemini.apiKey=YOUR_GEMINI_KEY_HERE
+# edith.ai.openai.apiKey=YOUR_OPENAI_KEY_HERE
+# edith.ai.sarvam.apiKey=YOUR_SARVAM_KEY_HERE
+```
+
+Desktop automation commands use `edith.ai.workspaceDir` as the root for file actions.
 
 ## Build And Test
 

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.edithj.commands.CalendarCommandHandler;
 import com.edithj.commands.CommandHandler;
+import com.edithj.commands.DesktopAutomationCommandHandler;
 import com.edithj.commands.DesktopToolsCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
 import com.edithj.commands.FallbackChatHandler;
@@ -19,9 +20,9 @@ import com.edithj.commands.ReminderCommandHandler;
 import com.edithj.commands.UtilitiesCommandHandler;
 import com.edithj.commands.WeatherCommandHandler;
 import com.edithj.commands.WhatsAppCommandHandler;
-import com.edithj.integration.llm.GroqClient;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
+import com.edithj.integration.llm.ProviderBackedLlmClient;
 import com.edithj.speech.SpeechService;
 
 /**
@@ -46,7 +47,7 @@ public class AssistantService {
     private IntentType lastStructuredIntent = IntentType.FALLBACK_CHAT;
 
     public AssistantService() {
-        this(new GroqClient(), new PromptBuilder(), new SpeechService(), new IntentRouter(), DEFAULT_MEMORY_WINDOW);
+        this(new ProviderBackedLlmClient(), new PromptBuilder(), new SpeechService(), new IntentRouter(), DEFAULT_MEMORY_WINDOW);
     }
 
     public AssistantService(LlmClient llmClient,
@@ -138,6 +139,11 @@ public class AssistantService {
             if (recoveredIntent.intentType() == IntentType.WHATSAPP) {
                 return intentRouter.routeAndHandle(recoveredIntent, channel);
             }
+        }
+
+        IntentRouter.RoutedIntent directIntent = intentRouter.route(normalizedInput);
+        if (directIntent.intentType() == IntentType.DESKTOP_AUTOMATION) {
+            return intentRouter.routeAndHandle(directIntent, channel);
         }
 
         IntentClassifier.Classification classification = intentClassifier.classify(normalizedInput);
@@ -242,6 +248,7 @@ public class AssistantService {
         intentRouter.registerHandler(new WeatherCommandHandler());
         intentRouter.registerHandler(new UtilitiesCommandHandler());
         intentRouter.registerHandler(new DesktopToolsCommandHandler());
+        intentRouter.registerHandler(new DesktopAutomationCommandHandler());
         intentRouter.registerHandler(new FallbackChatHandler(context -> fallbackChatService.runFallbackChat(context.channel())));
     }
 

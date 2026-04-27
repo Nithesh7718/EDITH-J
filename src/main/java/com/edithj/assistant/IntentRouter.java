@@ -73,6 +73,9 @@ public class IntentRouter {
     }
 
     private IntentType classify(String input) {
+        if (isDesktopAutomationCommand(input)) {
+            return IntentType.DESKTOP_AUTOMATION;
+        }
         if (IntentLexicon.looksLikeWorldMarketsRequest(input)) {
             return IntentType.ASK_WORLD_MARKETS;
         }
@@ -142,6 +145,15 @@ public class IntentRouter {
                 "blocked sites", "start work mode", "shutdown work mode", "work mode", "action log", "confirm open", "what did you do");
     }
 
+    private boolean isDesktopAutomationCommand(String input) {
+        return startsWithAnyIgnoreCase(input,
+                "open app", "launch app",
+                "play music", "play my playlist",
+                "search the web", "search the web for", "web search",
+                "file open", "file create text", "file rename", "file move",
+                "write code", "write document");
+    }
+
     private String extractPayload(String input, IntentType intentType) {
         return switch (intentType) {
             case APP_LAUNCH ->
@@ -162,6 +174,8 @@ public class IntentRouter {
                 stripLeadingKeywordIgnoreCase(input, "calculate", "calc", "what is", "what's", "time", "date", "day");
             case DESKTOP_TOOLS ->
                 stripLeadingKeywordIgnoreCase(input, "help", "search web", "google", "browse", "open website", "open site", "system info", "device info", "memory status");
+            case DESKTOP_AUTOMATION ->
+                input;
             case ASK_WORLD, ASK_WORLD_RISK, ASK_WORLD_MARKETS, ASK_LOCAL_KB, ASK_WEB, GENERAL_CHAT, FALLBACK_CHAT ->
                 input;
         };

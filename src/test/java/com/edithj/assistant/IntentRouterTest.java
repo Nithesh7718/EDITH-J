@@ -112,6 +112,30 @@ class IntentRouterTest {
     }
 
     @Test
+    void route_classifiesDesktopAutomationCommands() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent playMusic = router.route("play music");
+        IntentRouter.RoutedIntent webSearch = router.route("search the web for IPL yesterday news");
+        IntentRouter.RoutedIntent fileCreate = router.route("file create text notes/todo.txt with buy milk");
+
+        assertEquals(IntentType.DESKTOP_AUTOMATION, playMusic.intentType());
+        assertEquals(IntentType.DESKTOP_AUTOMATION, webSearch.intentType());
+        assertEquals(IntentType.DESKTOP_AUTOMATION, fileCreate.intentType());
+    }
+
+    @Test
+    void route_classifiesWriteCodeAndDocumentAsDesktopAutomation() {
+        IntentRouter router = new IntentRouter();
+
+        IntentRouter.RoutedIntent writeCode = router.route("write code src/hello.py: print hello");
+        IntentRouter.RoutedIntent writeDoc = router.route("write document docs/notes.md: meeting summary");
+
+        assertEquals(IntentType.DESKTOP_AUTOMATION, writeCode.intentType());
+        assertEquals(IntentType.DESKTOP_AUTOMATION, writeDoc.intentType());
+    }
+
+    @Test
     void routeAndHandle_invokesRegisteredEmailHandler() {
         IntentRouter router = new IntentRouter();
         RecordingHandler handler = new RecordingHandler(IntentType.EMAIL, "opened");
