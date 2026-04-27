@@ -16,6 +16,7 @@
         <junit.version>5.11.4</junit.version>
         <mockito.version>5.14.2</mockito.version>
         <app.main.class>com.edithj.app.Launcher</app.main.class>
+        <npm.executable>npm</npm.executable>
     </properties>
 
     <dependencies>
@@ -161,7 +162,7 @@
                         </goals>
                         <configuration>
                             <workingDirectory>${project.basedir}/edith-ui</workingDirectory>
-                            <executable>npm.cmd</executable>
+                            <executable>${npm.executable}</executable>
                             <arguments>
                                 <argument>install</argument>
                             </arguments>
@@ -175,7 +176,7 @@
                         </goals>
                         <configuration>
                             <workingDirectory>${project.basedir}/edith-ui</workingDirectory>
-                            <executable>npm.cmd</executable>
+                            <executable>${npm.executable}</executable>
                             <arguments>
                                 <argument>run</argument>
                                 <argument>build</argument>
@@ -246,6 +247,18 @@
          Requires WiX Toolset v3 for type exe or msi; omit for app-image.
     -->
     <profiles>
+        <profile>
+            <id>windows-os</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <npm.executable>npm.cmd</npm.executable>
+            </properties>
+        </profile>
+
         <profile>
             <id>windows-installer</id>
             <build>
