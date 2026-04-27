@@ -409,6 +409,34 @@ html, body, #root {
 }
 .chat-input:focus { box-shadow: none; border: none; }
 
+.mic-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.mic-btn:hover {
+  color: var(--accent);
+}
+
+.mic-btn.active {
+  color: #ff4d4d;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 77, 77, 0)); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255, 77, 77, 0.6)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 77, 77, 0)); }
+}
+
 .send-btn {
   padding: 0 1.1rem;
   height: 100%;

@@ -36,6 +36,7 @@ EDITH-J is an intelligent desktop assistant with a React frontend and a Java 21 
 ## How to Build & Run
 
 ### 1. Build the UI
+
 ```bash
 cd edith-ui
 npm install
@@ -44,32 +45,41 @@ cd ..
 ```
 
 ### 2. Build and Package
+
 ```bash
 mvn clean package
 ```
+
 This builds the Java backend and bundles the React assets into the JAR.
 
 ### 3. Run
+
 ```bash
 java -jar target/edith-j-0.1.0-SNAPSHOT-all.jar
 ```
+
 Or use the development runner:
+
 ```bash
 mvn exec:java
 ```
+
 Upon launch, the application will start the backend server and automatically open the UI in your default system browser at `http://localhost:8080`.
 
 ## API Overview
 
 ### Chat
+
 - `GET  /api/chat/history` - Retrieve recent chat messages.
 - `POST /api/chat`         - Send a message to the assistant.
 
 ### Notes & Reminders
+
 - `GET  /api/notes` / `POST /api/notes`
 - `GET  /api/reminders` / `POST /api/reminders`
 
 ### Automation
+
 - `POST /api/automation/open-app`   - `{ "app": "Notepad" }`
 - `POST /api/automation/web-search` - `{ "query": "Weather today" }`
 - `POST /api/automation/file`       - `{ "action": "open", "path": "notes.txt" }`
@@ -77,6 +87,7 @@ Upon launch, the application will start the backend server and automatically ope
 ## Configuration
 
 Secrets are managed via environment variables:
+
 - `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SARVAM_API_KEY`
 
 Optional overrides can be placed in `edith.properties` at the root.
@@ -84,7 +95,10 @@ Optional overrides can be placed in `edith.properties` at the root.
 ## Release
 
 To produce a self-contained Windows `.exe` installer:
+
 ```bash
 mvn package -P windows-installer
+
 ```
+
 The installer will be generated in `target/installer/`.

@@ -253,6 +253,36 @@ public final class EdithApiServer {
             ctx.json(res);
         });
 
+        // ── Voice Input ───────────────────────────────────────────────────────
+        app.get("/api/voice/status", ctx -> {
+            ctx.json(Map.of(
+                    "available", assistantService.isVoiceAvailable(),
+                    "listening", assistantService.isListening()
+            ));
+        });
+
+        app.post("/api/voice/start", ctx -> {
+            try {
+                assistantService.startVoiceInput();
+                ctx.json(Map.of("success", true, "status", "listening"));
+            } catch (IllegalStateException e) {
+                ctx.status(503).json(Map.of("error", e.getMessage()));
+            }
+        });
+
+        app.post("/api/voice/stop", ctx -> {
+            try {
+                AssistantResponse res = assistantService.stopVoiceInputAndHandle();
+                ctx.json(Map.of(
+                        "transcript", assistantService.getLastVoiceTranscript(),
+                        "answer", res.answer(),
+                        "intent", res.intentType().name()
+                ));
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("error", "Voice capture failed: " + e.getMessage()));
+            }
+        });
+
         // SPA fallback — serve index.html for all unmatched routes
         app.error(404, ctx -> {
             if (!ctx.path().startsWith("/api")) {

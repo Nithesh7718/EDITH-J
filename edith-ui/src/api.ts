@@ -56,3 +56,8 @@ export const resetTelemetry = () => req<{ success: boolean }>('/telemetry/reset'
 export const getSettings = () => req<Settings>('/settings');
 export const updateSettings = (patch: Partial<Settings>) =>
   req<{ success: boolean }>('/settings', { method: 'PUT', body: JSON.stringify(patch) });
+
+// Voice
+export const getVoiceStatus = () => req<{ available: boolean; listening: boolean }>('/voice/status');
+export const startVoice = () => req<{ success: boolean; status: string }>('/voice/start', { method: 'POST' });
+export const stopVoice = () => req<{ transcript: string; answer: string; intent: string }>('/voice/stop', { method: 'POST' });

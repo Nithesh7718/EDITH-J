@@ -73,6 +73,10 @@ public class SpeechRecognizer {
         return transcriptionEngine != null && transcriptionEngine.isAvailable();
     }
 
+    public boolean isListening() {
+        return audioCapture != null && audioCapture.isRecording();
+    }
+
     private String transcribe(byte[] wavAudio) {
         if (transcriptionEngine == null || wavAudio == null || wavAudio.length == 0) {
             return "";

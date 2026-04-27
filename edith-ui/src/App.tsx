@@ -122,6 +122,7 @@ export default function App() {
 function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>> }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [listening, setListening] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -141,6 +142,47 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
       setLoading(false);
     }
   }, [input, loading, setMessages]);
+
+  const toggleVoice = async () => {
+    if (listening) {
+      setListening(false);
+      setLoading(true);
+      try {
+        const res = await api.stopVoice();
+        if (res.transcript) {
+          setMessages(prev => [...prev, {
+            role: 'user',
+            content: res.transcript,
+            timestamp: new Date().toISOString()
+          }]);
+          setMessages(prev => [...prev, {
+            role: 'edith',
+            content: res.answer,
+            timestamp: new Date().toISOString()
+          }]);
+        }
+      } catch (e: unknown) {
+        setMessages(prev => [...prev, {
+          role: 'edith',
+          content: `Voice Error: ${(e as Error).message}`,
+          timestamp: new Date().toISOString()
+        }]);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      try {
+        await api.startVoice();
+        setListening(true);
+      } catch (e: unknown) {
+        setMessages(prev => [...prev, {
+          role: 'edith',
+          content: `Voice Error: ${(e as Error).message}`,
+          timestamp: new Date().toISOString()
+        }]);
+      }
+    }
+  };
 
   const QUICK = ['What can you do?', 'Set a reminder', 'Show recent files', 'Take a note'];
 
@@ -182,17 +224,30 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
 
       <div className="chat-input-bar">
         <div className="input-accent" />
+        <button
+          className={`mic-btn${listening ? ' active' : ''}`}
+          onClick={toggleVoice}
+          title={listening ? "Stop listening" : "Start voice command"}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+            <line x1="12" y1="19" x2="12" y2="23" />
+            <line x1="8" y1="23" x2="16" y2="23" />
+          </svg>
+        </button>
         <input
           className="chat-input"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-          placeholder="Awaiting command..."
+          placeholder={listening ? "Listening..." : "Awaiting command..."}
+          disabled={listening}
         />
         <button
           className="send-btn"
           onClick={send}
-          disabled={loading}
+          disabled={loading || listening || !input.trim()}
           aria-label="Send message"
           title="Send message"
         >

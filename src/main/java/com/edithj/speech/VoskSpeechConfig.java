@@ -10,7 +10,7 @@ public final class VoskSpeechConfig {
     public static final String SYSTEM_PROPERTY_MODEL_PATH = "edithj.vosk.modelPath";
     public static final String ENV_MODEL_PATH = "EDITHJ_VOSK_MODEL_PATH";
     public static final String APP_PROPERTY_MODEL_PATH = "speech.vosk.model-path";
-    public static final String DEFAULT_MODEL_PATH = "models/vosk-model";
+    public static final String DEFAULT_MODEL_PATH = "models/vosk-model-small-en-us-0.15";
 
     private VoskSpeechConfig() {
     }

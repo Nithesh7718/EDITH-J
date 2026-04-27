@@ -125,6 +125,14 @@ public class AssistantService {
         return lastVoiceTranscript;
     }
 
+    public boolean isVoiceAvailable() {
+        return speechService.isAvailable();
+    }
+
+    public boolean isListening() {
+        return speechService.isListening();
+    }
+
     private AssistantResponse handleIncomingInput(String rawInput, String channel) {
         String normalized = normalize(rawInput);
         if (normalized.isBlank()) {
