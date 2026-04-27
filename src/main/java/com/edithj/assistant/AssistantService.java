@@ -23,6 +23,7 @@ import com.edithj.commands.WhatsAppCommandHandler;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
 import com.edithj.integration.llm.ProviderBackedLlmClient;
+import com.edithj.chat.ConversationHistoryService;
 import com.edithj.speech.SpeechService;
 
 /**
@@ -42,21 +43,27 @@ public class AssistantService {
     private final KnowledgeRouter knowledgeRouter;
     private final IntentRouter intentRouter;
     private final FallbackChatService fallbackChatService;
+    private final ConversationHistoryService conversationHistoryService;
     private final AssistantTelemetry telemetry = AssistantTelemetry.instance();
     private String lastVoiceTranscript = "";
     private IntentType lastStructuredIntent = IntentType.FALLBACK_CHAT;
 
     public AssistantService() {
-        this(new ProviderBackedLlmClient(), new PromptBuilder(), new SpeechService(), new IntentRouter(), DEFAULT_MEMORY_WINDOW);
+        this(new ProviderBackedLlmClient(), new PromptBuilder(), new SpeechService(), new IntentRouter(), null, DEFAULT_MEMORY_WINDOW);
+    }
+
+    public AssistantService(ConversationHistoryService conversationHistoryService) {
+        this(new ProviderBackedLlmClient(), new PromptBuilder(), new SpeechService(), new IntentRouter(), conversationHistoryService, DEFAULT_MEMORY_WINDOW);
     }
 
     public AssistantService(LlmClient llmClient,
             PromptBuilder promptBuilder,
             SpeechService speechService,
             IntentRouter intentRouter,
+            ConversationHistoryService conversationHistoryService,
             int maxTurns) {
         this(llmClient, promptBuilder, speechService, intentRouter,
-                new FallbackChatService(llmClient, promptBuilder, maxTurns), maxTurns);
+                new FallbackChatService(llmClient, promptBuilder, maxTurns), conversationHistoryService, maxTurns);
     }
 
     AssistantService(LlmClient llmClient,
@@ -64,14 +71,20 @@ public class AssistantService {
             SpeechService speechService,
             IntentRouter intentRouter,
             FallbackChatService fallbackChatService,
+            ConversationHistoryService conversationHistoryService,
             int maxTurns) {
         Objects.requireNonNull(llmClient, "llmClient");
         Objects.requireNonNull(promptBuilder, "promptBuilder");
         this.speechService = Objects.requireNonNull(speechService, "speechService");
         this.intentRouter = Objects.requireNonNull(intentRouter, "intentRouter");
         this.fallbackChatService = Objects.requireNonNull(fallbackChatService, "fallbackChatService");
+        this.conversationHistoryService = conversationHistoryService;
         this.intentClassifier = new IntentClassifier(llmClient);
         this.knowledgeRouter = new KnowledgeRouter(intentRouter, fallbackChatService, llmClient);
+
+        if (this.conversationHistoryService != null) {
+            this.fallbackChatService.populateMemory(this.conversationHistoryService.getRecentHistory(maxTurns));
+        }
 
         registerDefaultHandlers();
     }
@@ -121,9 +134,15 @@ public class AssistantService {
 
         logger.info("Processing input from channel: {} | Input: {}", channel, normalized.substring(0, Math.min(100, normalized.length())));
         fallbackChatService.recordUserTurn(normalized);
+        if (conversationHistoryService != null) {
+            conversationHistoryService.appendMessage("user", normalized);
+        }
         AssistantResponse response = routeWithContextRecovery(normalized, channel);
         logger.info("Intent routed to: {} | Response length: {}", response.intentType(), response.answer().length());
         fallbackChatService.recordAssistantTurn(response.answer());
+        if (conversationHistoryService != null) {
+            conversationHistoryService.appendMessage("edith", response.answer());
+        }
 
         if (response.intentType() != IntentType.FALLBACK_CHAT) {
             lastStructuredIntent = response.intentType();

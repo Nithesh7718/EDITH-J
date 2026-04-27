@@ -68,6 +68,13 @@ public class FallbackChatService {
         remember("assistant", text);
     }
 
+    public synchronized void populateMemory(List<com.edithj.chat.ChatMessage> history) {
+        memoryWindow.clear();
+        for (com.edithj.chat.ChatMessage message : history) {
+            remember(message.role(), message.content());
+        }
+    }
+
     String buildPromptWithMemory(String channel) {
         StringBuilder prompt = new StringBuilder();
         String systemPrompt = resolveSystemPrompt();

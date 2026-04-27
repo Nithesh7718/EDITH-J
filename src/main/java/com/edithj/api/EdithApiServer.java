@@ -10,6 +10,7 @@ import com.edithj.desktop.SystemClipboardService;
 import com.edithj.desktop.SystemDesktopFileService;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
+import com.edithj.chat.ConversationHistoryService;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
 import com.edithj.storage.RepositoryFactory;
@@ -36,13 +37,15 @@ public final class EdithApiServer {
     private final AssistantService assistantService;
     private final ClipboardService clipboardService;
     private final DesktopFileService desktopFileService;
+    private final ConversationHistoryService historyService;
     private final PreferencesService preferences;
     private final ObjectMapper mapper;
 
     public EdithApiServer() {
         this.noteService = new NoteService(RepositoryFactory.createNoteRepository());
         this.reminderService = new ReminderService(RepositoryFactory.createReminderRepository());
-        this.assistantService = new AssistantService();
+        this.historyService = new ConversationHistoryService(RepositoryFactory.createChatRepository());
+        this.assistantService = new AssistantService(this.historyService);
         this.clipboardService = new SystemClipboardService();
         this.desktopFileService = new SystemDesktopFileService();
         this.preferences = PreferencesService.instance();
@@ -67,6 +70,10 @@ public final class EdithApiServer {
         app.get("/api/health", ctx -> ctx.json(Map.of("status", "ok", "service", "EDITH-J")));
 
         // ── Chat / Assistant ──────────────────────────────────────────────────
+        app.get("/api/chat/history", ctx -> {
+            ctx.json(historyService.getRecentHistory(50));
+        });
+
         app.post("/api/chat", ctx -> {
             ChatRequest req = ctx.bodyAsClass(ChatRequest.class);
             if (req.message() == null || req.message().isBlank()) {
@@ -74,7 +81,7 @@ public final class EdithApiServer {
                 return;
             }
             AssistantResponse response = assistantService.handleTypedInput(req.message());
-            ctx.json(new ChatMessageDto("edith", response.answer(), Instant.now().toString()));
+            ctx.json(new ChatMessageDto(java.util.UUID.randomUUID().toString(), "edith", response.answer(), Instant.now().toString()));
         });
 
         // ── Notes ─────────────────────────────────────────────────────────────
@@ -203,6 +210,49 @@ public final class EdithApiServer {
             ctx.json(Map.of("success", true));
         });
 
+        // ── Desktop Automation ────────────────────────────────────────────────
+        app.post("/api/automation/open-app", ctx -> {
+            OpenAppRequest req = ctx.bodyAsClass(OpenAppRequest.class);
+            AssistantResponse res = assistantService.handleTypedInput("open app " + req.app());
+            ctx.json(res);
+        });
+
+        app.post("/api/automation/play-music", ctx -> {
+            AssistantResponse res = assistantService.handleTypedInput("play music");
+            ctx.json(res);
+        });
+
+        app.post("/api/automation/web-search", ctx -> {
+            WebSearchRequest req = ctx.bodyAsClass(WebSearchRequest.class);
+            AssistantResponse res = assistantService.handleTypedInput("search the web for " + req.query());
+            ctx.json(res);
+        });
+
+        app.post("/api/automation/file", ctx -> {
+            FileAutomationRequest req = ctx.bodyAsClass(FileAutomationRequest.class);
+            String cmd = switch (req.action().toLowerCase()) {
+                case "open" -> "file open " + req.path();
+                case "create" -> "file create text " + req.path() + (req.content() != null ? " with " + req.content() : "");
+                case "rename" -> "file rename " + req.path() + " to " + req.to();
+                case "move" -> "file move " + req.path() + " to " + req.to();
+                default -> throw new IllegalArgumentException("Unknown file action: " + req.action());
+            };
+            AssistantResponse res = assistantService.handleTypedInput(cmd);
+            ctx.json(res);
+        });
+
+        app.post("/api/automation/write-code", ctx -> {
+            WriteGeneratedRequest req = ctx.bodyAsClass(WriteGeneratedRequest.class);
+            AssistantResponse res = assistantService.handleTypedInput("write code " + req.path() + ": " + req.instructions());
+            ctx.json(res);
+        });
+
+        app.post("/api/automation/write-document", ctx -> {
+            WriteGeneratedRequest req = ctx.bodyAsClass(WriteGeneratedRequest.class);
+            AssistantResponse res = assistantService.handleTypedInput("write document " + req.path() + ": " + req.instructions());
+            ctx.json(res);
+        });
+
         // SPA fallback — serve index.html for all unmatched routes
         app.error(404, ctx -> {
             if (!ctx.path().startsWith("/api")) {
@@ -213,8 +263,12 @@ public final class EdithApiServer {
 
     // ── Request / Response DTOs ────────────────────────────────────────────────
     public record ChatRequest(String message) {}
-    public record ChatMessageDto(String role, String content, String timestamp) {}
+    public record ChatMessageDto(String id, String role, String content, String timestamp) {}
     public record NoteRequest(String content) {}
     public record ReminderRequest(String text, String dueHint) {}
     public record ClipboardRequest(String text) {}
+    public record OpenAppRequest(String app) {}
+    public record WebSearchRequest(String query) {}
+    public record FileAutomationRequest(String action, String path, String content, String to) {}
+    public record WriteGeneratedRequest(String path, String instructions) {}
 }

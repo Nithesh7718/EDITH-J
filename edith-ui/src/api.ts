@@ -19,6 +19,7 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 // Chat
 export const sendChat = (message: string) =>
   req<ChatMessage>('/chat', { method: 'POST', body: JSON.stringify({ message }) });
+export const getChatHistory = () => req<ChatMessage[]>('/chat/history');
 
 // Notes
 export const getNotes = (q?: string) =>

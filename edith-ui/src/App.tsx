@@ -27,6 +27,7 @@ export default function App() {
   const [view, setView] = useState<View>('chat');
   const [booted, setBooted] = useState(false);
   const [bootLines, setBootLines] = useState<string[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     let i = 0;
@@ -40,6 +41,24 @@ export default function App() {
     }, 260);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (booted) {
+      api.getChatHistory()
+        .then(history => {
+          if (history && history.length > 0) {
+            setMessages(history);
+          } else {
+            setMessages([{
+              role: 'edith',
+              content: 'EDITH Initialization Complete. All systems nominal. How may I assist?',
+              timestamp: new Date().toISOString()
+            }]);
+          }
+        })
+        .catch(err => console.error("Failed to load chat history:", err));
+    }
+  }, [booted]);
 
   if (!booted) {
     return (
@@ -87,7 +106,7 @@ export default function App() {
 
       {/* ── Main Content ── */}
       <main className="main-content">
-        {view === 'chat'      && <ChatView />}
+        {view === 'chat'      && <ChatView messages={messages} setMessages={setMessages} />}
         {view === 'notes'     && <NotesView />}
         {view === 'reminders' && <RemindersView />}
         {view === 'desktop'   && <DesktopView />}
@@ -100,10 +119,7 @@ export default function App() {
 /* ═══════════════════════════════════════════════════
    CHAT VIEW
 ═══════════════════════════════════════════════════ */
-function ChatView() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'edith', content: 'EDITH Initialization Complete. All systems nominal. How may I assist?', timestamp: new Date().toISOString() }
-  ]);
+function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>> }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -124,7 +140,7 @@ function ChatView() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading]);
+  }, [input, loading, setMessages]);
 
   const QUICK = ['What can you do?', 'Set a reminder', 'Show recent files', 'Take a note'];
 

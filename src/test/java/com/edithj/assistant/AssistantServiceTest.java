@@ -28,7 +28,7 @@ class AssistantServiceTest {
         TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
         IntentRouter intentRouter = new IntentRouter();
 
-        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
 
         AssistantResponse response = service.handleTypedInput("note buy milk");
 
@@ -46,7 +46,7 @@ class AssistantServiceTest {
         TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
         IntentRouter intentRouter = new IntentRouter();
 
-        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
         FakeLauncher launcherService = new FakeLauncher();
         service.registerCommandHandler(new WhatsAppCommandHandler(launcherService));
 
@@ -66,7 +66,7 @@ class AssistantServiceTest {
         TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
         IntentRouter intentRouter = new IntentRouter();
 
-        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
         FakeLauncher launcherService = new FakeLauncher();
         service.registerCommandHandler(new WhatsAppCommandHandler(launcherService, new Properties()));
 
@@ -91,7 +91,7 @@ class AssistantServiceTest {
         TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
         IntentRouter intentRouter = new IntentRouter();
 
-        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
         FakeLauncher launcherService = new FakeLauncher();
         service.registerCommandHandler(new EmailCommandHandler(launcherService));
 
@@ -111,7 +111,7 @@ class AssistantServiceTest {
         TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
         IntentRouter intentRouter = new IntentRouter();
 
-        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
         FakeLauncher launcherService = new FakeLauncher();
         service.registerCommandHandler(new CalendarCommandHandler(launcherService, java.time.Clock.fixed(java.time.Instant.parse("2026-04-18T10:15:00Z"), java.time.ZoneOffset.UTC)));
 
@@ -132,7 +132,7 @@ class AssistantServiceTest {
         TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
         IntentRouter intentRouter = new IntentRouter();
 
-        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, 12);
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
 
         AssistantResponse response = service.handleTypedInput("open notes in our project");
 
