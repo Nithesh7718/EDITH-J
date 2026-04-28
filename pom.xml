@@ -15,16 +15,17 @@
         <jackson.version>2.21.1</jackson.version>
         <junit.version>5.11.4</junit.version>
         <mockito.version>5.14.2</mockito.version>
+        <javalin.version>6.3.0</javalin.version>
         <app.main.class>com.edithj.app.Launcher</app.main.class>
         <npm.executable>npm</npm.executable>
     </properties>
 
     <dependencies>
-        <!-- Javalin for REST/WebSocket Backend -->
+        <!-- Javalin (embedded HTTP server) -->
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>6.1.3</version>
+            <version>${javalin.version}</version>
         </dependency>
 
         <!-- Jackson -->
@@ -148,7 +149,7 @@
                 <version>3.5.1</version>
             </plugin>
 
-            <!-- Build React Frontend -->
+            <!-- Build React frontend -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -212,7 +213,6 @@
                 </executions>
             </plugin>
 
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -237,7 +237,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
@@ -263,9 +262,6 @@
             <id>windows-installer</id>
             <build>
                 <plugins>
-                    <!-- 1. Copy shaded JAR into a clean staging directory.
-                         pre-integration-test runs AFTER shade (package phase),
-                         so the -all.jar is guaranteed to exist. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
@@ -287,7 +283,6 @@
                         </executions>
                     </plugin>
 
-                    <!-- 2. Run jpackage to build the native Windows app -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
@@ -295,7 +290,6 @@
                         <executions>
                             <execution>
                                 <id>jpackage-windows</id>
-                                <!-- integration-test runs after pre-integration-test -->
                                 <phase>integration-test</phase>
                                 <goals>
                                     <goal>exec</goal>
@@ -305,40 +299,28 @@
                                     <arguments>
                                         <argument>--input</argument>
                                         <argument>${project.build.directory}/jpackage-input</argument>
-
                                         <argument>--main-jar</argument>
                                         <argument>${project.artifactId}-${project.version}-all.jar</argument>
-
                                         <argument>--main-class</argument>
                                         <argument>${app.main.class}</argument>
-
                                         <argument>--name</argument>
                                         <argument>EDITH-J</argument>
-
                                         <argument>--app-version</argument>
-                                        <!-- jpackage requires x.y.z -->
                                         <argument>0.1.0</argument>
-
                                         <argument>--dest</argument>
                                         <argument>${project.build.directory}/installer</argument>
-
-                                        <!-- JVM flags passed to the bundled JRE -->
                                         <argument>--java-options</argument>
                                         <argument>--enable-native-access=ALL-UNNAMED</argument>
                                         <argument>--java-options</argument>
                                         <argument>-Xms128m</argument>
                                         <argument>--java-options</argument>
                                         <argument>-Xmx512m</argument>
-
                                         <argument>--add-modules</argument>
                                         <argument>java.base,java.desktop,java.sql,java.naming,java.management,java.instrument,jdk.unsupported,jdk.httpserver,java.net.http,jdk.crypto.ec</argument>
-
                                         <argument>--jlink-options</argument>
                                         <argument>--no-header-files --no-man-pages --strip-debug</argument>
-
                                         <argument>--type</argument>
                                         <argument>exe</argument>
-
                                         <argument>--win-menu</argument>
                                         <argument>--win-shortcut</argument>
                                         <argument>--win-dir-chooser</argument>
@@ -346,17 +328,13 @@
                                         <argument>EDITH-J</argument>
                                         <argument>--win-upgrade-uuid</argument>
                                         <argument>7f3e2c1a-4b8d-4f9e-a2c3-1d5e6f7a8b9c</argument>
-
                                         <argument>--icon</argument>
                                         <argument>${project.basedir}/src/main/packaging/edith-j.ico</argument>
-
                                         <argument>--vendor</argument>
                                         <argument>EDITH-J Project</argument>
-
                                         <argument>--description</argument>
                                         <argument>Enhanced Desktop Intelligent Task Helper</argument>
                                     </arguments>
-                                    <!-- Add WiX bin to PATH so jpackage can find candle + light -->
                                     <environmentVariables>
                                         <PATH>${env.ProgramFiles(x86)}\WiX Toolset v3.14\bin;${env.PATH}</PATH>
                                     </environmentVariables>

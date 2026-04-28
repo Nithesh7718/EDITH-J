@@ -14,6 +14,7 @@ import java.net.URI;
 public final class Launcher {
 
     private static final Logger logger = LoggerFactory.getLogger(Launcher.class);
+    private static final int DEFAULT_PORT = 8080;
 
     private Launcher() {
     }
@@ -26,14 +27,28 @@ public final class Launcher {
         new JsonToSqliteMigrationService(databaseManager).migrateOnce();
 
         Javalin app = new EdithApiServer().createApp();
+        int port = resolvePort(appConfig);
+        String url = "http://localhost:" + port;
         try {
-            app.start(8080);
-            logger.info("EDITH-J is ready. Visit http://localhost:8080 to open the UI.");
+            app.start(port);
+            logger.info("EDITH-J is ready. Visit {} to open the UI.", url);
         } catch (Exception e) {
-            logger.warn("Server failed to start on port 8080. It might already be running: {}", e.getMessage());
+            logger.warn("Server failed to start on port {}. It might already be running: {}", port, e.getMessage());
         }
 
-        openBrowser("http://localhost:8080");
+        openBrowser(url);
+    }
+
+    private static int resolvePort(AppConfig config) {
+        String envPort = config.envConfig().getOrDefault(
+                "SERVER_PORT",
+                config.properties().getProperty("server.port", String.valueOf(DEFAULT_PORT)));
+        try {
+            return Integer.parseInt(envPort.trim());
+        } catch (NumberFormatException ex) {
+            logger.warn("Invalid SERVER_PORT value '{}', defaulting to {}", envPort, DEFAULT_PORT);
+            return DEFAULT_PORT;
+        }
     }
 
     private static void openBrowser(String url) {
@@ -41,7 +56,6 @@ public final class Launcher {
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(new URI(url));
             } else {
-                // Fallback for some Windows environments if Desktop API fails
                 new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
             }
         } catch (Exception e) {
@@ -49,4 +63,3 @@ public final class Launcher {
         }
     }
 }
-
