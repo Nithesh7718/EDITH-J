@@ -1,11 +1,11 @@
 # EDITH-J
 
-EDITH-J is an intelligent desktop assistant with a React frontend and a Java 21 (Javalin) backend. It routes typed and voice input through a unified intent pipeline supporting notes, reminders, desktop automation, and multi-provider AI chat.
+EDITH-J is an intelligent desktop assistant with a React frontend and a Java 25 (Javalin) backend. It routes typed and voice input through a unified intent pipeline supporting notes, reminders, desktop automation, and multi-provider AI chat.
 
 ## Architecture
 
 - **Frontend**: React + Vite (located in `edith-ui/`). Built and served by the Java backend.
-- **Backend**: Java 21 + Javalin. Handles logic, persistence (SQLite), and AI orchestration.
+- **Backend**: Java 25 + Javalin. Handles logic, persistence (SQLite), and AI orchestration.
 - **Communication**: REST API.
 
 ## What it does
@@ -29,7 +29,7 @@ EDITH-J is an intelligent desktop assistant with a React frontend and a Java 21 
 
 ## Requirements
 
-- Java 21 LTS
+- Java 25 LTS
 - Node.js & npm (for building the frontend)
 - Maven 3.9+
 
@@ -87,6 +87,7 @@ Upon launch, the application will start the backend server and automatically ope
 ## Configuration
 
 EDITH-J uses a unified configuration system with the following precedence (highest first):
+
 1. **Environment Variables**: Keys are normalized (e.g., `edith.ai.provider` becomes `EDITH_AI_PROVIDER`).
 2. **Local Properties**: Values defined in `edith.properties` in the project root.
 3. **Hardcoded Defaults**: Built-in fallback values.

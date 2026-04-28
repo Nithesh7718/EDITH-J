@@ -23,6 +23,6 @@
 
 ## Maven or JavaFX issues
 
-- Use Java 17.
+- Use Java 25.
 - Run `mvn clean test` first to verify the project compiles before launching the UI.
 - If JavaFX runtime errors appear, confirm the JavaFX dependencies are available in your Maven cache.

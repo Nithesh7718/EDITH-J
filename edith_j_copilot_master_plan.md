@@ -1,6 +1,6 @@
 # EDITH-J Master Build Plan
 
-A complete execution blueprint for turning EDITH-J into a stable desktop AI assistant with a strong AI core, modern JavaFX UI, embedded database, secure configuration, test coverage, and release workflow. The current repository already includes JavaFX app structure, domain packages for assistant features, Maven build setup, FXML/CSS resources, local persistence, and Groq-related fallback behavior, so this plan focuses on refactoring and completing the existing codebase rather than rewriting it from scratch. [cite:294][cite:255][cite:296]
+A complete execution blueprint for turning EDITH-J into a stable desktop AI assistant with a strong AI core, modern JavaFX UI, embedded database, secure configuration, test coverage, and release workflow. The current repository already includes JavaFX app structure, domain packages for assistant features, Maven build setup, FXML/CSS resources, local persistence, and Groq-related fallback behavior, so this plan focuses on refactoring and completing the existing codebase rather than rewriting it from scratch. [cite:294] [cite:255] [cite:296]
 
 ## Product goal
 
@@ -11,10 +11,10 @@ EDITH-J should become a Windows-first desktop AI assistant with these core capab
 | Layer | Final choice | Notes |
 |---|---|---|
 | Primary OS | Windows-first | Cross-platform can come later after launcher and desktop integration stabilize. [cite:294] |
-| JDK | Java 21 LTS | Standardize one runtime to reduce ecosystem drift. The repo currently documents Java 17, so this should be updated consistently. [cite:294] |
+| JDK | Java 25 LTS | Standardize one runtime to reduce ecosystem drift across the repo. [cite:294] |
 | UI | JavaFX + FXML + CSS | Matches the current codebase and avoids unnecessary rewrite cost. [cite:294] |
 | Build tool | Maven | Already used by the project. [cite:294] |
-| AI chat | Groq text chat API | Groq supports chat/text generation and streaming-style assistant use cases. [cite:255][cite:295] |
+| AI chat | Groq text chat API | Groq supports chat/text generation and streaming-style assistant use cases. [cite:255] [cite:295] |
 | STT | Groq Speech-to-Text first | Groq documents Whisper-based speech-to-text support. [cite:296] |
 | Wake word | openWakeWord later | Optional enhancement for voice mode. [cite:274] |
 | TTS | System TTS first | Keep v1 simple, then upgrade later. [cite:273] |
@@ -45,7 +45,7 @@ This means the project is already beyond the "toy app" stage, but it still behav
 
 - Real secrets must never be committed; runtime secrets should come from environment variables like `GROQ_API_KEY`. [cite:294]
 - `edith.properties` in the repository must contain placeholders only, or be replaced by `edith.properties.example`. [cite:294]
-- JDK 21 LTS becomes the single standard runtime. [cite:294]
+- JDK 25 LTS becomes the single standard runtime. [cite:294]
 - JavaFX remains the UI stack for v1. [cite:294]
 - SQLite becomes the primary persistence layer; JSON/file storage may remain only for import/export or temporary migration. [cite:297][cite:299]
 - Deterministic tools handle notes/reminders/launcher first; Groq is used for open-ended reasoning and ambiguity resolution, not as the default handler for everything. [cite:255][cite:294]
@@ -79,15 +79,17 @@ Use GitHub Copilot in a controlled way instead of asking it to rewrite the entir
 **What it likely has now:** Maven setup, JavaFX dependencies/plugins, current runtime settings. [cite:294]
 
 **What it should implement:**
-- Java 21 compiler target.
+
+- Java 25 compiler target.
 - Explicit JavaFX plugin config.
 - Shade plugin for a runnable fat JAR.
 - Surefire and, if needed later, Failsafe separation.
 - Dependencies for SQLite JDBC, logging, JUnit 5, Mockito, Jackson if needed. [cite:294][cite:297]
 
 **Copilot prompt:**
+
 ```text
-Refactor pom.xml for a Windows-first JavaFX desktop assistant on JDK 21 LTS. Keep Maven. Add or clean up JavaFX plugin config, SQLite JDBC, SLF4J + Logback, JUnit 5, Mockito, and a shaded JAR build path. Do not add unnecessary frameworks. Show the final dependency and plugin rationale before editing.
+Refactor pom.xml for a Windows-first JavaFX desktop assistant on JDK 25 LTS. Keep Maven. Add or clean up JavaFX plugin config, SQLite JDBC, SLF4J + Logback, JUnit 5, Mockito, and a shaded JAR build path. Do not add unnecessary frameworks. Show the final dependency and plugin rationale before editing.
 ```
 
 ### `.gitignore`
@@ -95,11 +97,13 @@ Refactor pom.xml for a Windows-first JavaFX desktop assistant on JDK 21 LTS. Kee
 **What it likely has now:** general ignores, but not fully aligned with secret and runtime hygiene because `edith.properties` is visible in the repo. [cite:294]
 
 **What it should implement:**
+
 - ignore `edith.properties`
 - ignore `.env` and `.env.*`
 - ignore `*.db`, `logs/`, `recordings/`, `target/`, IDE files, temp exports
 
 **Copilot prompt:**
+
 ```text
 Audit .gitignore for a JavaFX desktop AI assistant. Add ignores for local secrets, SQLite db files, logs, audio recordings, temp exports, target output, and IDE files. Keep tracked example config files only.
 ```
@@ -109,11 +113,13 @@ Audit .gitignore for a JavaFX desktop AI assistant. Add ignores for local secret
 **What it likely has now:** tracked configuration, possibly including live-key format exposure risk. [cite:294]
 
 **What it should implement:**
+
 - placeholders only
 - no live secrets
 - move real config loading to env vars and optional local override file outside git
 
 **Copilot prompt:**
+
 ```text
 Replace any real or risky values in edith.properties with placeholders only. If appropriate, rename tracked config to edith.properties.example and adjust config loading so runtime secrets come from environment variables like GROQ_API_KEY.
 ```
@@ -123,8 +129,9 @@ Replace any real or risky values in edith.properties with placeholders only. If 
 **What it likely has now:** feature overview, package listing, run/test instructions. [cite:294]
 
 **What it should implement:**
+
 - secure setup steps
-- JDK 21 standardization
+- JDK 25 standardization
 - architecture overview
 - runbook for `mvn javafx:run`, tests, package
 - screenshots section placeholder
@@ -133,8 +140,9 @@ Replace any real or risky values in edith.properties with placeholders only. If 
 - top user flows
 
 **Copilot prompt:**
+
 ```text
-Rewrite README.md into a release-quality runbook for EDITH-J. Keep it concise but complete. Include architecture overview, secure setup, GROQ_API_KEY usage, JDK 21, run/test/package commands, top user flows, troubleshooting, and known limitations.
+Rewrite README.md into a release-quality runbook for EDITH-J. Keep it concise but complete. Include architecture overview, secure setup, GROQ_API_KEY usage, JDK 25, run/test/package commands, top user flows, troubleshooting, and known limitations.
 ```
 
 ## `src/main/java/.../app`
@@ -144,6 +152,7 @@ Rewrite README.md into a release-quality runbook for EDITH-J. Keep it concise bu
 **What it likely has now:** JavaFX application entrypoint and startup. [cite:294]
 
 **What it should implement:**
+
 - centralized bootstrap
 - config loading
 - logging initialization
@@ -152,6 +161,7 @@ Rewrite README.md into a release-quality runbook for EDITH-J. Keep it concise bu
 - graceful shutdown hooks
 
 **Copilot prompt:**
+
 ```text
 Refactor the application bootstrap so startup is clean and explicit. Create or improve classes for config initialization, logging startup, database initialization, service wiring, and graceful shutdown. Keep the design simple and suitable for a JavaFX desktop app.
 ```
@@ -163,6 +173,7 @@ Refactor the application bootstrap so startup is clean and explicit. Create or i
 **What it likely has now:** `AssistantService` as the main pipeline. [cite:294]
 
 **What it should implement:**
+
 - `AssistantService` as orchestrator only
 - `IntentRouter`
 - `ToolPlanner`
@@ -172,6 +183,7 @@ Refactor the application bootstrap so startup is clean and explicit. Create or i
 - unified `AssistantResponse`
 
 **Copilot prompt:**
+
 ```text
 Refactor the assistant package so AssistantService becomes a thin orchestrator. Extract intent routing, tool planning, tool execution, conversation management, and response composition into separate classes. Add a unified AssistantResponse model used by UI and services.
 ```
@@ -179,6 +191,7 @@ Refactor the assistant package so AssistantService becomes a thin orchestrator. 
 ### Unified response model
 
 **What it should implement:**
+
 - response text
 - source type (`groq`, `notes`, `reminders`, `launcher`, etc.)
 - success/failure
@@ -186,6 +199,7 @@ Refactor the assistant package so AssistantService becomes a thin orchestrator. 
 - optional structured payload
 
 **Copilot prompt:**
+
 ```text
 Create a unified AssistantResponse model that supports normal replies, tool results, errors, and metadata. Use it across assistant-related services to reduce UI coupling.
 ```
@@ -195,6 +209,7 @@ Create a unified AssistantResponse model that supports normal replies, tool resu
 This package should be created if it does not exist.
 
 **What it should implement:**
+
 - `GroqClient`
 - `GroqChatService`
 - `PromptTemplateService`
@@ -205,6 +220,7 @@ This package should be created if it does not exist.
 Groq’s docs explicitly support text chat and API usage suitable for assistant-style calls, and this should become a first-class subsystem rather than a fallback side feature. [cite:255][cite:258][cite:295]
 
 **Copilot prompt:**
+
 ```text
 Create a dedicated ai package for Groq integration. Implement clean separation between raw API client, chat service, prompt building, and response parsing. Prepare for streaming responses in the UI even if the first version still returns fully assembled text. Handle missing GROQ_API_KEY, HTTP errors, and malformed responses explicitly.
 ```
@@ -212,6 +228,7 @@ Create a dedicated ai package for Groq integration. Implement clean separation b
 ## `src/main/java/.../config` (new package)
 
 **What it should implement:**
+
 - `AppConfig`
 - `EnvConfigLoader`
 - `PropertiesConfigLoader`
@@ -219,6 +236,7 @@ Create a dedicated ai package for Groq integration. Implement clean separation b
 - `ModelConfig`
 
 **Copilot prompt:**
+
 ```text
 Create a config package that centralizes app settings, environment-variable loading, optional placeholder property loading, and secret validation. Remove scattered config access from other classes and keep runtime secret handling explicit.
 ```
@@ -230,12 +248,14 @@ Create a config package that centralizes app settings, environment-variable load
 **What it likely has now:** feature handlers for notes, reminders, utilities, weather, and other assistant commands. [cite:294]
 
 **What it should implement:**
+
 - standard command interface
 - command context
 - command result mapped to `AssistantResponse`
 - registry-based command lookup
 
 **Copilot prompt:**
+
 ```text
 Refactor the commands package around a consistent AssistantCommand interface and CommandContext model. Make command execution deterministic, testable, and easy to register. Return results through AssistantResponse.
 ```
@@ -247,6 +267,7 @@ Refactor the commands package around a consistent AssistantCommand interface and
 **What it likely has now:** launcher helpers. [cite:294]
 
 **What it should implement:**
+
 - allowlisted applications only
 - Windows-specific adapter
 - registry of supported launch targets
@@ -254,6 +275,7 @@ Refactor the commands package around a consistent AssistantCommand interface and
 - clear errors for unsupported commands
 
 **Copilot prompt:**
+
 ```text
 Refactor launcher support into a Windows-first allowlisted service. Add a registry of supported apps and block unsafe arbitrary command execution. Return user-friendly errors for unknown app names.
 ```
@@ -265,6 +287,7 @@ Refactor launcher support into a Windows-first allowlisted service. Add a regist
 **What it likely has now:** notes model/service/repository using local persistence. [cite:294]
 
 **What it should implement:**
+
 - SQLite repository
 - note CRUD
 - tags
@@ -274,6 +297,7 @@ Refactor launcher support into a Windows-first allowlisted service. Add a regist
 - import/export compatibility if JSON exists today
 
 **Copilot prompt:**
+
 ```text
 Refactor the notes package into a stronger domain module with Note model, NotesService, repository abstraction, and SQLite implementation. Preserve current note functionality, add search/tag/pin support, and keep migration from existing storage practical.
 ```
@@ -285,6 +309,7 @@ Refactor the notes package into a stronger domain module with Note model, NotesS
 **What it likely has now:** reminders model/service/repository using local persistence. [cite:294]
 
 **What it should implement:**
+
 - SQLite-backed reminders
 - active/completed/snoozed states
 - due-time parsing normalization
@@ -293,6 +318,7 @@ Refactor the notes package into a stronger domain module with Note model, NotesS
 - recurrence-ready schema
 
 **Copilot prompt:**
+
 ```text
 Refactor reminders into a robust module with repository abstraction, SQLite implementation, normalized schedule fields, and statuses like active/completed/snoozed. Keep the first pass simple but architect it for recurrence and notifications later.
 ```
@@ -304,6 +330,7 @@ Refactor reminders into a robust module with repository abstraction, SQLite impl
 **What it likely has now:** speech input and typed fallback. [cite:294]
 
 **What it should implement:**
+
 - microphone capture service
 - STT adapter
 - voice session state machine
@@ -313,6 +340,7 @@ Refactor reminders into a robust module with repository abstraction, SQLite impl
 Groq’s speech-to-text docs provide a good first remote STT path, while openWakeWord is suitable as a later wake-word enhancement. [cite:296][cite:274]
 
 **Copilot prompt:**
+
 ```text
 Refactor the speech package into clear services for microphone capture, speech-to-text, optional text-to-speech, and voice session state. Keep typed input working. Prepare extension points for wake-word support later.
 ```
@@ -324,6 +352,7 @@ Refactor the speech package into clear services for microphone capture, speech-t
 **What it likely has now:** local storage helpers, possibly JSON/file persistence. [cite:294]
 
 **What it should implement:**
+
 - `DatabaseManager`
 - migration runner
 - backup/export service
@@ -331,6 +360,7 @@ Refactor the speech package into clear services for microphone capture, speech-t
 - storage health checks
 
 **Copilot prompt:**
+
 ```text
 Introduce a proper storage layer centered on SQLite. Add DatabaseManager, migration support, and backup/export hooks. If the current project uses JSON persistence, keep it only for import/export or migration support, not as the main long-term store.
 ```
@@ -342,6 +372,7 @@ Introduce a proper storage layer centered on SQLite. Add DatabaseManager, migrat
 A JARVIS-style assistant needs memory beyond raw chat history.
 
 **What it should implement:**
+
 - user preferences
 - recent conversation summaries
 - pinned context
@@ -349,6 +380,7 @@ A JARVIS-style assistant needs memory beyond raw chat history.
 - retrieval methods for prompt enrichment
 
 **Copilot prompt:**
+
 ```text
 Create a memory package for EDITH-J with models and services for user preferences, recent conversation summaries, pinned context, and memory retrieval for prompt enrichment. Keep it lightweight and local-first.
 ```
@@ -360,6 +392,7 @@ Create a memory package for EDITH-J with models and services for user preference
 **What it likely has now:** controllers, views, CSS, navigation. [cite:294]
 
 **What it should implement:**
+
 - shell layout with sidebar, main chat, right-side context panel
 - bottom input bar with send and mic
 - UI state store
@@ -369,6 +402,7 @@ Create a memory package for EDITH-J with models and services for user preference
 - visible states: listening, thinking, typing, speaking, offline
 
 **Copilot prompt:**
+
 ```text
 Refactor the JavaFX UI into a modern assistant shell. Keep FXML and CSS. Build a sidebar, main chat area, optional right context panel, and bottom input bar with send/mic actions. Add visible assistant states such as listening, thinking, and offline. Keep controllers thin and move logic into services.
 ```
@@ -376,11 +410,13 @@ Refactor the JavaFX UI into a modern assistant shell. Keep FXML and CSS. Build a
 ### Streaming response support
 
 **What it should implement:**
+
 - append partial model output into the chat UI
 - support cancellation/interruption later
 - show source badges like `AI`, `Notes`, `Reminder`, `Launcher`
 
 **Copilot prompt:**
+
 ```text
 Prepare the chat UI and assistant pipeline for streaming responses. Even if the current implementation remains synchronous, define interfaces and UI hooks that can append partial output later.
 ```
@@ -392,6 +428,7 @@ Prepare the chat UI and assistant pipeline for streaming responses. Even if the 
 **What it likely has now:** JavaFX layouts. [cite:294]
 
 **What it should implement:**
+
 - `main-shell.fxml`
 - `chat-view.fxml`
 - `notes-panel.fxml`
@@ -400,6 +437,7 @@ Prepare the chat UI and assistant pipeline for streaming responses. Even if the 
 - `voice-overlay.fxml`
 
 **Copilot prompt:**
+
 ```text
 Reorganize FXML views into a modular shell-based structure with separate views for main shell, chat, notes, reminders, settings, and optional voice overlay.
 ```
@@ -409,6 +447,7 @@ Reorganize FXML views into a modular shell-based structure with separate views f
 **What it likely has now:** styling files. [cite:294]
 
 **What it should implement:**
+
 - theme tokens
 - dark theme first
 - reusable panel and message styles
@@ -416,6 +455,7 @@ Reorganize FXML views into a modular shell-based structure with separate views f
 - status badges
 
 **Copilot prompt:**
+
 ```text
 Refactor JavaFX CSS into a reusable design system with theme variables, dark theme defaults, message bubble styles, panel styles, input bar styles, and assistant state visuals.
 ```
@@ -425,6 +465,7 @@ Refactor JavaFX CSS into a reusable design system with theme variables, dark the
 **What it likely has now:** prompt resources. [cite:294]
 
 **What it should implement:**
+
 - system prompt for EDITH persona
 - tool-routing prompt
 - summarization prompt
@@ -432,6 +473,7 @@ Refactor JavaFX CSS into a reusable design system with theme variables, dark the
 - fallback clarification prompt
 
 **Copilot prompt:**
+
 ```text
 Create a structured prompts folder for EDITH-J with separate prompt templates for system persona, tool routing, summarization, memory extraction, and fallback clarification. Avoid hardcoding long prompts inside Java classes.
 ```
@@ -441,6 +483,7 @@ Create a structured prompts folder for EDITH-J with separate prompt templates fo
 **What it likely has now:** base app settings. [cite:294]
 
 **What it should implement:**
+
 - non-secret defaults only
 - storage path
 - theme
@@ -449,6 +492,7 @@ Create a structured prompts folder for EDITH-J with separate prompt templates fo
 - default model name
 
 **Copilot prompt:**
+
 ```text
 Clean application.properties so it contains only non-secret defaults such as theme, storage path, debug flags, and default model settings. Remove any sensitive values from resource config.
 ```
@@ -472,6 +516,7 @@ Use SQLite as the primary embedded data store for desktop persistence. This is a
 - `app_settings`
 
 ### Copilot prompt
+
 ```text
 Design a lightweight SQLite schema for EDITH-J covering users, preferences, conversations, messages, notes, note tags, reminders, tasks, tool runs, memory entries, and app settings. Keep it simple, normalized, and suitable for a local desktop assistant.
 ```
@@ -492,6 +537,7 @@ The project needs QA level B: unit tests plus integration smoke. The repo alread
 - app bootstrap smoke path
 
 ### Copilot prompt
+
 ```text
 Add or improve tests for config loading, intent routing, notes CRUD, reminders CRUD, launcher safety, assistant fallback logic, and database initialization. Use JUnit 5 and Mockito. Keep tests focused and runnable in Maven without external secrets.
 ```
@@ -503,19 +549,21 @@ The repository should add a GitHub Actions workflow that runs on push and pull r
 ### Workflow should do
 
 - checkout
-- setup JDK 21
+- setup JDK 25
 - cache Maven
 - run `mvn -B clean test`
 - optionally package the app
 
 ### Copilot prompt
+
 ```text
-Create a GitHub Actions CI workflow for EDITH-J that runs on push and pull request, sets up JDK 21, caches Maven dependencies, runs Maven tests, and optionally packages the application artifact.
+Create a GitHub Actions CI workflow for EDITH-J that runs on push and pull request, sets up JDK 25, caches Maven dependencies, runs Maven tests, and optionally packages the application artifact.
 ```
 
 ## Release deliverables
 
 v1 should ship with:
+
 - stable runnable app via `javafx:run`
 - shaded runnable JAR
 - clean test suite
@@ -606,12 +654,12 @@ Do not feed the entire repository to Copilot with "fix everything". Instead, use
 Use this at the start of a session:
 
 ```text
-You are helping refactor EDITH-J into a Windows-first JavaFX desktop AI assistant with Java 21 LTS, Groq chat integration, SQLite persistence, secure env-based configuration, modular assistant orchestration, and a modern chat-first UI. Follow this plan exactly:
+You are helping refactor EDITH-J into a Windows-first JavaFX desktop AI assistant with Java 25 LTS, Groq chat integration, SQLite persistence, secure env-based configuration, modular assistant orchestration, and a modern chat-first UI. Follow this plan exactly:
 - Do not rewrite the entire repo at once.
 - Work package by package.
 - Keep JavaFX, Maven, and the current app foundation.
 - Move secrets to env vars only.
-- Standardize on JDK 21.
+- Standardize on JDK 25.
 - Introduce clean packages for config, ai, memory, and SQLite storage.
 - Keep notes, reminders, and launcher deterministic.
 - Use Groq for open-ended reasoning only.
