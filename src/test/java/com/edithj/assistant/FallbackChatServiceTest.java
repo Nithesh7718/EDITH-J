@@ -1,10 +1,9 @@
 package com.edithj.assistant;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import com.edithj.ai.PromptTemplateService;
@@ -79,7 +78,7 @@ class FallbackChatServiceTest {
             service.runFallbackChat("typed");
 
             assertEquals(AssistantStatus.OFFLINE, statusService.status());
-            assertEquals("Groq unreachable", statusService.message());
+            assertEquals("AI provider unreachable", statusService.message());
         } finally {
             if (previousStatus == AssistantStatus.ONLINE) {
                 statusService.markOnline(previousMessage);

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <mkdir dir="E:\EDITH-J\target/jpackage-input" />
+    <copy file="E:\EDITH-J\target/edith-j-0.1.0-SNAPSHOT-all.jar" todir="E:\EDITH-J\target/jpackage-input" overwrite="true" />
+  </target>
+</project>

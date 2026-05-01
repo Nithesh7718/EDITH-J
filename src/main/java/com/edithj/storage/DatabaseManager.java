@@ -75,6 +75,15 @@ public class DatabaseManager {
                         meta_value TEXT NOT NULL
                     )
                     """);
+
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS chat_history (
+                        id TEXT PRIMARY KEY,
+                        role TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        timestamp TEXT NOT NULL
+                    )
+                    """);
             logger.debug("SQLite schema initialized at {}", databasePath);
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to initialize SQLite schema", exception);

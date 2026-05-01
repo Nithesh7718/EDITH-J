@@ -18,21 +18,10 @@ public final class StorageConfig {
     }
 
     public static StorageConfig load(EnvConfig envConfig, Properties properties) {
-        String configuredBackend = envConfig.get("EDITH_STORAGE_BACKEND")
-                .orElseGet(() -> properties.getProperty("storage.backend", DEFAULT_BACKEND));
+        String backend = AppConfig.resolve(envConfig, properties, "storage.backend", DEFAULT_BACKEND).trim().toLowerCase();
+        String dbPath = AppConfig.resolve(envConfig, properties, "storage.db-path", StoragePaths.databasePath().toString());
 
-        String configuredDbPath = envConfig.get("EDITH_DB_PATH")
-                .orElseGet(() -> properties.getProperty("storage.db-path", StoragePaths.databasePath().toString()));
-
-        String backend = configuredBackend == null || configuredBackend.isBlank()
-                ? DEFAULT_BACKEND
-                : configuredBackend.trim().toLowerCase();
-
-        Path databasePath = Path.of(configuredDbPath == null || configuredDbPath.isBlank()
-                ? StoragePaths.databasePath().toString()
-                : configuredDbPath.trim());
-
-        return new StorageConfig(backend, databasePath);
+        return new StorageConfig(backend, Path.of(dbPath.trim()));
     }
 
     public String backend() {

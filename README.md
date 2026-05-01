@@ -1,62 +1,133 @@
 # EDITH-J
 
-EDITH-J is a Java 17 JavaFX desktop assistant. It routes typed and voice input through a single assistant service so notes, reminders, launch commands, utilities, weather, and fallback chat all use the same intent pipeline.
+EDITH-J is an intelligent desktop assistant with a React frontend and a Java 25 (Javalin) backend. It routes typed and voice input through a unified intent pipeline supporting notes, reminders, desktop automation, and multi-provider AI chat.
+
+## Architecture
+
+- **Frontend**: React + Vite (located in `edith-ui/`). Built and served by the Java backend.
+- **Backend**: Java 25 + Javalin. Handles logic, persistence (SQLite), and AI orchestration.
+- **Communication**: REST API.
 
 ## What it does
 
-- Intent routing for notes, reminders, launcher actions, weather, utilities, desktop tools, and fallback chat
-- Typed and voice input through `AssistantService`
-- Local persistence for notes and reminders
-- Groq-backed chat fallback when no specific command intent matches
+- **Unified Intent Routing**: Notes, reminders, launcher actions, weather, and fallback chat.
+- **Desktop Automation**: Open apps, play music, web search, and file management (create/rename/move).
+- **AI Integration**: Support for Groq, Gemini, OpenAI, and Sarvam.
+- **Persistence**: SQLite-backed storage for chat history, notes, and reminders.
+- **Voice Support**: Integrated STT/TTS pipeline through `AssistantService`.
 
 ## Project Layout
 
-- `src/main/java/com/edithj/app` - application startup
-- `src/main/java/com/edithj/assistant` - intent routing and orchestration
-- `src/main/java/com/edithj/ai` - chat abstractions and Groq chat service wrapper
-- `src/main/java/com/edithj/commands` - command handlers
-- `src/main/java/com/edithj/launcher` - OS launch helpers
-- `src/main/java/com/edithj/memory` - lightweight assistant memory models and service
-- `src/main/java/com/edithj/notes` - note domain and repositories
-- `src/main/java/com/edithj/reminders` - reminder domain and repositories
-- `src/main/java/com/edithj/speech` - speech capture and typed fallback
-- `src/main/java/com/edithj/ui` - JavaFX views, controllers, and navigation
-- `src/main/java/com/edithj/storage` - SQLite and JSON storage helpers
-- `src/main/resources` - FXML, CSS, prompts, and seeded data
+- `edith-ui/` - React frontend source code.
+- `src/main/java/com/edithj/api` - Javalin REST API server.
+- `src/main/java/com/edithj/app` - Application entry point (`Launcher.java`).
+- `src/main/java/com/edithj/assistant` - Intent classification and orchestration logic.
+- `src/main/java/com/edithj/commands` - Command handlers for specific tools.
+- `src/main/java/com/edithj/ai` - LLM provider integrations.
+- `src/main/java/com/edithj/storage` - SQLite persistence layer.
+- `src/main/resources/public` - Static assets for the React UI.
 
 ## Requirements
 
-- Java 17
+- Java 25 LTS
+- Node.js & npm (for building the frontend)
 - Maven 3.9+
-- Optional: `GROQ_API_KEY` for chat fallback
+
+## How to Build & Run
+
+### 1. Build the UI
+
+```bash
+cd edith-ui
+npm install
+npm run build
+cd ..
+```
+
+### 2. Build and Package
+
+```bash
+mvn clean package
+```
+
+This builds the Java backend and bundles the React assets into the JAR.
+
+### 3. Run
+
+```bash
+java -jar target/edith-j-0.1.0-SNAPSHOT-all.jar
+```
+
+Or use the development runner:
+
+```bash
+mvn exec:java
+```
+
+Upon launch, the application will start the backend server and automatically open the UI in your default system browser at `http://localhost:8080`.
+
+## API Overview
+
+### Chat
+
+- `GET  /api/chat/history` - Retrieve recent chat messages.
+- `POST /api/chat`         - Send a message to the assistant.
+
+### Notes & Reminders
+
+- `GET  /api/notes` / `POST /api/notes`
+- `GET  /api/reminders` / `POST /api/reminders`
+
+### Automation
+
+- `POST /api/automation/open-app`   - `{ "app": "Notepad" }`
+- `POST /api/automation/web-search` - `{ "query": "Weather today" }`
+- `POST /api/automation/file`       - `{ "action": "open", "path": "notes.txt" }`
 
 ## Configuration
 
-Secrets should stay out of tracked files.
+EDITH-J uses a unified configuration system with the following precedence (highest first):
 
-- Set `GROQ_API_KEY` in your environment for Groq chat replies.
-- Optional overrides can be placed in `edith.properties`, which is ignored by git.
+1. **Environment Variables**: Keys are normalized (e.g., `edith.ai.provider` becomes `EDITH_AI_PROVIDER`).
+2. **Local Properties**: Values defined in `edith.properties` in the project root.
+3. **Hardcoded Defaults**: Built-in fallback values.
 
-## Build And Test
+### `edith.properties` Template
 
-```bash
-mvn clean test
+Create an `edith.properties` file in the root directory (this file is ignored by git):
+
+```properties
+# AI Configuration
+edith.ai.provider=groq
+edith.ai.workspaceDir=C:/path/to/workspace
+
+# Provider API Keys (Or set as ENV vars: GROQ_API_KEY, etc.)
+edith.ai.groq.apiKey=gsk_...
+edith.ai.gemini.apiKey=
+edith.ai.openai.apiKey=
+edith.ai.sarvam.apiKey=
+
+# Automation
+edith.automation.musicUrl=https://music.youtube.com
+
+# Desktop Automation Toggles
+edith.desktop.fileOpenEnabled=true
+edith.desktop.clipboardWriteEnabled=true
+
+# Launcher Overrides (Alias to Path)
+edith.launch.notepad=C:/Windows/System32/notepad.exe
+
+# Voice Support
+speech.vosk.model-path=models/vosk-model-small-en-us-0.15
 ```
 
-## Run
+## Release
+
+To produce a self-contained Windows `.exe` installer:
 
 ```bash
-mvn javafx:run
+mvn package -P windows-installer
+
 ```
 
-## Storage
-
-Notes and reminders are stored under `~/.edith-j/data/` by default.
-
-- Primary backend: SQLite (`~/.edith-j/data/edith.db`)
-- Fallback backend: JSON files when SQLite is unavailable
-
-## Notes
-
-- The chat view now routes through `AssistantService` instead of talking to Groq directly.
-- The UI controllers are thin and delegate to services or the navigation layer.
+The installer will be generated in `target/installer/`.

@@ -30,8 +30,5 @@
     <!-- Application-specific loggers -->
     <logger name="com.edithj" level="DEBUG" />
 
-    <!-- Third-party loggers (reduce verbosity) -->
-    <logger name="org.openjfx" level="WARN" />
-    <logger name="javafx" level="WARN" />
 </configuration>
 

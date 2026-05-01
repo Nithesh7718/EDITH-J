@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Objects;
 
 import com.edithj.assistant.IntentType;
 
@@ -47,8 +48,16 @@ public class UtilitiesCommandHandler implements CommandHandler {
                 BigDecimal value = new ExpressionParser(expression).parse();
                 return "Result: " + formatNumber(value);
             } catch (IllegalArgumentException exception) {
+                if (exception.getMessage() != null && exception.getMessage().toLowerCase(Locale.ROOT).contains("division by zero")) {
+                    return "Cannot divide by zero. Try a different calculation.";
+                }
                 return "I couldn't parse that calculation. Try: calculate 125 * (4 + 2).";
             }
+        }
+
+        String normalizedInput = Objects.toString(input, "").trim().toLowerCase(Locale.ROOT);
+        if (normalizedInput.startsWith("calculate") || normalizedInput.startsWith("calc ")) {
+            return "I couldn't parse that calculation. Try: calculate 125 * (4 + 2).";
         }
 
         return examples();

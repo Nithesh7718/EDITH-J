@@ -8,7 +8,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 
@@ -21,8 +20,7 @@ class GroqConnectivityProbeTest {
     @Test
     void javaHttpClient_canReachGroqModelsEndpoint() {
         String apiKey = System.getenv("GROQ_API_KEY");
-        assertFalse(apiKey == null || apiKey.isBlank(), "GROQ_API_KEY is missing or blank");
-        if (apiKey == null) {
+        if (apiKey == null || apiKey.isBlank()) {
             fail("GROQ_API_KEY is missing or blank");
             return;
         }

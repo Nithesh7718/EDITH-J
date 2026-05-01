@@ -95,7 +95,7 @@ public class WindowsLauncher {
 
         try {
             // Use cmd /c start to open URL in default application
-            ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "start", url);
+            ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "start", "", url);
             pb.start();
             return true;
         } catch (IOException exception) {

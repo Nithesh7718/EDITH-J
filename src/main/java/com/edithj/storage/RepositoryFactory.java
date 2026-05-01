@@ -13,6 +13,8 @@ import com.edithj.memory.SQLiteMemoryRepository;
 import com.edithj.reminders.FileReminderRepository;
 import com.edithj.reminders.ReminderRepository;
 import com.edithj.reminders.SQLiteReminderRepository;
+import com.edithj.chat.ChatRepository;
+import com.edithj.chat.SQLiteChatRepository;
 
 public final class RepositoryFactory {
 
@@ -59,6 +61,20 @@ public final class RepositoryFactory {
         } catch (RuntimeException exception) {
             logger.warn("SQLite memory repository unavailable, falling back to in-memory storage", exception);
             return new InMemoryMemoryRepository();
+        }
+    }
+
+    public static ChatRepository createChatRepository() {
+        try {
+            DATABASE_MANAGER.initialize();
+            return new SQLiteChatRepository(DATABASE_MANAGER);
+        } catch (RuntimeException exception) {
+            logger.warn("SQLite chat repository unavailable", exception);
+            return new ChatRepository() {
+                @Override public java.util.List<com.edithj.chat.ChatMessage> findRecent(int limit) { return java.util.List.of(); }
+                @Override public void save(com.edithj.chat.ChatMessage message) {}
+                @Override public void clear() {}
+            };
         }
     }
 }

@@ -8,6 +8,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 
 public class AudioCapture {
@@ -15,6 +16,7 @@ public class AudioCapture {
     private static final int BUFFER_SIZE = 4_096;
 
     private final AudioFormat format;
+    private final String preferredInputDeviceName;
 
     private volatile boolean recording;
     private volatile TargetDataLine microphone;
@@ -24,11 +26,17 @@ public class AudioCapture {
     private byte[] lastRecordingWav = new byte[0];
 
     public AudioCapture() {
-        this(new AudioFormat(16_000.0f, 16, 1, true, false));
+        this(new AudioFormat(16_000.0f, 16, 1, true, false),
+                SpeechAudioConfig.resolveInputDeviceName().orElse(null));
     }
 
     public AudioCapture(AudioFormat format) {
+        this(format, null);
+    }
+
+    public AudioCapture(AudioFormat format, String preferredInputDeviceName) {
         this.format = format;
+        this.preferredInputDeviceName = preferredInputDeviceName;
     }
 
     public synchronized void startRecording() {
@@ -38,7 +46,7 @@ public class AudioCapture {
 
         try {
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-            TargetDataLine line = (TargetDataLine) AudioSystem.getLine(info);
+            TargetDataLine line = resolveInputLine(info);
             line.open(format);
             line.start();
 
@@ -125,5 +133,34 @@ public class AudioCapture {
         } catch (Exception exception) {
             throw new IllegalStateException("Unable to encode recorded audio as WAV", exception);
         }
+    }
+
+    private TargetDataLine resolveInputLine(DataLine.Info info) throws javax.sound.sampled.LineUnavailableException {
+        TargetDataLine preferredLine = resolvePreferredLine(info);
+        if (preferredLine != null) {
+            return preferredLine;
+        }
+        return (TargetDataLine) AudioSystem.getLine(info);
+    }
+
+    private TargetDataLine resolvePreferredLine(DataLine.Info info) throws javax.sound.sampled.LineUnavailableException {
+        if (preferredInputDeviceName == null || preferredInputDeviceName.isBlank()) {
+            return null;
+        }
+
+        String expectedName = preferredInputDeviceName.trim();
+        for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {
+            if (!mixerInfo.getName().equalsIgnoreCase(expectedName)) {
+                continue;
+            }
+
+            Mixer mixer = AudioSystem.getMixer(mixerInfo);
+            if (!mixer.isLineSupported(info)) {
+                continue;
+            }
+
+            return (TargetDataLine) mixer.getLine(info);
+        }
+        return null;
     }
 }

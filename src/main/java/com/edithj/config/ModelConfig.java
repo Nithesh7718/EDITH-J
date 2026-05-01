@@ -25,23 +25,17 @@ public final class ModelConfig {
     }
 
     public static ModelConfig load(EnvConfig envConfig, Properties properties) {
-        Objects.requireNonNull(envConfig, "envConfig");
-        Properties safeProperties = properties == null ? new Properties() : properties;
+        String apiKey = AppConfig.resolve(envConfig, properties, "groq.api-key", "");
+        // Special case: check GROQ_API_KEY if groq.api-key is empty (for convenience)
+        if (apiKey.isBlank()) {
+            apiKey = envConfig.get("GROQ_API_KEY").orElse("");
+        }
 
-        String apiKey = envConfig.get("GROQ_API_KEY").orElse("");
-        String baseUrl = envConfig.get("GROQ_BASE_URL")
-                .orElseGet(() -> safeProperties.getProperty("groq.base-url", DEFAULT_BASE_URL));
-        String model = envConfig.get("GROQ_MODEL")
-                .orElseGet(() -> safeProperties.getProperty("groq.model", DEFAULT_MODEL));
+        String baseUrl = AppConfig.resolve(envConfig, properties, "groq.base-url", DEFAULT_BASE_URL);
+        String model = AppConfig.resolve(envConfig, properties, "groq.model", DEFAULT_MODEL);
 
-        long timeoutSeconds = parseLong(
-                envConfig.get("GROQ_TIMEOUT_SECONDS")
-                        .orElse(safeProperties.getProperty("groq.timeout-seconds", "30")),
-                DEFAULT_TIMEOUT.getSeconds());
-        double temperature = parseDouble(
-                envConfig.get("GROQ_TEMPERATURE")
-                        .orElse(safeProperties.getProperty("groq.temperature", "0.2")),
-                0.2d);
+        long timeoutSeconds = parseLong(AppConfig.resolve(envConfig, properties, "groq.timeout-seconds", "30"), DEFAULT_TIMEOUT.getSeconds());
+        double temperature = parseDouble(AppConfig.resolve(envConfig, properties, "groq.temperature", "0.2"), 0.2d);
 
         return new ModelConfig(apiKey, baseUrl, model, Duration.ofSeconds(timeoutSeconds), temperature);
     }

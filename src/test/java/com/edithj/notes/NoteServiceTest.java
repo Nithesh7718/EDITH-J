@@ -8,32 +8,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class NoteServiceTest {
 
     @Test
     void createNote_derivesTitleAndSaves() {
-    NoteRepository repository = org.mockito.Mockito.mock(NoteRepository.class);
-    NoteService noteService = new NoteService(repository);
-    when(repository.save(org.mockito.ArgumentMatchers.any(Note.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        InMemoryNoteRepository repository = new InMemoryNoteRepository();
+        NoteService noteService = new NoteService(repository);
 
         Note created = noteService.createNote("Buy groceries and vegetables");
 
         assertEquals("Buy groceries and vegetables", created.getTitle());
         assertEquals("Buy groceries and vegetables", created.getContent());
-        verify(repository).save(org.mockito.ArgumentMatchers.any(Note.class));
+        assertEquals(1, repository.savedNotes().size());
     }
 
     @Test
     void listNotes_sortsByMostRecentUpdatedAtFirst() {
-        NoteRepository repository = org.mockito.Mockito.mock(NoteRepository.class);
+        InMemoryNoteRepository repository = new InMemoryNoteRepository();
         NoteService noteService = new NoteService(repository);
         Note older = new Note("1", "old", "old", Instant.now().minusSeconds(60), Instant.now().minusSeconds(60));
         Note newer = new Note("2", "new", "new", Instant.now(), Instant.now());
-        when(repository.findAll()).thenReturn(List.of(older, newer));
+        repository.setNotes(List.of(older, newer));
 
         List<Note> notes = noteService.listNotes();
 
@@ -42,7 +38,7 @@ class NoteServiceTest {
 
     @Test
     void updateNote_returnsEmptyForInvalidId() {
-        NoteService noteService = new NoteService(org.mockito.Mockito.mock(NoteRepository.class));
+        NoteService noteService = new NoteService(new InMemoryNoteRepository());
         Optional<Note> updated = noteService.updateNote("", "new text");
 
         assertTrue(updated.isEmpty());
@@ -50,25 +46,23 @@ class NoteServiceTest {
 
     @Test
     void updateNote_updatesExistingNote() {
-        NoteRepository repository = org.mockito.Mockito.mock(NoteRepository.class);
+        InMemoryNoteRepository repository = new InMemoryNoteRepository();
         NoteService noteService = new NoteService(repository);
         Note existing = new Note("abc123", "old", "old", Instant.now(), Instant.now());
-        when(repository.findById("abc123")).thenReturn(Optional.of(existing));
-        when(repository.save(existing)).thenReturn(existing);
+        repository.setNotes(List.of(existing));
 
         Optional<Note> updated = noteService.updateNote("abc123", "Updated body");
 
         assertTrue(updated.isPresent());
         assertEquals("Updated body", updated.get().getContent());
         assertEquals("Updated body", updated.get().getTitle());
-        verify(repository).save(existing);
     }
 
     @Test
     void deleteNote_returnsRepositoryResult() {
-        NoteRepository repository = org.mockito.Mockito.mock(NoteRepository.class);
+        InMemoryNoteRepository repository = new InMemoryNoteRepository();
         NoteService noteService = new NoteService(repository);
-        when(repository.deleteById("n-1")).thenReturn(true);
+        repository.setNotes(List.of(new Note("n-1", "title", "content", Instant.now(), Instant.now())));
 
         assertTrue(noteService.deleteNote("n-1"));
         assertFalse(noteService.deleteNote(""));

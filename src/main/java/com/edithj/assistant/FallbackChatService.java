@@ -6,6 +6,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,8 @@ import com.edithj.memory.MemoryService;
 public class FallbackChatService {
 
     private static final Logger logger = LoggerFactory.getLogger(FallbackChatService.class);
+        private static final Pattern PROVIDER_OVERRIDE_PATTERN = Pattern.compile(
+            "(?i)^\\s*use\\s+(groq|gemini|openai|sarvam)\\s+for\\s+this\\s+answer[,:]?\\s*(.*)$");
 
     private record ChatTurn(String role, String text) {
 
@@ -64,6 +68,13 @@ public class FallbackChatService {
         remember("assistant", text);
     }
 
+    public synchronized void populateMemory(List<com.edithj.chat.ChatMessage> history) {
+        memoryWindow.clear();
+        for (com.edithj.chat.ChatMessage message : history) {
+            remember(message.role(), message.content());
+        }
+    }
+
     String buildPromptWithMemory(String channel) {
         StringBuilder prompt = new StringBuilder();
         String systemPrompt = resolveSystemPrompt();
@@ -85,19 +96,39 @@ public class FallbackChatService {
 
     public String runFallbackChat(String channel) {
         String prompt = buildPromptWithMemory(channel);
+        String providerOverride = detectProviderOverride();
+        if (!providerOverride.isBlank()) {
+            prompt = "[[provider:" + providerOverride + "]]\n" + prompt;
+        }
         String reply = llmClient.generateReply(prompt);
         if (reply == null || reply.isBlank()) {
-            assistantStatusService.markOffline("Groq unreachable");
+            assistantStatusService.markOffline("AI provider unreachable");
             return DEFAULT_REPLY;
         }
 
         String trimmed = reply.trim();
-        if (indicatesGroqConnectivityFailure(trimmed)) {
-            assistantStatusService.markOffline("Groq unreachable");
+        if (indicatesProviderConnectivityFailure(trimmed)) {
+            assistantStatusService.markOffline("AI provider unreachable");
         } else {
             assistantStatusService.markOnline("AI ready");
         }
         return trimmed;
+    }
+
+    private String detectProviderOverride() {
+        List<ChatTurn> turns = snapshotMemory();
+        for (int index = turns.size() - 1; index >= 0; index--) {
+            ChatTurn turn = turns.get(index);
+            if (!"user".equalsIgnoreCase(turn.role())) {
+                continue;
+            }
+            Matcher matcher = PROVIDER_OVERRIDE_PATTERN.matcher(turn.text());
+            if (matcher.matches()) {
+                return matcher.group(1).toLowerCase(Locale.ROOT);
+            }
+            break;
+        }
+        return "";
     }
 
     private synchronized void remember(String role, String text) {
@@ -155,7 +186,7 @@ public class FallbackChatService {
         }
     }
 
-    private boolean indicatesGroqConnectivityFailure(String reply) {
+    private boolean indicatesProviderConnectivityFailure(String reply) {
         if (reply == null || reply.isBlank()) {
             return true;
         }
@@ -163,8 +194,8 @@ public class FallbackChatService {
         String lower = reply.toLowerCase(Locale.ROOT);
         return lower.contains("httpconnecttimeoutexception")
                 || lower.contains("connect timed out")
-                || lower.contains("unable to reach groq")
-                || lower.contains("groq request failed")
-                || lower.contains("groq request was interrupted");
+                || lower.contains("unable to reach")
+                || lower.contains("request failed with http")
+                || lower.contains("request was interrupted");
     }
 }

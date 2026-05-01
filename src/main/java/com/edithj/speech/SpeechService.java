@@ -28,4 +28,12 @@ public class SpeechService {
     public TypedFallbackService typedFallbackService() {
         return speechRecognizer.typedFallbackService();
     }
+
+    public boolean isAvailable() {
+        return speechRecognizer.isAvailable();
+    }
+
+    public boolean isListening() {
+        return speechRecognizer.isListening();
+    }
 }
