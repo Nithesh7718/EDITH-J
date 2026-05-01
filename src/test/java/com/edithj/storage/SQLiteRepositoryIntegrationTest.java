@@ -83,10 +83,10 @@ class SQLiteRepositoryIntegrationTest {
                 "",
                 "This request spans multiple actions, so I prepared a structured plan first.",
                 new AssistantResponse.TaskPlan("Follow up on launch prep", List.of(
-                        new AssistantResponse.TaskPlanStep("step-1", "Create reminder", "Reminder tool", "pending", "Save a reminder."),
-                        new AssistantResponse.TaskPlanStep("step-2", "Draft email", "Email tool", "pending", "Prepare a draft."))),
+                        new AssistantResponse.TaskPlanStep("step-1", "Create reminder", "Reminder tool", "pending", "Save a reminder.", "remind me to follow up tomorrow"),
+                        new AssistantResponse.TaskPlanStep("step-2", "Draft email", "Email tool", "pending", "Prepare a draft.", "draft an email saying Follow up"))),
                 List.of(new AssistantResponse.AssistantAction("execute-plan", "Start plan", "plan", "start this plan")),
-                List.of(new AssistantResponse.RecoveryOption("Refine plan", "refine this plan")),
+                List.of(new AssistantResponse.RecoveryOption("Show status", "show plan status")),
                 Map.of("planner", "deterministic"));
 
         historyService.appendAssistantResponse(response);
@@ -99,8 +99,9 @@ class SQLiteRepositoryIntegrationTest {
         assertEquals("Follow up on launch prep", stored.planGoal());
         assertNotNull(stored.taskPlan());
         assertEquals(2, stored.taskPlan().steps().size());
+        assertEquals("remind me to follow up tomorrow", stored.taskPlan().steps().get(0).command());
         assertEquals("Start plan", stored.actions().get(0).label());
-        assertEquals("Refine plan", stored.recoveryOptions().get(0).label());
+        assertEquals("Show status", stored.recoveryOptions().get(0).label());
         assertEquals("deterministic", stored.metadata().get("planner"));
         assertFalse(stored.requiresApproval());
     }

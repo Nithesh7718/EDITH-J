@@ -13,11 +13,14 @@ import java.util.Properties;
 
 import com.edithj.commands.CalendarCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
+import com.edithj.commands.ReminderCommandHandler;
 import com.edithj.commands.WhatsAppCommandHandler;
 import com.edithj.config.PreferencesService;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
 import com.edithj.launcher.FakeLauncher;
+import com.edithj.reminders.InMemoryReminderRepository;
+import com.edithj.reminders.ReminderService;
 import com.edithj.speech.SpeechRecognizer;
 import com.edithj.speech.SpeechService;
 import com.edithj.speech.TypedFallbackService;
@@ -26,6 +29,7 @@ class AssistantServiceTest {
 
     @BeforeEach
     @AfterEach
+    @SuppressWarnings("unused")
     void clearPersistedAssistantState() {
         PreferencesService.instance().clearPendingApproval();
         PreferencesService.instance().clearActivePlan();
@@ -257,15 +261,26 @@ class AssistantServiceTest {
         IntentRouter intentRouter = new IntentRouter();
 
         AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+        InMemoryReminderRepository reminderRepository = new InMemoryReminderRepository();
+        FakeLauncher launcherService = new FakeLauncher();
+        service.registerCommandHandler(new ReminderCommandHandler(new ReminderService(reminderRepository)));
+        service.registerCommandHandler(new EmailCommandHandler(launcherService));
+        service.registerCommandHandler(new CalendarCommandHandler(launcherService, java.time.Clock.fixed(java.time.Instant.parse("2026-04-18T10:15:00Z"), java.time.ZoneOffset.UTC)));
 
         AssistantResponse planned = service.handleTypedInput("create a reminder, draft an email, and open the calendar for tomorrow");
         AssistantResponse started = service.handleTypedInput("start this plan");
         AssistantResponse continued = service.handleTypedInput("continue this plan");
+        AssistantResponse finished = service.handleTypedInput("continue this plan");
 
         assertNotNull(planned.taskPlan());
-        assertEquals("in_progress", started.taskPlan().steps().get(0).status());
-        assertEquals("done", continued.taskPlan().steps().get(0).status());
-        assertTrue(continued.taskPlan().steps().stream().anyMatch(step -> "in_progress".equals(step.status()) || "done".equals(step.status())));
+        assertEquals("done", started.taskPlan().steps().get(0).status());
+        assertTrue(started.success());
+        assertEquals(1, reminderRepository.findAll().size());
+        assertEquals("done", continued.taskPlan().steps().get(1).status());
+        assertTrue(launcherService.lastOpenedUrl().startsWith("mailto:"));
+        assertEquals("done", finished.taskPlan().steps().get(2).status());
+        assertTrue(launcherService.lastOpenedUrl().endsWith(".ics"));
+        assertTrue(finished.taskPlan().steps().stream().allMatch(step -> "done".equals(step.status())));
     }
 
     @Test
@@ -310,9 +325,9 @@ class AssistantServiceTest {
         AssistantResponse status = service.handleTypedInput("show plan status");
         AssistantResponse approval = service.handleTypedInput("approve last action");
 
-        assertEquals(IntentType.FALLBACK_CHAT, status.intentType());
+        assertEquals(IntentType.GENERAL_CHAT, status.intentType());
         assertFalse(status.answer().contains("current plan status"));
-        assertEquals(IntentType.FALLBACK_CHAT, approval.intentType());
+        assertEquals(IntentType.GENERAL_CHAT, approval.intentType());
         assertNull(PreferencesService.instance().getPendingApproval());
         assertNull(PreferencesService.instance().getActivePlan());
     }

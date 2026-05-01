@@ -238,55 +238,11 @@ public class AssistantService {
         }
 
         if (lower.equals("start this plan") || lower.equals("start plan")) {
-            TaskPlanner.ExecutionResult result = taskPlanner.startPlan(activeTaskPlan);
-            if (result == null) {
-                return null;
-            }
-            activeTaskPlan = result.plan();
-            persistActivePlan();
-            return new AssistantResponse(
-                    IntentType.GENERAL_CHAT,
-                    normalizedInput,
-                    result.answer(),
-                    channel,
-                    "Planner",
-                    true,
-                    false,
-                    "",
-                    "Plan execution has started. I’ll track the active step here.",
-                    result.plan(),
-                    result.actions(),
-                    List.of(),
-                    Map.of("planner", "active", "planExecution", "started"));
+            return executeNextPlanStep(normalizedInput, channel, "started");
         }
 
         if (lower.equals("continue this plan") || lower.equals("continue plan")) {
-            TaskPlanner.ExecutionResult result = taskPlanner.continuePlan(activeTaskPlan);
-            if (result == null) {
-                return null;
-            }
-            activeTaskPlan = result.plan();
-            if (allPlanStepsDone(activeTaskPlan)) {
-                preferencesService.clearActivePlan();
-            } else {
-                persistActivePlan();
-            }
-            return new AssistantResponse(
-                    IntentType.GENERAL_CHAT,
-                    normalizedInput,
-                    result.answer(),
-                    channel,
-                    "Planner",
-                    true,
-                    false,
-                    "",
-                    allPlanStepsDone(activeTaskPlan)
-                            ? "All tracked steps are now complete."
-                            : "The plan has moved to the next tracked step.",
-                    result.plan(),
-                    result.actions(),
-                    List.of(),
-                    Map.of("planner", allPlanStepsDone(activeTaskPlan) ? "complete" : "active", "planExecution", "continued"));
+            return executeNextPlanStep(normalizedInput, channel, "continued");
         }
 
         if (lower.equals("show plan status")) {
@@ -322,7 +278,8 @@ public class AssistantService {
                         step.title(),
                         step.tool(),
                         step.status(),
-                        step.detail()))
+                        step.detail(),
+                        step.command()))
                 .toList();
         AssistantResponse.TaskPlan taskPlan = new AssistantResponse.TaskPlan(plan.goal(), steps);
         activeTaskPlan = taskPlan;
@@ -657,6 +614,125 @@ public class AssistantService {
         return plan != null
                 && !plan.steps().isEmpty()
                 && plan.steps().stream().allMatch(step -> "done".equalsIgnoreCase(step.status()));
+    }
+
+    private AssistantResponse executeNextPlanStep(String normalizedInput, String channel, String phase) {
+        if (activeTaskPlan == null || activeTaskPlan.steps().isEmpty()) {
+            return null;
+        }
+
+        int stepIndex = nextExecutablePlanStepIndex(activeTaskPlan);
+        if (stepIndex < 0) {
+            return new AssistantResponse(
+                    IntentType.GENERAL_CHAT,
+                    normalizedInput,
+                    "All tracked steps in this plan are already complete.",
+                    channel,
+                    "Planner",
+                    true,
+                    false,
+                    "",
+                    "There are no remaining plan steps to execute.",
+                    activeTaskPlan,
+                    List.of(new AssistantResponse.AssistantAction("show-plan-status", "Show final plan", "plan", "show plan status")),
+                    List.of(),
+                    Map.of("planner", "complete", "planExecution", phase));
+        }
+
+        AssistantResponse.TaskPlanStep step = activeTaskPlan.steps().get(stepIndex);
+        AssistantResponse toolResponse = enrichResponse(routeWithContextRecovery(step.command().isBlank() ? step.title() : step.command(), channel));
+        boolean stepCompleted = didPlanStepComplete(toolResponse);
+        String nextStatus = stepCompleted ? "done" : "needs_input";
+
+        List<AssistantResponse.TaskPlanStep> updatedSteps = new ArrayList<>();
+        for (int i = 0; i < activeTaskPlan.steps().size(); i++) {
+            AssistantResponse.TaskPlanStep current = activeTaskPlan.steps().get(i);
+            if (i == stepIndex) {
+                updatedSteps.add(new AssistantResponse.TaskPlanStep(
+                        current.id(),
+                        current.title(),
+                        current.tool(),
+                        nextStatus,
+                        current.detail(),
+                        current.command()));
+            } else {
+                updatedSteps.add(current);
+            }
+        }
+
+        activeTaskPlan = new AssistantResponse.TaskPlan(activeTaskPlan.goal(), updatedSteps);
+        if (allPlanStepsDone(activeTaskPlan)) {
+            preferencesService.clearActivePlan();
+        } else {
+            persistActivePlan();
+        }
+
+        String answer = stepCompleted
+                ? "Completed step: " + step.title() + ". " + toolResponse.answer()
+                : "Attempted step: " + step.title() + ". " + toolResponse.answer();
+        String explanation = stepCompleted
+                ? (allPlanStepsDone(activeTaskPlan)
+                        ? "All tracked steps are now complete."
+                        : "The step ran successfully. Continue the plan when you're ready.")
+                : "This step needs more detail before the plan can move forward.";
+
+        return new AssistantResponse(
+                IntentType.GENERAL_CHAT,
+                normalizedInput,
+                answer,
+                channel,
+                "Planner",
+                toolResponse.success(),
+                toolResponse.requiresApproval(),
+                toolResponse.approvalType(),
+                explanation,
+                activeTaskPlan,
+                mergePlanActions(toolResponse, allPlanStepsDone(activeTaskPlan), stepCompleted),
+                toolResponse.recoveryOptions(),
+                Map.of(
+                        "planner", allPlanStepsDone(activeTaskPlan) ? "complete" : "active",
+                        "planExecution", phase,
+                        "executedStep", step.id(),
+                        "stepStatus", nextStatus));
+    }
+
+    private int nextExecutablePlanStepIndex(AssistantResponse.TaskPlan plan) {
+        for (int i = 0; i < plan.steps().size(); i++) {
+            String status = plan.steps().get(i).status();
+            if (!"done".equalsIgnoreCase(status)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean didPlanStepComplete(AssistantResponse response) {
+        if (response == null || !response.success() || response.requiresApproval()) {
+            return false;
+        }
+        String lower = response.answer().toLowerCase(Locale.ROOT);
+        return !(lower.contains("i need")
+                || lower.contains("what would you like")
+                || lower.contains("didn’t catch")
+                || lower.contains("didn't catch")
+                || lower.contains("please provide")
+                || lower.contains("try:")
+                || lower.contains("i can draft")
+                || lower.contains("i couldn't parse"));
+    }
+
+    private List<AssistantResponse.AssistantAction> mergePlanActions(
+            AssistantResponse toolResponse,
+            boolean allDone,
+            boolean stepCompleted) {
+        List<AssistantResponse.AssistantAction> actions = new ArrayList<>(toolResponse.actions());
+        if (allDone) {
+            actions.add(new AssistantResponse.AssistantAction("show-plan-status", "Show final plan", "plan", "show plan status"));
+        } else if (stepCompleted) {
+            actions.add(new AssistantResponse.AssistantAction("continue-plan", "Continue plan", "plan", "continue this plan"));
+            actions.add(new AssistantResponse.AssistantAction("show-plan-status", "Show plan status", "plan", "show plan status"));
+        }
+        return List.copyOf(actions);
     }
 
     private record PendingApproval(IntentRouter.RoutedIntent routedIntent, String channel, String approvalType) {

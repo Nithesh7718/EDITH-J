@@ -3,9 +3,16 @@ package com.edithj.assistant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TaskPlanner {
+
+    private static final Pattern TOMORROW_TIME_PATTERN = Pattern.compile("(?i)\\btomorrow(?:\\s+at\\s+\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)?");
+    private static final Pattern TODAY_TIME_PATTERN = Pattern.compile("(?i)\\btoday(?:\\s+at\\s+\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)?");
+    private static final Pattern RELATIVE_TIME_PATTERN = Pattern.compile("(?i)\\bin\\s+\\d+\\s+(minutes?|hours?|days?)\\b");
+    private static final Pattern CLOCK_TIME_PATTERN = Pattern.compile("(?i)\\bat\\s+\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?\\b");
 
     public PlanResult plan(String rawInput, String channel) {
         String input = rawInput == null ? "" : rawInput.trim();
@@ -18,23 +25,23 @@ public class TaskPlanner {
 
         if (containsReminder(lower)) {
             steps.add(new TaskStep("step-reminder", "Create reminder", "Reminder tool", "pending",
-                    "Extract reminder details and save it."));
+                    "Extract reminder details and save it.", buildReminderCommand(input)));
         }
         if (containsEmail(lower)) {
             steps.add(new TaskStep("step-email", "Draft email", "Email tool", "pending",
-                    "Prepare an email draft from the request."));
+                    "Prepare an email draft from the request.", buildEmailCommand(input)));
         }
         if (containsCalendar(lower)) {
             steps.add(new TaskStep("step-calendar", "Open calendar", "Calendar tool", "pending",
-                    "Prepare or open the calendar flow."));
+                    "Prepare or open the calendar flow.", buildCalendarCommand(input)));
         }
         if (containsNotes(lower)) {
             steps.add(new TaskStep("step-notes", "Save note", "Notes tool", "pending",
-                    "Capture the important details as a note."));
+                    "Capture the important details as a note.", buildNotesCommand(input)));
         }
         if (containsResearch(lower)) {
             steps.add(new TaskStep("step-research", "Research topic", "Web/AI", "pending",
-                    "Collect a concise answer or starting points."));
+                    "Collect a concise answer or starting points.", buildResearchCommand(input)));
         }
 
         if (steps.size() < 2) {
@@ -58,7 +65,7 @@ public class TaskPlanner {
         boolean startedOne = false;
         for (AssistantResponse.TaskPlanStep step : plan.steps()) {
             if (!startedOne && isPending(step.status())) {
-                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "in_progress", step.detail()));
+                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "in_progress", step.detail(), step.command()));
                 startedOne = true;
             } else {
                 updated.add(step);
@@ -87,13 +94,13 @@ public class TaskPlanner {
         for (AssistantResponse.TaskPlanStep step : plan.steps()) {
             String status = step.status();
             if (!advanced && "in_progress".equalsIgnoreCase(status)) {
-                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "done", step.detail()));
+                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "done", step.detail(), step.command()));
                 advanced = true;
                 markNext = true;
                 continue;
             }
             if (markNext && isPending(status)) {
-                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "in_progress", step.detail()));
+                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "in_progress", step.detail(), step.command()));
                 markNext = false;
                 continue;
             }
@@ -122,7 +129,7 @@ public class TaskPlanner {
         }
         return plan.steps().stream()
                 .map(step -> escape(step.id()) + "~" + escape(step.title()) + "~" + escape(step.tool()) + "~"
-                        + escape(step.status()) + "~" + escape(step.detail()))
+                        + escape(step.status()) + "~" + escape(step.detail()) + "~" + escape(step.command()))
                 .collect(Collectors.joining("|"));
     }
 
@@ -141,7 +148,8 @@ public class TaskPlanner {
                     unescape(parts[1]),
                     unescape(parts[2]),
                     unescape(parts[3]),
-                    unescape(parts[4])));
+                    unescape(parts[4]),
+                    parts.length >= 6 ? unescape(parts[5]) : ""));
         }
         if (steps.isEmpty()) {
             return null;
@@ -188,6 +196,105 @@ public class TaskPlanner {
         return input.substring(0, 93) + "...";
     }
 
+    private String buildReminderCommand(String input) {
+        String timeHint = extractTimeHint(input);
+        String reminderText = summarizeAction(input, "follow up on this plan");
+        return "remind me to " + reminderText + " " + timeHint;
+    }
+
+    private String buildEmailCommand(String input) {
+        String body = "Here is the follow-up for this request: " + summarizeAction(input, "follow up on this request");
+        return "draft an email saying " + body;
+    }
+
+    private String buildCalendarCommand(String input) {
+        String dateHint = extractCalendarHint(input);
+        return "add a meeting " + dateHint + " called " + inferCalendarTitle(input);
+    }
+
+    private String buildNotesCommand(String input) {
+        return "note " + summarizeAction(input, "Save this plan");
+    }
+
+    private String buildResearchCommand(String input) {
+        return "look up " + summarizeAction(input, input);
+    }
+
+    private String extractTimeHint(String input) {
+        String matched = firstMatch(input, TOMORROW_TIME_PATTERN, TODAY_TIME_PATTERN, RELATIVE_TIME_PATTERN);
+        if (!matched.isBlank()) {
+            String lower = matched.toLowerCase(Locale.ROOT);
+            if ("tomorrow".equals(lower)) {
+                return "tomorrow at 9 AM";
+            }
+            if ("today".equals(lower)) {
+                return "today at 5 PM";
+            }
+            return matched;
+        }
+        matched = firstMatch(input, CLOCK_TIME_PATTERN);
+        return matched.isBlank() ? "tomorrow at 9 AM" : "tomorrow " + matched;
+    }
+
+    private String extractCalendarHint(String input) {
+        String matched = firstMatch(input, TOMORROW_TIME_PATTERN, TODAY_TIME_PATTERN);
+        if (!matched.isBlank()) {
+            if (matched.toLowerCase(Locale.ROOT).contains(" at ")) {
+                return matched;
+            }
+            return matched + " at 9am";
+        }
+        matched = firstMatch(input, RELATIVE_TIME_PATTERN);
+        if (!matched.isBlank()) {
+            return "tomorrow at 9am";
+        }
+        matched = firstMatch(input, CLOCK_TIME_PATTERN);
+        if (!matched.isBlank()) {
+            return "tomorrow " + matched;
+        }
+        return "tomorrow at 9am";
+    }
+
+    private String inferCalendarTitle(String input) {
+        String normalized = summarizeAction(input, "Plan follow-up");
+        normalized = normalized.replaceAll("(?i)\\b(create|draft|open)\\b", "").replaceAll("\\s+", " ").trim();
+        if (normalized.isBlank()) {
+            return "Plan follow-up";
+        }
+        if (normalized.length() > 40) {
+            return normalized.substring(0, 40).trim();
+        }
+        return normalized;
+    }
+
+    private String summarizeAction(String input, String fallback) {
+        String normalized = input == null ? "" : input.trim();
+        normalized = normalized.replaceAll("(?i)\\b(create|draft|open)\\b", "");
+        normalized = normalized.replaceAll("(?i)\\b(reminder|email|calendar|meeting|event|note|notes|research|look up|find out)\\b", "");
+        normalized = normalized.replaceAll("(?i)\\bfor tomorrow\\b", "");
+        normalized = normalized.replaceAll("(?i)\\b(a|an|the|and|for)\\b", "");
+        normalized = normalized.replaceAll("[,]+", " ");
+        normalized = normalized.replaceAll("\\s+", " ").trim();
+        if (normalized.isBlank() || normalized.length() < 6) {
+            return fallback;
+        }
+        return normalized;
+    }
+
+    @SafeVarargs
+    private String firstMatch(String input, Pattern... patterns) {
+        if (input == null || input.isBlank()) {
+            return "";
+        }
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(input);
+            if (matcher.find()) {
+                return matcher.group().trim();
+            }
+        }
+        return "";
+    }
+
     public record PlanResult(
             String goal,
             List<TaskStep> steps,
@@ -201,7 +308,8 @@ public class TaskPlanner {
             String title,
             String tool,
             String status,
-            String detail) {
+            String detail,
+            String command) {
     }
 
     public record ExecutionResult(
