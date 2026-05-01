@@ -33,7 +33,10 @@ public class ConversationHistoryService {
                 response.answer(),
                 response.source(),
                 response.intentType().name(),
-                response.success()));
+                response.success(),
+                response.requiresApproval(),
+                response.approvalType(),
+                response.explanation()));
     }
 
     public void clearHistory() {

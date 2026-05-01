@@ -24,6 +24,9 @@ export interface ChatMessage {
   source?: string;
   intentType?: string;
   success?: boolean;
+  requiresApproval?: boolean;
+  approvalType?: string;
+  explanation?: string;
   actions?: AssistantAction[];
   recoveryOptions?: RecoveryOption[];
 }

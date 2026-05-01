@@ -19,6 +19,9 @@ function toAssistantMessage(response: AssistantResponse): ChatMessage {
     source: response.source,
     intentType: response.intentType,
     success: response.success,
+    requiresApproval: response.requiresApproval,
+    approvalType: response.approvalType,
+    explanation: response.explanation,
     actions: response.actions,
     recoveryOptions: response.recoveryOptions,
   };
@@ -244,12 +247,19 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
             <div className="msg-header">
               <span className="msg-role">{m.role === 'user' ? '▸ YOU' : '▸ EDITH'}</span>
               {m.role !== 'user' && m.source && <span className={`source-badge ${m.success === false ? 'error' : ''}`}>{m.source}</span>}
+              {m.role !== 'user' && m.requiresApproval && <span className="pending-badge">PENDING APPROVAL</span>}
               <span className="msg-ts">{fmt(m.timestamp)}</span>
             </div>
             <div className="msg-body">{m.content}</div>
+            {m.role !== 'user' && m.explanation && (
+              <div className={`msg-explanation ${m.requiresApproval ? 'approval' : m.success === false ? 'error' : ''}`}>
+                {m.explanation}
+              </div>
+            )}
             {m.role !== 'user' && m.intentType && (
               <div className="msg-meta">
                 <span>{m.intentType.replaceAll('_', ' ')}</span>
+                {m.approvalType && <span> · {m.approvalType.replaceAll('_', ' ')}</span>}
               </div>
             )}
             {m.role !== 'user' && ((m.actions?.length ?? 0) > 0 || (m.recoveryOptions?.length ?? 0) > 0) && (

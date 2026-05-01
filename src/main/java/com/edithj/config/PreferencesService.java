@@ -12,6 +12,9 @@ public final class PreferencesService {
     private static final String KEY_ALLOW_WEB_FALLBACK = "launcher.allowWebFallback";
     private static final String KEY_WHATSAPP_APP_FIRST = "launcher.whatsappAppFirst";
     private static final String KEY_DEV_SMOKE_LAUNCHERS_ENABLED = "dev.smokeLaunchersEnabled";
+    private static final String KEY_PENDING_APPROVAL_INPUT = "assistant.pendingApproval.input";
+    private static final String KEY_PENDING_APPROVAL_CHANNEL = "assistant.pendingApproval.channel";
+    private static final String KEY_PENDING_APPROVAL_TYPE = "assistant.pendingApproval.type";
 
     private final Preferences preferences = Preferences.userNodeForPackage(PreferencesService.class);
 
@@ -78,5 +81,31 @@ public final class PreferencesService {
     public void setDevSmokeLaunchersEnabled(boolean enabled) {
         this.devSmokeLaunchersEnabled = enabled;
         preferences.putBoolean(KEY_DEV_SMOKE_LAUNCHERS_ENABLED, enabled);
+    }
+
+    public void savePendingApproval(String input, String channel, String approvalType) {
+        preferences.put(KEY_PENDING_APPROVAL_INPUT, input == null ? "" : input);
+        preferences.put(KEY_PENDING_APPROVAL_CHANNEL, channel == null ? "typed" : channel);
+        preferences.put(KEY_PENDING_APPROVAL_TYPE, approvalType == null ? "" : approvalType);
+    }
+
+    public PendingApprovalState getPendingApproval() {
+        String input = preferences.get(KEY_PENDING_APPROVAL_INPUT, "");
+        if (input == null || input.isBlank()) {
+            return null;
+        }
+        return new PendingApprovalState(
+                input,
+                preferences.get(KEY_PENDING_APPROVAL_CHANNEL, "typed"),
+                preferences.get(KEY_PENDING_APPROVAL_TYPE, ""));
+    }
+
+    public void clearPendingApproval() {
+        preferences.remove(KEY_PENDING_APPROVAL_INPUT);
+        preferences.remove(KEY_PENDING_APPROVAL_CHANNEL);
+        preferences.remove(KEY_PENDING_APPROVAL_TYPE);
+    }
+
+    public record PendingApprovalState(String input, String channel, String approvalType) {
     }
 }

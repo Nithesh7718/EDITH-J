@@ -371,6 +371,19 @@ html, body, #root {
   color: var(--danger);
   background: rgba(255, 77, 109, 0.08);
 }
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid rgba(255, 196, 0, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 196, 0, 0.1);
+  color: #ffd666;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 
 .msg-body {
   padding: 0.75rem 1rem;
@@ -386,6 +399,26 @@ html, body, #root {
   color: var(--text);
 }
 .message.edith .msg-body { color: var(--text); }
+.msg-explanation {
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.msg-explanation.approval {
+  border-color: rgba(255, 196, 0, 0.35);
+  background: rgba(255, 196, 0, 0.08);
+  color: #ffd666;
+}
+.msg-explanation.error {
+  border-color: rgba(255, 77, 109, 0.35);
+  background: rgba(255, 77, 109, 0.08);
+  color: #ff9aae;
+}
 .msg-meta {
   margin-top: 0.35rem;
   padding-left: 0.1rem;

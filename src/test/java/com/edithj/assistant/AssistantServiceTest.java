@@ -3,6 +3,7 @@ package com.edithj.assistant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.Properties;
 import com.edithj.commands.CalendarCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
 import com.edithj.commands.WhatsAppCommandHandler;
+import com.edithj.config.PreferencesService;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
 import com.edithj.launcher.FakeLauncher;
@@ -140,6 +142,82 @@ class AssistantServiceTest {
         assertTrue(response.answer().contains("Did you mean"));
         assertFalse(fallbackChatService.wasInvoked());
         assertEquals(1L, AssistantTelemetry.instance().snapshot().clarificationPrompts());
+    }
+
+    @Test
+    void handleTypedInput_requiresApprovalForRiskyDesktopAutomation() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+
+        AssistantResponse response = service.handleTypedInput("file move notes.txt to archive/notes.txt");
+
+        assertEquals(IntentType.DESKTOP_AUTOMATION, response.intentType());
+        assertTrue(response.requiresApproval());
+        assertEquals("file_move", response.approvalType());
+        assertTrue(response.answer().contains("Approval required"));
+        assertFalse(response.actions().isEmpty());
+        assertTrue(PreferencesService.instance().getPendingApproval() != null);
+    }
+
+    @Test
+    void handleTypedInput_approveFollowUpExecutesPendingDesktopAutomation() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+
+        AssistantResponse pending = service.handleTypedInput("file move notes.txt to archive/notes.txt");
+        AssistantResponse approved = service.handleTypedInput("approve last action");
+
+        assertTrue(pending.requiresApproval());
+        assertFalse(approved.requiresApproval());
+        assertEquals(IntentType.DESKTOP_AUTOMATION, approved.intentType());
+        assertTrue(approved.answer().contains("Source file does not exist") || approved.answer().contains("Moved file"));
+        assertNull(PreferencesService.instance().getPendingApproval());
+    }
+
+    @Test
+    void handleTypedInput_failedDesktopAutomationGetsRecoveryOptions() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+
+        service.handleTypedInput("file move notes.txt to archive/notes.txt");
+        AssistantResponse approved = service.handleTypedInput("approve last action");
+
+        assertFalse(approved.success());
+        assertFalse(approved.recoveryOptions().isEmpty());
+        assertFalse(approved.explanation().isBlank());
+    }
+
+    @Test
+    void assistantService_restoresPendingApprovalFromPreferences() {
+        PreferencesService.instance().savePendingApproval("file move notes.txt to archive/notes.txt", "typed", "file_move");
+
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+        AssistantResponse approved = service.handleTypedInput("approve last action");
+
+        assertEquals(IntentType.DESKTOP_AUTOMATION, approved.intentType());
+        assertFalse(approved.requiresApproval());
+        assertNull(PreferencesService.instance().getPendingApproval());
     }
 
     private static final class TestPromptBuilder extends PromptBuilder {
