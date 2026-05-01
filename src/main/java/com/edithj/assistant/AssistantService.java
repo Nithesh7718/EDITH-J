@@ -143,13 +143,13 @@ public class AssistantService {
         logger.info("Processing input from channel: {} | Input: {}", channel, normalized.substring(0, Math.min(100, normalized.length())));
         fallbackChatService.recordUserTurn(normalized);
         if (conversationHistoryService != null) {
-            conversationHistoryService.appendMessage("user", normalized);
+            conversationHistoryService.appendUserMessage(normalized);
         }
-        AssistantResponse response = routeWithContextRecovery(normalized, channel);
+        AssistantResponse response = enrichResponse(routeWithContextRecovery(normalized, channel));
         logger.info("Intent routed to: {} | Response length: {}", response.intentType(), response.answer().length());
         fallbackChatService.recordAssistantTurn(response.answer());
         if (conversationHistoryService != null) {
-            conversationHistoryService.appendMessage("edith", response.answer());
+            conversationHistoryService.appendAssistantResponse(response);
         }
 
         if (response.intentType() != IntentType.FALLBACK_CHAT) {
@@ -157,6 +157,32 @@ public class AssistantService {
         }
 
         return response;
+    }
+
+    private AssistantResponse enrichResponse(AssistantResponse response) {
+        if (response == null) {
+            return new AssistantResponse(IntentType.FALLBACK_CHAT, "", "I could not complete that request.", "typed");
+        }
+        return new AssistantResponse(
+                response.intentType(),
+                response.userInput(),
+                response.answer(),
+                response.channel(),
+                response.source(),
+                response.success(),
+                response.requiresApproval(),
+                response.approvalType(),
+                response.explanation(),
+                response.actions(),
+                response.recoveryOptions(),
+                response.metadata().isEmpty() ? buildMetadata(response) : response.metadata());
+    }
+
+    private java.util.Map<String, String> buildMetadata(AssistantResponse response) {
+        return java.util.Map.of(
+                "intentType", response.intentType().name(),
+                "channel", response.channel(),
+                "source", response.source());
     }
 
     private AssistantResponse routeWithContextRecovery(String normalizedInput, String channel) {

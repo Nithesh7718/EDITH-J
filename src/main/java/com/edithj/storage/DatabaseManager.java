@@ -84,9 +84,23 @@ public class DatabaseManager {
                         timestamp TEXT NOT NULL
                     )
                     """);
+            ensureColumn(statement, "chat_history", "source", "TEXT");
+            ensureColumn(statement, "chat_history", "intent_type", "TEXT");
+            ensureColumn(statement, "chat_history", "success", "INTEGER NOT NULL DEFAULT 1");
             logger.debug("SQLite schema initialized at {}", databasePath);
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to initialize SQLite schema", exception);
+        }
+    }
+
+    private void ensureColumn(Statement statement, String tableName, String columnName, String definition) throws SQLException {
+        try {
+            statement.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition);
+        } catch (SQLException exception) {
+            String message = exception.getMessage();
+            if (message == null || !message.toLowerCase().contains("duplicate column name")) {
+                throw exception;
+            }
         }
     }
 }

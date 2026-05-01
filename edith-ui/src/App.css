@@ -343,6 +343,7 @@ html, body, #root {
 .msg-header {
   display: flex; gap: 0.75rem; align-items: baseline;
   margin-bottom: 0.3rem;
+  flex-wrap: wrap;
 }
 .msg-role {
   font-family: var(--font-mono);
@@ -352,6 +353,24 @@ html, body, #root {
 }
 .message.user .msg-role { color: var(--text-dim); }
 .msg-ts { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim); }
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid var(--cyan-mid);
+  border-radius: 999px;
+  background: rgba(0, 243, 255, 0.08);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.source-badge.error {
+  border-color: rgba(255, 77, 109, 0.6);
+  color: var(--danger);
+  background: rgba(255, 77, 109, 0.08);
+}
 
 .msg-body {
   padding: 0.75rem 1rem;
@@ -367,6 +386,43 @@ html, body, #root {
   color: var(--text);
 }
 .message.edith .msg-body { color: var(--text); }
+.msg-meta {
+  margin-top: 0.35rem;
+  padding-left: 0.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.msg-actions {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.msg-action-btn {
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--cyan-mid);
+  border-radius: 999px;
+  background: rgba(0, 243, 255, 0.08);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.msg-action-btn:hover {
+  background: rgba(0, 243, 255, 0.16);
+}
+.msg-action-btn.secondary {
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+.msg-action-btn.secondary:hover {
+  border-color: var(--cyan-mid);
+  color: var(--text);
+}
 
 /* Thinking dots */
 .thinking {

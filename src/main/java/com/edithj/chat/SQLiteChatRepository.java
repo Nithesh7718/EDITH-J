@@ -20,7 +20,7 @@ public class SQLiteChatRepository implements ChatRepository {
 
     @Override
     public List<ChatMessage> findRecent(int limit) {
-        String sql = "SELECT id, role, content, timestamp FROM chat_history ORDER BY timestamp DESC LIMIT ?";
+        String sql = "SELECT id, role, content, timestamp, source, intent_type, success FROM chat_history ORDER BY timestamp DESC LIMIT ?";
         List<ChatMessage> messages = new ArrayList<>();
 
         try (Connection connection = databaseManager.openConnection();
@@ -32,7 +32,10 @@ public class SQLiteChatRepository implements ChatRepository {
                             resultSet.getString("id"),
                             resultSet.getString("role"),
                             resultSet.getString("content"),
-                            Instant.parse(resultSet.getString("timestamp"))
+                            Instant.parse(resultSet.getString("timestamp")),
+                            resultSet.getString("source"),
+                            resultSet.getString("intent_type"),
+                            resultSet.getInt("success") != 0
                     ));
                 }
             }
@@ -47,13 +50,16 @@ public class SQLiteChatRepository implements ChatRepository {
 
     @Override
     public void save(ChatMessage message) {
-        String sql = "INSERT INTO chat_history (id, role, content, timestamp) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO chat_history (id, role, content, timestamp, source, intent_type, success) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseManager.openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, message.id());
             statement.setString(2, message.role());
             statement.setString(3, message.content());
             statement.setString(4, message.timestamp().toString());
+            statement.setString(5, message.source());
+            statement.setString(6, message.intentType());
+            statement.setInt(7, message.success() ? 1 : 0);
             statement.executeUpdate();
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to save chat message", exception);

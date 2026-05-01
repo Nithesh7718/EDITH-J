@@ -21,7 +21,6 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -81,7 +80,7 @@ public final class EdithApiServer {
                 return;
             }
             AssistantResponse response = assistantService.handleTypedInput(req.message());
-            ctx.json(new ChatMessageDto(java.util.UUID.randomUUID().toString(), "edith", response.answer(), Instant.now().toString()));
+            ctx.json(response);
         });
 
         // ── Notes ─────────────────────────────────────────────────────────────
@@ -275,8 +274,7 @@ public final class EdithApiServer {
                 AssistantResponse res = assistantService.stopVoiceInputAndHandle();
                 ctx.json(Map.of(
                         "transcript", assistantService.getLastVoiceTranscript(),
-                        "answer", res.answer(),
-                        "intent", res.intentType().name()
+                        "response", res
                 ));
             } catch (Exception e) {
                 ctx.status(500).json(Map.of("error", "Voice capture failed: " + e.getMessage()));
@@ -293,7 +291,6 @@ public final class EdithApiServer {
 
     // ── Request / Response DTOs ────────────────────────────────────────────────
     public record ChatRequest(String message) {}
-    public record ChatMessageDto(String id, String role, String content, String timestamp) {}
     public record NoteRequest(String content) {}
     public record ReminderRequest(String text, String dueHint) {}
     public record ClipboardRequest(String text) {}

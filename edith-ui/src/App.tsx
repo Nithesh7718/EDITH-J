@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { ChatMessage, Note, Reminder, Settings, Telemetry } from './api';
+import type { AssistantResponse, ChatMessage, Note, Reminder, Settings, Telemetry } from './api';
 import * as api from './api';
 import './App.css';
 
@@ -8,6 +8,20 @@ type View = 'chat' | 'notes' | 'reminders' | 'desktop' | 'settings';
 /* ───────────────── helpers ─────────────────────── */
 function fmt(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function toAssistantMessage(response: AssistantResponse): ChatMessage {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role: 'edith',
+    content: response.answer,
+    timestamp: new Date().toISOString(),
+    source: response.source,
+    intentType: response.intentType,
+    success: response.success,
+    actions: response.actions,
+    recoveryOptions: response.recoveryOptions,
+  };
 }
 
 const BOOT_SEQ = [
@@ -50,9 +64,13 @@ export default function App() {
             setMessages(history);
           } else {
             setMessages([{
+              id: 'boot-greeting',
               role: 'edith',
               content: 'EDITH Initialization Complete. All systems nominal. How may I assist?',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              source: 'System',
+              intentType: 'GENERAL_CHAT',
+              success: true,
             }]);
           }
         })
@@ -131,13 +149,27 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
     const text = input.trim();
     if (!text || loading) return;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: text, timestamp: new Date().toISOString() }]);
+    setMessages(prev => [...prev, {
+      id: `${Date.now()}-user`,
+      role: 'user',
+      content: text,
+      timestamp: new Date().toISOString(),
+      source: 'User',
+      success: true,
+    }]);
     setLoading(true);
     try {
       const resp = await api.sendChat(text);
-      setMessages(prev => [...prev, resp]);
+      setMessages(prev => [...prev, toAssistantMessage(resp)]);
     } catch (e: unknown) {
-      setMessages(prev => [...prev, { role: 'edith', content: `Error: ${(e as Error).message}`, timestamp: new Date().toISOString() }]);
+      setMessages(prev => [...prev, {
+        id: `${Date.now()}-error`,
+        role: 'edith',
+        content: `Error: ${(e as Error).message}`,
+        timestamp: new Date().toISOString(),
+        source: 'System',
+        success: false,
+      }]);
     } finally {
       setLoading(false);
     }
@@ -151,21 +183,23 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
         const res = await api.stopVoice();
         if (res.transcript) {
           setMessages(prev => [...prev, {
+            id: `${Date.now()}-voice-user`,
             role: 'user',
             content: res.transcript,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: 'User',
+            success: true,
           }]);
-          setMessages(prev => [...prev, {
-            role: 'edith',
-            content: res.answer,
-            timestamp: new Date().toISOString()
-          }]);
+          setMessages(prev => [...prev, toAssistantMessage(res.response)]);
         }
       } catch (e: unknown) {
         setMessages(prev => [...prev, {
+          id: `${Date.now()}-voice-error`,
           role: 'edith',
           content: `Voice Error: ${(e as Error).message}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'System',
+          success: false,
         }]);
       } finally {
         setLoading(false);
@@ -176,9 +210,12 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
         setListening(true);
       } catch (e: unknown) {
         setMessages(prev => [...prev, {
+          id: `${Date.now()}-voice-start-error`,
           role: 'edith',
           content: `Voice Error: ${(e as Error).message}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'System',
+          success: false,
         }]);
       }
     }
@@ -203,12 +240,42 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
 
       <div className="message-list">
         {messages.map((m, i) => (
-          <div key={i} className={`message ${m.role}`}>
+          <div key={m.id ?? i} className={`message ${m.role}`}>
             <div className="msg-header">
               <span className="msg-role">{m.role === 'user' ? '▸ YOU' : '▸ EDITH'}</span>
+              {m.role !== 'user' && m.source && <span className={`source-badge ${m.success === false ? 'error' : ''}`}>{m.source}</span>}
               <span className="msg-ts">{fmt(m.timestamp)}</span>
             </div>
             <div className="msg-body">{m.content}</div>
+            {m.role !== 'user' && m.intentType && (
+              <div className="msg-meta">
+                <span>{m.intentType.replaceAll('_', ' ')}</span>
+              </div>
+            )}
+            {m.role !== 'user' && ((m.actions?.length ?? 0) > 0 || (m.recoveryOptions?.length ?? 0) > 0) && (
+              <div className="msg-actions">
+                {m.actions?.map(action => (
+                  <button
+                    key={action.id || `${m.id}-${action.label}`}
+                    className="msg-action-btn"
+                    onClick={() => setInput(action.value)}
+                    title={action.kind || action.label}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+                {m.recoveryOptions?.map(option => (
+                  <button
+                    key={`${m.id}-${option.label}`}
+                    className="msg-action-btn secondary"
+                    onClick={() => setInput(option.prompt)}
+                    title={option.prompt}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         {loading && (
