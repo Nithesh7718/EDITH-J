@@ -1,10 +1,10 @@
 package com.edithj.assistant;
 
-import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.edithj.chat.ConversationHistoryService;
 import com.edithj.commands.CalendarCommandHandler;
 import com.edithj.commands.CommandHandler;
 import com.edithj.commands.DesktopAutomationCommandHandler;
@@ -28,7 +29,6 @@ import com.edithj.config.PreferencesService;
 import com.edithj.integration.llm.LlmClient;
 import com.edithj.integration.llm.PromptBuilder;
 import com.edithj.integration.llm.ProviderBackedLlmClient;
-import com.edithj.chat.ConversationHistoryService;
 import com.edithj.speech.SpeechService;
 
 /**
@@ -258,8 +258,8 @@ public class AssistantService {
                     "This is the latest tracked state of your active plan.",
                     activeTaskPlan,
                     allPlanStepsDone(activeTaskPlan)
-                            ? List.of()
-                            : List.of(new AssistantResponse.AssistantAction("continue-plan", "Continue plan", "plan", "continue this plan")),
+                    ? List.of()
+                    : List.of(new AssistantResponse.AssistantAction("continue-plan", "Continue plan", "plan", "continue this plan")),
                     List.of(),
                     Map.of("planner", allPlanStepsDone(activeTaskPlan) ? "complete" : "active"));
         }
@@ -274,12 +274,12 @@ public class AssistantService {
         }
         List<AssistantResponse.TaskPlanStep> steps = plan.steps().stream()
                 .map(step -> new AssistantResponse.TaskPlanStep(
-                        step.id(),
-                        step.title(),
-                        step.tool(),
-                        step.status(),
-                        step.detail(),
-                        step.command()))
+                step.id(),
+                step.title(),
+                step.tool(),
+                step.status(),
+                step.detail(),
+                step.command()))
                 .toList();
         AssistantResponse.TaskPlan taskPlan = new AssistantResponse.TaskPlan(plan.goal(), steps);
         activeTaskPlan = taskPlan;
@@ -672,8 +672,8 @@ public class AssistantService {
                 : "Attempted step: " + step.title() + ". " + toolResponse.answer();
         String explanation = stepCompleted
                 ? (allPlanStepsDone(activeTaskPlan)
-                        ? "All tracked steps are now complete."
-                        : "The step ran successfully. Continue the plan when you're ready.")
+                ? "All tracked steps are now complete."
+                : "The step ran successfully. Continue the plan when you're ready.")
                 : "This step needs more detail before the plan can move forward.";
 
         return new AssistantResponse(
@@ -736,5 +736,6 @@ public class AssistantService {
     }
 
     private record PendingApproval(IntentRouter.RoutedIntent routedIntent, String channel, String approvalType) {
+
     }
 }

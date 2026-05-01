@@ -1,15 +1,15 @@
 package com.edithj.assistant;
 
+import java.util.Properties;
+
+import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.Properties;
 
 import com.edithj.commands.CalendarCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
@@ -270,6 +270,7 @@ class AssistantServiceTest {
         AssistantResponse planned = service.handleTypedInput("create a reminder, draft an email, and open the calendar for tomorrow");
         AssistantResponse started = service.handleTypedInput("start this plan");
         AssistantResponse continued = service.handleTypedInput("continue this plan");
+        String afterContinueUrl = launcherService.lastOpenedUrl();
         AssistantResponse finished = service.handleTypedInput("continue this plan");
 
         assertNotNull(planned.taskPlan());
@@ -277,7 +278,7 @@ class AssistantServiceTest {
         assertTrue(started.success());
         assertEquals(1, reminderRepository.findAll().size());
         assertEquals("done", continued.taskPlan().steps().get(1).status());
-        assertTrue(launcherService.lastOpenedUrl().startsWith("mailto:"));
+        assertTrue(afterContinueUrl.startsWith("mailto:"));
         assertEquals("done", finished.taskPlan().steps().get(2).status());
         assertTrue(launcherService.lastOpenedUrl().endsWith(".ics"));
         assertTrue(finished.taskPlan().steps().stream().allMatch(step -> "done".equals(step.status())));
