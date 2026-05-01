@@ -1,15 +1,20 @@
 package com.edithj.ai;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Properties;
 
 import com.edithj.config.AppConfig;
+import com.edithj.config.AppPaths;
 import com.edithj.config.EnvConfig;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class AiConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(AiConfig.class);
 
     public enum Provider {
         GROQ,
@@ -84,13 +89,29 @@ public final class AiConfig {
 
     public Path workspaceDir() {
         String configured = property("edith.ai.workspaceDir", "");
+        Path fallback = AppPaths.defaultWorkspaceDirectory();
+        Path resolved = fallback;
         if (!configured.isBlank()) {
-            return Paths.get(configured).toAbsolutePath().normalize();
+            try {
+                resolved = AppPaths.resolveAgainstWorkspaceDefault(configured);
+            } catch (RuntimeException exception) {
+                logger.warn("Invalid workspace path '{}'; using {}", configured, fallback, exception);
+                resolved = fallback;
+            }
         }
 
-        return Paths.get(System.getProperty("user.home", "."), "EDITH-workspace")
-                .toAbsolutePath()
-                .normalize();
+        try {
+            java.nio.file.Files.createDirectories(resolved);
+            return resolved.toAbsolutePath().normalize();
+        } catch (Exception exception) {
+            logger.warn("Unable to prepare workspace at {}; using {}", resolved, fallback, exception);
+            try {
+                java.nio.file.Files.createDirectories(fallback);
+            } catch (Exception ignored) {
+                // Return the fallback path even if creation fails; callers can still show a useful error.
+            }
+            return fallback.toAbsolutePath().normalize();
+        }
     }
 
     public String launchOverride(String appAlias) {

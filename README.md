@@ -1,133 +1,182 @@
 # EDITH-J
 
-EDITH-J is an intelligent desktop assistant with a React frontend and a Java 25 (Javalin) backend. It routes typed and voice input through a unified intent pipeline supporting notes, reminders, desktop automation, and multi-provider AI chat.
+EDITH-J is a Java 25 + Javalin desktop assistant with a React + Vite frontend, SQLite persistence, provider-backed AI chat, desktop automation, and optional offline speech recognition through Vosk.
 
 ## Architecture
 
-- **Frontend**: React + Vite (located in `edith-ui/`). Built and served by the Java backend.
-- **Backend**: Java 25 + Javalin. Handles logic, persistence (SQLite), and AI orchestration.
-- **Communication**: REST API.
+- `edith-ui/` contains the React frontend source.
+- `src/main/java/` contains the backend, API, assistant logic, storage, speech, and launcher code.
+- `models/vosk-model-small-en-us-0.15/` contains the bundled default offline speech model used by packaged Windows builds.
+- `src/main/packaging/edith-j.ico` is the Windows installer icon.
 
-## What it does
+## Runtime Model
 
-- **Unified Intent Routing**: Notes, reminders, launcher actions, weather, and fallback chat.
-- **Desktop Automation**: Open apps, play music, web search, and file management (create/rename/move).
-- **AI Integration**: Support for Groq, Gemini, OpenAI, and Sarvam.
-- **Persistence**: SQLite-backed storage for chat history, notes, and reminders.
-- **Voice Support**: Integrated STT/TTS pipeline through `AssistantService`.
+EDITH-J no longer depends on the repository root after packaging.
 
-## Project Layout
+- User config: `%APPDATA%\EDITH-J\edith.properties`
+- User config template: `%APPDATA%\EDITH-J\edith.properties.example`
+- User data: `%LOCALAPPDATA%\EDITH-J\data`
+- User logs: `%LOCALAPPDATA%\EDITH-J\logs`
+- User temp: `%LOCALAPPDATA%\EDITH-J\temp`
+- Default workspace: `%USERPROFILE%\Documents\EDITH-workspace`
 
-- `edith-ui/` - React frontend source code.
-- `src/main/java/com/edithj/api` - Javalin REST API server.
-- `src/main/java/com/edithj/app` - Application entry point (`Launcher.java`).
-- `src/main/java/com/edithj/assistant` - Intent classification and orchestration logic.
-- `src/main/java/com/edithj/commands` - Command handlers for specific tools.
-- `src/main/java/com/edithj/ai` - LLM provider integrations.
-- `src/main/java/com/edithj/storage` - SQLite persistence layer.
-- `src/main/resources/public` - Static assets for the React UI.
+If no user config exists, the app still starts with safe defaults and writes a local `edith.properties.example` template for reference.
 
 ## Requirements
 
-- Java 25 LTS
-- Node.js & npm (for building the frontend)
+- Java 25
 - Maven 3.9+
+- Node.js 20+ and npm
+- Windows packaging only:
+  - `jpackage` available from the JDK
+  - WiX Toolset v3.14 installed for `exe` or `msi` installers
 
-## How to Build & Run
+## Build The App
 
-### 1. Build the UI
-
-```bash
-cd edith-ui
-npm install
-npm run build
-cd ..
-```
-
-### 2. Build and Package
+### Build the frontend and shaded JAR
 
 ```bash
 mvn clean package
 ```
 
-This builds the Java backend and bundles the React assets into the JAR.
+This does all of the following:
 
-### 3. Run
+- runs `npm ci` in `edith-ui/`
+- runs the Vite production build
+- copies the frontend build into the backend classpath at packaging time
+- creates the shaded runtime JAR at `target/edith-j-0.1.0-SNAPSHOT-all.jar`
+
+### Run from the shaded JAR
 
 ```bash
 java -jar target/edith-j-0.1.0-SNAPSHOT-all.jar
 ```
 
-Or use the development runner:
+Or on Windows:
 
-```bash
-mvn exec:java
+```bat
+edith-j.bat
 ```
 
-Upon launch, the application will start the backend server and automatically open the UI in your default system browser at `http://localhost:8080`.
+## Build A Windows Installer
 
-## API Overview
+### Maven path
 
-### Chat
+```bash
+mvn clean package -P windows-installer
+```
 
-- `GET  /api/chat/history` - Retrieve recent chat messages.
-- `POST /api/chat`         - Send a message to the assistant.
+That profile stages:
 
-### Notes & Reminders
+- the shaded JAR
+- the bundled Vosk model directory
+- `edith.properties.example`
 
-- `GET  /api/notes` / `POST /api/notes`
-- `GET  /api/reminders` / `POST /api/reminders`
+Then it runs `jpackage` and writes the installer into:
 
-### Automation
+```text
+target/installer/
+```
 
-- `POST /api/automation/open-app`   - `{ "app": "Notepad" }`
-- `POST /api/automation/web-search` - `{ "query": "Weather today" }`
-- `POST /api/automation/file`       - `{ "action": "open", "path": "notes.txt" }`
+Default output type is `exe`.
+
+To produce `msi` instead:
+
+```bash
+mvn clean package -P windows-installer -Djpackage.type=msi
+```
+
+### Batch helper
+
+Portable app-image:
+
+```bat
+build-installer.bat
+```
+
+Windows `.exe` installer:
+
+```bat
+build-installer.bat exe
+```
+
+Windows `.msi` installer:
+
+```bat
+build-installer.bat msi
+```
+
+## Installer Contents
+
+A packaged Windows build is expected to include:
+
+- the shaded application JAR
+- the bundled React frontend assets
+- the bundled Vosk model under `models/`
+- a config template under `conf/edith.properties.example`
+- the application icon and Windows metadata
 
 ## Configuration
 
-EDITH-J uses a unified configuration system with the following precedence (highest first):
+Configuration precedence is:
 
-1. **Environment Variables**: Keys are normalized (e.g., `edith.ai.provider` becomes `EDITH_AI_PROVIDER`).
-2. **Local Properties**: Values defined in `edith.properties` in the project root.
-3. **Hardcoded Defaults**: Built-in fallback values.
+1. Environment variables
+2. User config at `%APPDATA%\EDITH-J\edith.properties`
+3. Bundled config at `conf/edith.properties` if present in an installed app
+4. `edith.properties` in the current working directory for development
+5. Built-in defaults
 
-### `edith.properties` Template
+Use [`edith.properties.example`](./edith.properties.example) as the reference template.
 
-Create an `edith.properties` file in the root directory (this file is ignored by git):
+Important active keys:
 
 ```properties
-# AI Configuration
+app.name=EDITH-J
+app.host=127.0.0.1
+app.port=8080
+app.auto-open-browser=true
+
 edith.ai.provider=groq
-edith.ai.workspaceDir=C:/path/to/workspace
+edith.ai.workspaceDir=C:/Users/your-user/Documents/EDITH-workspace
 
-# Provider API Keys (Or set as ENV vars: GROQ_API_KEY, etc.)
-edith.ai.groq.apiKey=gsk_...
-edith.ai.gemini.apiKey=
-edith.ai.openai.apiKey=
-edith.ai.sarvam.apiKey=
+storage.backend=sqlite
+storage.db-path=edith.db
 
-# Automation
-edith.automation.musicUrl=https://music.youtube.com
-
-# Desktop Automation Toggles
-edith.desktop.fileOpenEnabled=true
-edith.desktop.clipboardWriteEnabled=true
-
-# Launcher Overrides (Alias to Path)
-edith.launch.notepad=C:/Windows/System32/notepad.exe
-
-# Voice Support
 speech.vosk.model-path=models/vosk-model-small-en-us-0.15
+speech.audio.input-device-name=
 ```
 
-## Release
+Notes:
 
-To produce a self-contained Windows `.exe` installer:
+- `storage.db-path` may be relative; relative paths resolve under `%LOCALAPPDATA%\EDITH-J\data`.
+- `speech.vosk.model-path` may be omitted for packaged builds because the installer bundles the default model.
+- API keys remain optional. When missing, EDITH-J starts normally and returns clear provider-specific guidance instead of crashing.
 
-```bash
-mvn package -P windows-installer
+## Release Artifact Naming
 
-```
+Use this naming convention for Windows release uploads:
 
-The installer will be generated in `target/installer/`.
+- `EDITH-J-0.1.0-windows-x64.exe`
+- `EDITH-J-0.1.0-windows-x64.msi`
+- `EDITH-J-0.1.0-windows-x64-app-image.zip`
+
+## Release Readiness
+
+- Windows release checklist: [`docs/windows-release-checklist.md`](./docs/windows-release-checklist.md)
+- Installer verification checklist: [`docs/installer-verification-checklist.md`](./docs/installer-verification-checklist.md)
+
+## API Overview
+
+- `GET /api/health`
+- `GET /api/chat/history`
+- `POST /api/chat`
+- `GET /api/notes`
+- `POST /api/notes`
+- `GET /api/reminders`
+- `POST /api/reminders`
+- `POST /api/automation/open-app`
+- `POST /api/automation/web-search`
+- `POST /api/automation/file`
+- `GET /api/voice/status`
+- `POST /api/voice/start`
+- `POST /api/voice/stop`

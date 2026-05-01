@@ -1,9 +1,10 @@
 package com.edithj.speech;
 
 import java.nio.file.Path;
-import java.util.Objects;
+import java.nio.file.Files;
 
 import com.edithj.config.AppConfig;
+import com.edithj.config.AppPaths;
 
 public final class VoskSpeechConfig {
 
@@ -20,7 +21,20 @@ public final class VoskSpeechConfig {
                 System.getProperty(SYSTEM_PROPERTY_MODEL_PATH),
                 System.getenv(ENV_MODEL_PATH),
                 AppConfig.load().get(APP_PROPERTY_MODEL_PATH, DEFAULT_MODEL_PATH));
-        return Path.of(Objects.requireNonNull(configured, "configured")).toAbsolutePath().normalize();
+
+        Path bundledModel = AppPaths.bundledModelDirectory();
+        if (configured == null || configured.isBlank() || DEFAULT_MODEL_PATH.equals(configured.trim())) {
+            if (Files.isDirectory(bundledModel)) {
+                return bundledModel;
+            }
+        }
+
+        Path installResolved = AppPaths.resolveAgainstInstallDirectory(configured);
+        if (Files.isDirectory(installResolved)) {
+            return installResolved;
+        }
+
+        return Path.of(configured).toAbsolutePath().normalize();
     }
 
     private static String firstNonBlank(String... values) {

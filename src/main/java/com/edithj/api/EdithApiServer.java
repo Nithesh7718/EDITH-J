@@ -33,6 +33,8 @@ import io.javalin.http.staticfiles.Location;
  */
 public final class EdithApiServer {
 
+    private static final String FRONTEND_ENTRY = "/public/index.html";
+
     private final NoteService noteService;
     private final ReminderService reminderService;
     private final AssistantService assistantService;
@@ -60,17 +62,22 @@ public final class EdithApiServer {
     }
 
     public Javalin createApp() {
+        boolean frontendAvailable = hasBundledFrontend();
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add("/public", Location.CLASSPATH);
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
             config.jsonMapper(new io.javalin.json.JavalinJackson(mapper, false));
         });
 
-        registerRoutes(app);
+        registerRoutes(app, frontendAvailable);
         return app;
     }
 
-    private void registerRoutes(Javalin app) {
+    public static boolean hasBundledFrontend() {
+        return EdithApiServer.class.getResource(FRONTEND_ENTRY) != null;
+    }
+
+    private void registerRoutes(Javalin app, boolean frontendAvailable) {
         // ── Health ────────────────────────────────────────────────────────────
         app.get("/api/health", ctx -> ctx.json(Map.of("status", "ok", "service", "EDITH-J")));
 
@@ -313,10 +320,27 @@ public final class EdithApiServer {
             }
         });
 
+        if (!frontendAvailable) {
+            app.get("/", ctx -> {
+                ctx.status(503).html("""
+                        <html><head><title>EDITH-J Startup Error</title></head>
+                        <body style="font-family:Segoe UI,Arial,sans-serif;padding:2rem;">
+                        <h1>EDITH-J UI assets are missing</h1>
+                        <p>The backend started, but the packaged frontend files were not found.</p>
+                        <p>Rebuild with <code>mvn clean package</code> before creating the installer.</p>
+                        </body></html>
+                        """);
+            });
+        }
+
         // SPA fallback — serve index.html for all unmatched routes
         app.error(404, ctx -> {
             if (!ctx.path().startsWith("/api")) {
-                ctx.redirect("/");
+                if (frontendAvailable) {
+                    ctx.redirect("/");
+                } else {
+                    ctx.status(503).result("EDITH-J frontend assets are missing from this build.");
+                }
             }
         });
     }
