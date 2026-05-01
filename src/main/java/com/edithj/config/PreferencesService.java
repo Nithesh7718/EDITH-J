@@ -15,6 +15,8 @@ public final class PreferencesService {
     private static final String KEY_PENDING_APPROVAL_INPUT = "assistant.pendingApproval.input";
     private static final String KEY_PENDING_APPROVAL_CHANNEL = "assistant.pendingApproval.channel";
     private static final String KEY_PENDING_APPROVAL_TYPE = "assistant.pendingApproval.type";
+    private static final String KEY_ACTIVE_PLAN_GOAL = "assistant.activePlan.goal";
+    private static final String KEY_ACTIVE_PLAN_DATA = "assistant.activePlan.data";
 
     private final Preferences preferences = Preferences.userNodeForPackage(PreferencesService.class);
 
@@ -106,6 +108,27 @@ public final class PreferencesService {
         preferences.remove(KEY_PENDING_APPROVAL_TYPE);
     }
 
+    public void saveActivePlan(String goal, String encodedPlan) {
+        preferences.put(KEY_ACTIVE_PLAN_GOAL, goal == null ? "" : goal);
+        preferences.put(KEY_ACTIVE_PLAN_DATA, encodedPlan == null ? "" : encodedPlan);
+    }
+
+    public ActivePlanState getActivePlan() {
+        String encodedPlan = preferences.get(KEY_ACTIVE_PLAN_DATA, "");
+        if (encodedPlan == null || encodedPlan.isBlank()) {
+            return null;
+        }
+        return new ActivePlanState(preferences.get(KEY_ACTIVE_PLAN_GOAL, ""), encodedPlan);
+    }
+
+    public void clearActivePlan() {
+        preferences.remove(KEY_ACTIVE_PLAN_GOAL);
+        preferences.remove(KEY_ACTIVE_PLAN_DATA);
+    }
+
     public record PendingApprovalState(String input, String channel, String approvalType) {
+    }
+
+    public record ActivePlanState(String goal, String encodedPlan) {
     }
 }

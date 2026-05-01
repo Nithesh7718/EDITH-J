@@ -3,6 +3,7 @@ package com.edithj.assistant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class TaskPlanner {
 
@@ -44,9 +45,120 @@ public class TaskPlanner {
         String answer = "I broke this into a task plan so we can execute it step by step.";
         List<AssistantResponse.AssistantAction> actions = List.of(
                 new AssistantResponse.AssistantAction("execute-plan", "Execute first step", "plan", "start this plan"),
-                new AssistantResponse.AssistantAction("refine-plan", "Refine plan", "plan", "refine this plan"));
+                new AssistantResponse.AssistantAction("show-plan-status", "Show plan status", "plan", "show plan status"));
 
         return new PlanResult(goal, steps, answer, channel, actions);
+    }
+
+    public ExecutionResult startPlan(AssistantResponse.TaskPlan plan) {
+        if (plan == null || plan.steps().isEmpty()) {
+            return null;
+        }
+        List<AssistantResponse.TaskPlanStep> updated = new ArrayList<>();
+        boolean startedOne = false;
+        for (AssistantResponse.TaskPlanStep step : plan.steps()) {
+            if (!startedOne && isPending(step.status())) {
+                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "in_progress", step.detail()));
+                startedOne = true;
+            } else {
+                updated.add(step);
+            }
+        }
+        if (!startedOne) {
+            return new ExecutionResult(plan, "This plan is already in progress or completed.", List.of());
+        }
+        AssistantResponse.TaskPlan updatedPlan = new AssistantResponse.TaskPlan(plan.goal(), updated);
+        return new ExecutionResult(
+                updatedPlan,
+                "Started the first pending step in the plan.",
+                List.of(
+                        new AssistantResponse.AssistantAction("continue-plan", "Continue plan", "plan", "continue this plan"),
+                        new AssistantResponse.AssistantAction("show-plan-status", "Show plan status", "plan", "show plan status")));
+    }
+
+    public ExecutionResult continuePlan(AssistantResponse.TaskPlan plan) {
+        if (plan == null || plan.steps().isEmpty()) {
+            return null;
+        }
+        List<AssistantResponse.TaskPlanStep> updated = new ArrayList<>();
+        boolean advanced = false;
+        boolean markNext = false;
+
+        for (AssistantResponse.TaskPlanStep step : plan.steps()) {
+            String status = step.status();
+            if (!advanced && "in_progress".equalsIgnoreCase(status)) {
+                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "done", step.detail()));
+                advanced = true;
+                markNext = true;
+                continue;
+            }
+            if (markNext && isPending(status)) {
+                updated.add(new AssistantResponse.TaskPlanStep(step.id(), step.title(), step.tool(), "in_progress", step.detail()));
+                markNext = false;
+                continue;
+            }
+            updated.add(step);
+        }
+
+        if (!advanced) {
+            return new ExecutionResult(plan, "There isn’t an active step to continue yet. Start the plan first.", List.of(
+                    new AssistantResponse.AssistantAction("execute-plan", "Start plan", "plan", "start this plan")));
+        }
+
+        AssistantResponse.TaskPlan updatedPlan = new AssistantResponse.TaskPlan(plan.goal(), updated);
+        boolean allDone = updated.stream().allMatch(step -> "done".equalsIgnoreCase(step.status()));
+        String answer = allDone
+                ? "Completed the final tracked step in this plan."
+                : "Marked the current step done and advanced the next step.";
+        List<AssistantResponse.AssistantAction> actions = allDone
+                ? List.of(new AssistantResponse.AssistantAction("show-plan-status", "Show final plan", "plan", "show plan status"))
+                : List.of(new AssistantResponse.AssistantAction("continue-plan", "Continue plan", "plan", "continue this plan"));
+        return new ExecutionResult(updatedPlan, answer, actions);
+    }
+
+    public String encodePlan(AssistantResponse.TaskPlan plan) {
+        if (plan == null || plan.steps().isEmpty()) {
+            return "";
+        }
+        return plan.steps().stream()
+                .map(step -> escape(step.id()) + "~" + escape(step.title()) + "~" + escape(step.tool()) + "~"
+                        + escape(step.status()) + "~" + escape(step.detail()))
+                .collect(Collectors.joining("|"));
+    }
+
+    public AssistantResponse.TaskPlan decodePlan(String goal, String encoded) {
+        if (encoded == null || encoded.isBlank()) {
+            return null;
+        }
+        List<AssistantResponse.TaskPlanStep> steps = new ArrayList<>();
+        for (String rawStep : encoded.split("\\|")) {
+            String[] parts = rawStep.split("~", -1);
+            if (parts.length < 5) {
+                continue;
+            }
+            steps.add(new AssistantResponse.TaskPlanStep(
+                    unescape(parts[0]),
+                    unescape(parts[1]),
+                    unescape(parts[2]),
+                    unescape(parts[3]),
+                    unescape(parts[4])));
+        }
+        if (steps.isEmpty()) {
+            return null;
+        }
+        return new AssistantResponse.TaskPlan(goal == null ? "" : goal, steps);
+    }
+
+    private boolean isPending(String status) {
+        return status == null || status.isBlank() || "pending".equalsIgnoreCase(status);
+    }
+
+    private String escape(String value) {
+        return value == null ? "" : value.replace("\\", "\\\\").replace("|", "\\p").replace("~", "\\t");
+    }
+
+    private String unescape(String value) {
+        return value == null ? "" : value.replace("\\t", "~").replace("\\p", "|").replace("\\\\", "\\");
     }
 
     private boolean containsReminder(String lower) {
@@ -90,5 +202,11 @@ public class TaskPlanner {
             String tool,
             String status,
             String detail) {
+    }
+
+    public record ExecutionResult(
+            AssistantResponse.TaskPlan plan,
+            String answer,
+            List<AssistantResponse.AssistantAction> actions) {
     }
 }

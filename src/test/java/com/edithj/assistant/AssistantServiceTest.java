@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -21,6 +23,13 @@ import com.edithj.speech.SpeechService;
 import com.edithj.speech.TypedFallbackService;
 
 class AssistantServiceTest {
+
+    @BeforeEach
+    @AfterEach
+    void clearPersistedAssistantState() {
+        PreferencesService.instance().clearPendingApproval();
+        PreferencesService.instance().clearActivePlan();
+    }
 
     @Test
     void handleTypedInput_routesStructuredIntentsWithoutFallbackChat() {
@@ -237,6 +246,75 @@ class AssistantServiceTest {
         assertNotNull(response.taskPlan());
         assertTrue(response.taskPlan().steps().size() >= 2);
         assertFalse(response.actions().isEmpty());
+    }
+
+    @Test
+    void handleTypedInput_canStartAndContinuePlan() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+
+        AssistantResponse planned = service.handleTypedInput("create a reminder, draft an email, and open the calendar for tomorrow");
+        AssistantResponse started = service.handleTypedInput("start this plan");
+        AssistantResponse continued = service.handleTypedInput("continue this plan");
+
+        assertNotNull(planned.taskPlan());
+        assertEquals("in_progress", started.taskPlan().steps().get(0).status());
+        assertEquals("done", continued.taskPlan().steps().get(0).status());
+        assertTrue(continued.taskPlan().steps().stream().anyMatch(step -> "in_progress".equals(step.status()) || "done".equals(step.status())));
+    }
+
+    @Test
+    void assistantService_restoresActivePlanFromPreferences() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService firstService = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+        AssistantResponse planned = firstService.handleTypedInput("create a reminder, draft an email, and open the calendar for tomorrow");
+
+        assertNotNull(planned.taskPlan());
+
+        AssistantService restoredService = new AssistantService(llmClient, promptBuilder, speechService, new IntentRouter(), fallbackChatService, null, 12);
+        AssistantResponse restored = restoredService.handleTypedInput("show plan status");
+
+        assertNotNull(restored.taskPlan());
+        assertEquals(planned.taskPlan().goal(), restored.taskPlan().goal());
+        assertEquals(planned.taskPlan().steps().size(), restored.taskPlan().steps().size());
+    }
+
+    @Test
+    void clearConversationState_resetsPlanAndPendingApprovalState() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+
+        AssistantResponse planned = service.handleTypedInput("create a reminder, draft an email, and open the calendar for tomorrow");
+        AssistantResponse pending = service.handleTypedInput("file move notes.txt to archive/notes.txt");
+
+        assertNotNull(planned.taskPlan());
+        assertTrue(pending.requiresApproval());
+
+        service.clearConversationState();
+
+        AssistantResponse status = service.handleTypedInput("show plan status");
+        AssistantResponse approval = service.handleTypedInput("approve last action");
+
+        assertEquals(IntentType.FALLBACK_CHAT, status.intentType());
+        assertFalse(status.answer().contains("current plan status"));
+        assertEquals(IntentType.FALLBACK_CHAT, approval.intentType());
+        assertNull(PreferencesService.instance().getPendingApproval());
+        assertNull(PreferencesService.instance().getActivePlan());
     }
 
     private static final class TestPromptBuilder extends PromptBuilder {

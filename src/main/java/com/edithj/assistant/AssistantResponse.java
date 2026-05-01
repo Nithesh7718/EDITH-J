@@ -52,13 +52,14 @@ public record AssistantResponse(
         }
     }
 
-    public record TaskPlanStep(String id, String title, String tool, String status, String detail) {
+    public record TaskPlanStep(String id, String title, String tool, String status, String detail, String command) {
         public TaskPlanStep {
             id = id == null ? "" : id;
             title = title == null ? "" : title;
             tool = tool == null ? "" : tool;
             status = status == null ? "" : status;
             detail = detail == null ? "" : detail;
+            command = command == null ? "" : command;
         }
     }
 

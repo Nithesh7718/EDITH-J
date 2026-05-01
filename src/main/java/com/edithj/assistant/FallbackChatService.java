@@ -75,6 +75,10 @@ public class FallbackChatService {
         }
     }
 
+    public synchronized void clearConversationMemory() {
+        memoryWindow.clear();
+    }
+
     String buildPromptWithMemory(String channel) {
         StringBuilder prompt = new StringBuilder();
         String systemPrompt = resolveSystemPrompt();

@@ -91,6 +91,10 @@ public class DatabaseManager {
             ensureColumn(statement, "chat_history", "approval_type", "TEXT");
             ensureColumn(statement, "chat_history", "explanation", "TEXT");
             ensureColumn(statement, "chat_history", "plan_goal", "TEXT");
+            ensureColumn(statement, "chat_history", "task_plan_json", "TEXT");
+            ensureColumn(statement, "chat_history", "actions_json", "TEXT");
+            ensureColumn(statement, "chat_history", "recovery_options_json", "TEXT");
+            ensureColumn(statement, "chat_history", "metadata_json", "TEXT");
             logger.debug("SQLite schema initialized at {}", databasePath);
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to initialize SQLite schema", exception);

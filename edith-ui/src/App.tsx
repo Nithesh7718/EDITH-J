@@ -28,6 +28,18 @@ function toAssistantMessage(response: AssistantResponse): ChatMessage {
   };
 }
 
+function isPlanComplete(message?: ChatMessage | null) {
+  const steps = message?.taskPlan?.steps ?? [];
+  return steps.length > 0 && steps.every(step => step.status.toLowerCase() === 'done');
+}
+
+function planStepClass(status?: string) {
+  const normalized = (status ?? '').toLowerCase();
+  if (normalized === 'done') return 'task-step done';
+  if (normalized === 'in_progress') return 'task-step in-progress';
+  return 'task-step pending';
+}
+
 const BOOT_SEQ = [
   '> EDITH-J v2.0 INITIALIZING...',
   '> Loading AI subsystems...',
@@ -145,14 +157,15 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [status, setStatus] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const activePlanMessage = [...messages].reverse().find(message => message.role !== 'user' && message.taskPlan && !isPlanComplete(message));
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const send = useCallback(async () => {
-    const text = input.trim();
+  const submitMessage = useCallback(async (rawText: string) => {
+    const text = rawText.trim();
     if (!text || loading) return;
-    setInput('');
     setMessages(prev => [...prev, {
       id: `${Date.now()}-user`,
       role: 'user',
@@ -173,11 +186,18 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
         timestamp: new Date().toISOString(),
         source: 'System',
         success: false,
-      }]);
+        }]);
     } finally {
       setLoading(false);
     }
-  }, [input, loading, setMessages]);
+  }, [loading, setMessages]);
+
+  const send = useCallback(async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput('');
+    await submitMessage(text);
+  }, [input, loading, submitMessage]);
 
   const toggleVoice = async () => {
     if (listening) {
@@ -225,6 +245,40 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
     }
   };
 
+  const clearChat = async () => {
+    if (loading || listening) return;
+    const confirmed = window.confirm('Clear the current chat view? The conversation will be archived to memory first.');
+    if (!confirmed) return;
+    setLoading(true);
+    try {
+      const result = await api.clearChatHistory();
+      setMessages([{
+        id: 'chat-cleared',
+        role: 'edith',
+        content: 'Chat cleared. I archived the conversation to memory for future reference.',
+        timestamp: new Date().toISOString(),
+        source: 'Memory',
+        intentType: 'GENERAL_CHAT',
+        success: true,
+      }]);
+      setStatus(result.archivedMessages > 0
+        ? `Archived ${result.archivedMessages} messages to memory.`
+        : 'Chat was already empty.');
+      setTimeout(() => setStatus(''), 4000);
+    } catch (e: unknown) {
+      setMessages(prev => [...prev, {
+        id: `${Date.now()}-clear-error`,
+        role: 'edith',
+        content: `Error: ${(e as Error).message}`,
+        timestamp: new Date().toISOString(),
+        source: 'System',
+        success: false,
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const QUICK = ['What can you do?', 'Set a reminder', 'Show recent files', 'Take a note'];
 
   return (
@@ -232,7 +286,10 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
       <div className="view-header">
         <h1>CHAT</h1>
         <span className="view-sub">AI Assistant</span>
+        <button className="header-btn" onClick={clearChat} disabled={loading || listening}>CLEAR CHAT</button>
       </div>
+
+      {status && <div className="status-bar">{status}</div>}
 
       <div className="quick-actions">
         {QUICK.map(q => (
@@ -241,6 +298,31 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
           </button>
         ))}
       </div>
+
+      {activePlanMessage?.taskPlan && (
+        <div className="active-plan-banner">
+          <div className="active-plan-copy">
+            <span className="active-plan-label">ACTIVE PLAN</span>
+            <div className="active-plan-goal">{activePlanMessage.taskPlan.goal}</div>
+          </div>
+          <div className="active-plan-actions">
+            <button
+              className="msg-action-btn"
+              disabled={loading || listening}
+              onClick={() => submitMessage('show plan status')}
+            >
+              Show status
+            </button>
+            <button
+              className="msg-action-btn"
+              disabled={loading || listening}
+              onClick={() => submitMessage('continue this plan')}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="message-list">
         {messages.map((m, i) => (
@@ -268,7 +350,7 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
                 <div className="task-plan-goal">{m.taskPlan.goal}</div>
                 <div className="task-plan-steps">
                   {m.taskPlan.steps.map(step => (
-                    <div key={step.id} className="task-step">
+                    <div key={step.id} className={planStepClass(step.status)}>
                       <div className="task-step-title">{step.title}</div>
                       <div className="task-step-meta">{step.tool} · {step.status}</div>
                       <div className="task-step-detail">{step.detail}</div>
@@ -283,7 +365,8 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
                   <button
                     key={action.id || `${m.id}-${action.label}`}
                     className="msg-action-btn"
-                    onClick={() => setInput(action.value)}
+                    disabled={loading || listening}
+                    onClick={() => submitMessage(action.value)}
                     title={action.kind || action.label}
                   >
                     {action.label}
@@ -293,7 +376,8 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
                   <button
                     key={`${m.id}-${option.label}`}
                     className="msg-action-btn secondary"
-                    onClick={() => setInput(option.prompt)}
+                    disabled={loading || listening}
+                    onClick={() => submitMessage(option.prompt)}
                     title={option.prompt}
                   >
                     {option.label}

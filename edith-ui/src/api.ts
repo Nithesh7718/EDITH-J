@@ -30,9 +30,11 @@ export interface ChatMessage {
   requiresApproval?: boolean;
   approvalType?: string;
   explanation?: string;
+  planGoal?: string;
   taskPlan?: TaskPlan;
   actions?: AssistantAction[];
   recoveryOptions?: RecoveryOption[];
+  metadata?: Record<string, string>;
 }
 export interface Note { id: string; title: string; content: string; createdAt: string; updatedAt: string; }
 export interface Reminder { id: string; text: string; dueAt: string; completed: boolean; createdAt: string; }
@@ -53,6 +55,7 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 export const sendChat = (message: string) =>
   req<AssistantResponse>('/chat', { method: 'POST', body: JSON.stringify({ message }) });
 export const getChatHistory = () => req<ChatMessage[]>('/chat/history');
+export const clearChatHistory = () => req<{ success: boolean; archivedMessages: number }>('/chat/history', { method: 'DELETE' });
 
 // Notes
 export const getNotes = (q?: string) =>

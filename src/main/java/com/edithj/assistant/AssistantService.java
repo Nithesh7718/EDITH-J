@@ -56,6 +56,7 @@ public class AssistantService {
     private String lastVoiceTranscript = "";
     private IntentType lastStructuredIntent = IntentType.FALLBACK_CHAT;
     private PendingApproval pendingApproval;
+    private AssistantResponse.TaskPlan activeTaskPlan;
 
     public AssistantService() {
         this(new ProviderBackedLlmClient(), new PromptBuilder(), new SpeechService(), new IntentRouter(), null, DEFAULT_MEMORY_WINDOW);
@@ -97,6 +98,7 @@ public class AssistantService {
 
         registerDefaultHandlers();
         restorePendingApproval();
+        restoreActivePlan();
     }
 
     public void configureTypedFallbackProvider(Function<String, String> typedInputProvider) {
@@ -143,6 +145,16 @@ public class AssistantService {
         return speechService.isListening();
     }
 
+    public void clearConversationState() {
+        fallbackChatService.clearConversationMemory();
+        pendingApproval = null;
+        activeTaskPlan = null;
+        lastStructuredIntent = IntentType.FALLBACK_CHAT;
+        lastVoiceTranscript = "";
+        preferencesService.clearPendingApproval();
+        preferencesService.clearActivePlan();
+    }
+
     private AssistantResponse handleIncomingInput(String rawInput, String channel) {
         String normalized = normalize(rawInput);
         if (normalized.isBlank()) {
@@ -153,6 +165,11 @@ public class AssistantService {
         AssistantResponse planned = maybeBuildTaskPlan(normalized, channel);
         if (planned != null) {
             return planned;
+        }
+
+        AssistantResponse planExecution = maybeHandlePlanFollowUp(normalized, channel);
+        if (planExecution != null) {
+            return planExecution;
         }
 
         AssistantResponse approvalFollowUp = maybeHandleApprovalFollowUp(normalized, channel);
@@ -214,6 +231,86 @@ public class AssistantService {
         return null;
     }
 
+    private AssistantResponse maybeHandlePlanFollowUp(String normalizedInput, String channel) {
+        String lower = normalizedInput.toLowerCase();
+        if (activeTaskPlan == null) {
+            return null;
+        }
+
+        if (lower.equals("start this plan") || lower.equals("start plan")) {
+            TaskPlanner.ExecutionResult result = taskPlanner.startPlan(activeTaskPlan);
+            if (result == null) {
+                return null;
+            }
+            activeTaskPlan = result.plan();
+            persistActivePlan();
+            return new AssistantResponse(
+                    IntentType.GENERAL_CHAT,
+                    normalizedInput,
+                    result.answer(),
+                    channel,
+                    "Planner",
+                    true,
+                    false,
+                    "",
+                    "Plan execution has started. I’ll track the active step here.",
+                    result.plan(),
+                    result.actions(),
+                    List.of(),
+                    Map.of("planner", "active", "planExecution", "started"));
+        }
+
+        if (lower.equals("continue this plan") || lower.equals("continue plan")) {
+            TaskPlanner.ExecutionResult result = taskPlanner.continuePlan(activeTaskPlan);
+            if (result == null) {
+                return null;
+            }
+            activeTaskPlan = result.plan();
+            if (allPlanStepsDone(activeTaskPlan)) {
+                preferencesService.clearActivePlan();
+            } else {
+                persistActivePlan();
+            }
+            return new AssistantResponse(
+                    IntentType.GENERAL_CHAT,
+                    normalizedInput,
+                    result.answer(),
+                    channel,
+                    "Planner",
+                    true,
+                    false,
+                    "",
+                    allPlanStepsDone(activeTaskPlan)
+                            ? "All tracked steps are now complete."
+                            : "The plan has moved to the next tracked step.",
+                    result.plan(),
+                    result.actions(),
+                    List.of(),
+                    Map.of("planner", allPlanStepsDone(activeTaskPlan) ? "complete" : "active", "planExecution", "continued"));
+        }
+
+        if (lower.equals("show plan status")) {
+            return new AssistantResponse(
+                    IntentType.GENERAL_CHAT,
+                    normalizedInput,
+                    "Here is the current plan status.",
+                    channel,
+                    "Planner",
+                    true,
+                    false,
+                    "",
+                    "This is the latest tracked state of your active plan.",
+                    activeTaskPlan,
+                    allPlanStepsDone(activeTaskPlan)
+                            ? List.of()
+                            : List.of(new AssistantResponse.AssistantAction("continue-plan", "Continue plan", "plan", "continue this plan")),
+                    List.of(),
+                    Map.of("planner", allPlanStepsDone(activeTaskPlan) ? "complete" : "active"));
+        }
+
+        return null;
+    }
+
     private AssistantResponse maybeBuildTaskPlan(String normalizedInput, String channel) {
         TaskPlanner.PlanResult plan = taskPlanner.plan(normalizedInput, channel);
         if (plan == null) {
@@ -228,6 +325,8 @@ public class AssistantService {
                         step.detail()))
                 .toList();
         AssistantResponse.TaskPlan taskPlan = new AssistantResponse.TaskPlan(plan.goal(), steps);
+        activeTaskPlan = taskPlan;
+        persistActivePlan();
         return new AssistantResponse(
                 IntentType.GENERAL_CHAT,
                 normalizedInput,
@@ -533,6 +632,31 @@ public class AssistantService {
                 routedIntent,
                 saved.channel() == null || saved.channel().isBlank() ? "typed" : saved.channel(),
                 saved.approvalType() == null ? "" : saved.approvalType());
+    }
+
+    private void restoreActivePlan() {
+        PreferencesService.ActivePlanState saved = preferencesService.getActivePlan();
+        if (saved == null) {
+            return;
+        }
+        activeTaskPlan = taskPlanner.decodePlan(saved.goal(), saved.encodedPlan());
+        if (activeTaskPlan == null) {
+            preferencesService.clearActivePlan();
+        }
+    }
+
+    private void persistActivePlan() {
+        if (activeTaskPlan == null) {
+            preferencesService.clearActivePlan();
+            return;
+        }
+        preferencesService.saveActivePlan(activeTaskPlan.goal(), taskPlanner.encodePlan(activeTaskPlan));
+    }
+
+    private boolean allPlanStepsDone(AssistantResponse.TaskPlan plan) {
+        return plan != null
+                && !plan.steps().isEmpty()
+                && plan.steps().stream().allMatch(step -> "done".equalsIgnoreCase(step.status()));
     }
 
     private record PendingApproval(IntentRouter.RoutedIntent routedIntent, String channel, String approvalType) {

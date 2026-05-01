@@ -11,6 +11,7 @@ import com.edithj.desktop.SystemDesktopFileService;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
 import com.edithj.chat.ConversationHistoryService;
+import com.edithj.memory.MemoryService;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
 import com.edithj.storage.RepositoryFactory;
@@ -37,6 +38,7 @@ public final class EdithApiServer {
     private final ClipboardService clipboardService;
     private final DesktopFileService desktopFileService;
     private final ConversationHistoryService historyService;
+    private final MemoryService memoryService;
     private final PreferencesService preferences;
     private final ObjectMapper mapper;
 
@@ -45,6 +47,7 @@ public final class EdithApiServer {
         this.reminderService = new ReminderService(RepositoryFactory.createReminderRepository());
         this.historyService = new ConversationHistoryService(RepositoryFactory.createChatRepository());
         this.assistantService = new AssistantService(this.historyService);
+        this.memoryService = new MemoryService();
         this.clipboardService = new SystemClipboardService();
         this.desktopFileService = new SystemDesktopFileService();
         this.preferences = PreferencesService.instance();
@@ -71,6 +74,12 @@ public final class EdithApiServer {
         // ── Chat / Assistant ──────────────────────────────────────────────────
         app.get("/api/chat/history", ctx -> {
             ctx.json(historyService.getRecentHistory(50));
+        });
+
+        app.delete("/api/chat/history", ctx -> {
+            int archivedMessages = historyService.archiveToMemoryAndClear(memoryService, 200);
+            assistantService.clearConversationState();
+            ctx.json(Map.of("success", true, "archivedMessages", archivedMessages));
         });
 
         app.post("/api/chat", ctx -> {
