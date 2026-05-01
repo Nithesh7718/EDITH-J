@@ -83,6 +83,14 @@ public class IntentClassifier {
             }
         }
 
+        if (looksLikeFileSearchRequest(lower)) {
+            candidates.add(Intent.FILE_SEARCH);
+            String fileTarget = stripFileSearchKeywords(normalized);
+            if (!fileTarget.isBlank()) {
+                targets.add(fileTarget);
+            }
+        }
+
         if (IntentLexicon.looksLikeDesktopToolsRequest(lower)) {
             candidates.add(Intent.DESKTOP_TOOLS);
         }
@@ -122,7 +130,7 @@ public class IntentClassifier {
         return switch (primary) {
             case OPEN_APP, CLOSE_APP ->
                 HIGH_CONFIDENCE;
-            case DESKTOP_TOOLS, ASK_WORLD, ASK_WORLD_RISK, ASK_WORLD_MARKETS, ASK_LOCAL_KB, ASK_WEB ->
+            case DESKTOP_TOOLS, FILE_SEARCH, ASK_WORLD, ASK_WORLD_RISK, ASK_WORLD_MARKETS, ASK_LOCAL_KB, ASK_WEB ->
                 MEDIUM_CONFIDENCE;
             case GENERAL_CHAT ->
                 LOW_CONFIDENCE;
@@ -133,8 +141,8 @@ public class IntentClassifier {
         String prompt = """
                 You are an intent classifier for a desktop assistant named EDITH.
                 Given the user input, return JSON with fields:
-                - intent (one of: OPEN_APP, CLOSE_APP, DESKTOP_TOOLS, ASK_WORLD, ASK_WORLD_RISK, ASK_WORLD_MARKETS, ASK_LOCAL_KB, ASK_WEB, GENERAL_CHAT)
-                - targets (list of strings like app names, regions, tickers, doc hints)
+                - intent (one of: OPEN_APP, CLOSE_APP, DESKTOP_TOOLS, FILE_SEARCH, ASK_WORLD, ASK_WORLD_RISK, ASK_WORLD_MARKETS, ASK_LOCAL_KB, ASK_WEB, GENERAL_CHAT)
+                - targets (list of strings like app names, regions, tickers, file names, doc hints)
                 Do not answer the question.
 
                 User input: %s
@@ -180,6 +188,29 @@ public class IntentClassifier {
             return trimmed.substring(start, end + 1);
         }
         return trimmed;
+    }
+
+    private boolean looksLikeFileSearchRequest(String lower) {
+        return (lower.startsWith("find ") || lower.startsWith("search ") || lower.startsWith("locate ")
+                || lower.startsWith("look for ") || lower.startsWith("look up "))
+                && (lower.contains("file")
+                || lower.contains("document")
+                || lower.contains("pdf")
+                || lower.contains("docx")
+                || lower.contains("txt")
+                || lower.contains("resume")
+                || lower.contains("report")
+                || lower.contains("presentation")
+                || lower.contains("spreadsheet")
+                || lower.contains("notes"));
+    }
+
+    private String stripFileSearchKeywords(String normalized) {
+        return normalized
+                .replaceAll("(?i)\\b(find|locate|search for|search|look for|look up)\\b", "")
+                .replaceAll("(?i)\\b(files?|documents?|pdfs?|docx|docs?|reports?|presentations?|spreadsheets?|notes?)\\b", "")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private Intent parseIntent(String value) {

@@ -18,8 +18,15 @@ class FallbackChatServiceTest {
     void buildPromptWithMemory_includesSystemPromptChannelAndTurns() {
         LlmClient llmClient = prompt -> "ok";
         PromptBuilder promptBuilder = new TestPromptBuilder();
+        PromptTemplateService promptTemplateService = new PromptTemplateService(com.edithj.config.AppConfig.load(), promptBuilder);
+        MemoryService emptyMemoryService = new TestMemoryService(List.of());
 
-        FallbackChatService service = new FallbackChatService(llmClient, promptBuilder, 4);
+        FallbackChatService service = new FallbackChatService(
+                llmClient,
+                promptTemplateService,
+                emptyMemoryService,
+                AssistantStatusService.instance(),
+                4);
         service.recordUserTurn("hello");
         service.recordAssistantTurn("hi there");
         service.recordUserTurn("what can you do");

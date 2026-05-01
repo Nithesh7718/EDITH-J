@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 public final class Launcher {
 
@@ -44,7 +46,7 @@ public final class Launcher {
                 // Fallback for some Windows environments if Desktop API fails
                 new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
             }
-        } catch (Exception e) {
+        } catch (IOException | URISyntaxException | SecurityException e) {
             logger.error("Failed to open browser", e);
         }
     }

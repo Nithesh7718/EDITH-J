@@ -46,6 +46,7 @@ public record AssistantResponse(
     }
 
     public record TaskPlan(String goal, List<TaskPlanStep> steps) {
+
         public TaskPlan {
             goal = goal == null ? "" : goal;
             steps = steps == null ? List.of() : List.copyOf(steps);
@@ -53,6 +54,7 @@ public record AssistantResponse(
     }
 
     public record TaskPlanStep(String id, String title, String tool, String status, String detail, String command) {
+
         public TaskPlanStep {
             id = id == null ? "" : id;
             title = title == null ? "" : title;
@@ -73,19 +75,31 @@ public record AssistantResponse(
             return "AI";
         }
         return switch (intentType) {
-            case NOTES -> "Notes";
-            case REMINDERS -> "Reminders";
-            case APP_LAUNCH -> "Launcher";
-            case EMAIL, CALENDAR, DESKTOP_TOOLS, DESKTOP_AUTOMATION, WHATSAPP -> "Automation";
-            case WEATHER, UTILITIES -> "Tools";
-            case ASK_WEB -> "Web";
-            case ASK_LOCAL_KB -> "Knowledge";
-            case ASK_WORLD, ASK_WORLD_MARKETS, ASK_WORLD_RISK -> "World";
-            case GENERAL_CHAT, FALLBACK_CHAT -> "AI";
+            case NOTES ->
+                "Notes";
+            case REMINDERS ->
+                "Reminders";
+            case APP_LAUNCH ->
+                "Launcher";
+            case EMAIL, CALENDAR, DESKTOP_TOOLS, DESKTOP_AUTOMATION, WHATSAPP ->
+                "Automation";
+            case FILE_SEARCH ->
+                "File Search";
+            case WEATHER, UTILITIES ->
+                "Tools";
+            case ASK_WEB ->
+                "Web";
+            case ASK_LOCAL_KB ->
+                "Knowledge";
+            case ASK_WORLD, ASK_WORLD_MARKETS, ASK_WORLD_RISK ->
+                "World";
+            case GENERAL_CHAT, FALLBACK_CHAT ->
+                "AI";
         };
     }
 
     public record AssistantAction(String id, String label, String kind, String value) {
+
         public AssistantAction {
             id = id == null ? "" : id;
             label = label == null ? "" : label;
@@ -95,6 +109,7 @@ public record AssistantResponse(
     }
 
     public record RecoveryOption(String label, String prompt) {
+
         public RecoveryOption {
             label = label == null ? "" : label;
             prompt = prompt == null ? "" : prompt;

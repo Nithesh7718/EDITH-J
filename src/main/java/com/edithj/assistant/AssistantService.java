@@ -19,6 +19,7 @@ import com.edithj.commands.DesktopAutomationCommandHandler;
 import com.edithj.commands.DesktopToolsCommandHandler;
 import com.edithj.commands.EmailCommandHandler;
 import com.edithj.commands.FallbackChatHandler;
+import com.edithj.commands.FileSearchCommandHandler;
 import com.edithj.commands.LauncherCommandHandler;
 import com.edithj.commands.NotesCommandHandler;
 import com.edithj.commands.ReminderCommandHandler;
@@ -534,6 +535,8 @@ public class AssistantService {
                 "local knowledge lookup";
             case ASK_WEB ->
                 "web lookup";
+            case FILE_SEARCH ->
+                "file search";
             case GENERAL_CHAT ->
                 "general chat";
         };
@@ -570,6 +573,7 @@ public class AssistantService {
         intentRouter.registerHandler(new WhatsAppCommandHandler());
         intentRouter.registerHandler(new WeatherCommandHandler());
         intentRouter.registerHandler(new UtilitiesCommandHandler());
+        intentRouter.registerHandler(new FileSearchCommandHandler());
         intentRouter.registerHandler(new DesktopToolsCommandHandler());
         intentRouter.registerHandler(new DesktopAutomationCommandHandler());
         intentRouter.registerHandler(new FallbackChatHandler(context -> fallbackChatService.runFallbackChat(context.channel())));

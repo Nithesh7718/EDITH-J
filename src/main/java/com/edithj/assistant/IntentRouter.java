@@ -110,6 +110,9 @@ public class IntentRouter {
         if (looksLikeDirectWhatsAppMessageCommand(input)) {
             return IntentType.WHATSAPP;
         }
+        if (isFileSearchCommand(input)) {
+            return IntentType.FILE_SEARCH;
+        }
         if (isExplicitDesktopCommand(input) || IntentLexicon.looksLikeDesktopToolsRequest(input)) {
             return IntentType.DESKTOP_TOOLS;
         }
@@ -133,6 +136,11 @@ public class IntentRouter {
                 "schedule an event", "schedule a reminder", "calendar", "add event", "create calendar event")
                 || containsAnyIgnoreCase(input, "meeting", "event", "calendar", "appointment")
                 && containsAnyIgnoreCase(input, "today", "tomorrow", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "at ", "called", "named", "for ", "to ");
+    }
+
+    private boolean isFileSearchCommand(String input) {
+        return (startsWithAnyIgnoreCase(input, "find file", "find ", "search ", "locate ", "look for ", "look up "))
+                && (containsAnyIgnoreCase(input, "file", "document", "pdf", "docx", "txt", "resume", "report", "presentation", "spreadsheet", "notes"));
     }
 
     private boolean isExplicitDesktopCommand(String input) {
@@ -172,6 +180,8 @@ public class IntentRouter {
                 stripLeadingKeywordIgnoreCase(input, "weather", "forecast", "temperature", "rain", "check weather", "check forecast");
             case UTILITIES ->
                 stripLeadingKeywordIgnoreCase(input, "calculate", "calc", "what is", "what's", "time", "date", "day");
+            case FILE_SEARCH ->
+                stripLeadingKeywordIgnoreCase(input, "find file", "find", "search for", "search", "locate", "look for", "look up");
             case DESKTOP_TOOLS ->
                 stripLeadingKeywordIgnoreCase(input, "help", "search web", "google", "browse", "open website", "open site", "system info", "device info", "memory status");
             case DESKTOP_AUTOMATION ->

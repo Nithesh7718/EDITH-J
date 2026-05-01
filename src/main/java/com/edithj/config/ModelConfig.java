@@ -1,7 +1,6 @@
 package com.edithj.config;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.Properties;
 
 public final class ModelConfig {

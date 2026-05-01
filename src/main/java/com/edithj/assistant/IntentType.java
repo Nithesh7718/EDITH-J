@@ -11,6 +11,7 @@ public enum IntentType {
     WEATHER,
     UTILITIES,
     DESKTOP_TOOLS,
+    FILE_SEARCH,
     ASK_WORLD,
     ASK_WORLD_RISK,
     ASK_WORLD_MARKETS,
