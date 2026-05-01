@@ -36,7 +36,8 @@ public class ConversationHistoryService {
                 response.success(),
                 response.requiresApproval(),
                 response.approvalType(),
-                response.explanation()));
+                response.explanation(),
+                response.taskPlan() == null ? "" : response.taskPlan().goal()));
     }
 
     public void clearHistory() {

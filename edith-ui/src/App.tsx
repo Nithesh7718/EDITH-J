@@ -22,6 +22,7 @@ function toAssistantMessage(response: AssistantResponse): ChatMessage {
     requiresApproval: response.requiresApproval,
     approvalType: response.approvalType,
     explanation: response.explanation,
+    taskPlan: response.taskPlan,
     actions: response.actions,
     recoveryOptions: response.recoveryOptions,
   };
@@ -260,6 +261,20 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
               <div className="msg-meta">
                 <span>{m.intentType.replaceAll('_', ' ')}</span>
                 {m.approvalType && <span> · {m.approvalType.replaceAll('_', ' ')}</span>}
+              </div>
+            )}
+            {m.role !== 'user' && m.taskPlan && (
+              <div className="task-plan">
+                <div className="task-plan-goal">{m.taskPlan.goal}</div>
+                <div className="task-plan-steps">
+                  {m.taskPlan.steps.map(step => (
+                    <div key={step.id} className="task-step">
+                      <div className="task-step-title">{step.title}</div>
+                      <div className="task-step-meta">{step.tool} · {step.status}</div>
+                      <div className="task-step-detail">{step.detail}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {m.role !== 'user' && ((m.actions?.length ?? 0) > 0 || (m.recoveryOptions?.length ?? 0) > 0) && (

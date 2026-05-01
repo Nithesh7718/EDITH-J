@@ -434,6 +434,48 @@ html, body, #root {
   gap: 0.45rem;
   flex-wrap: wrap;
 }
+.task-plan {
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(0, 243, 255, 0.03);
+}
+.task-plan-goal {
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  margin-bottom: 0.55rem;
+  letter-spacing: 0.06em;
+}
+.task-plan-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.task-step {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(0, 243, 255, 0.12);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.02);
+}
+.task-step-title {
+  color: var(--text);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+.task-step-meta {
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  margin-top: 0.12rem;
+}
+.task-step-detail {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-top: 0.22rem;
+  line-height: 1.4;
+}
 .msg-action-btn {
   padding: 0.32rem 0.7rem;
   border: 1px solid var(--cyan-mid);

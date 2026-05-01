@@ -220,6 +220,25 @@ class AssistantServiceTest {
         assertNull(PreferencesService.instance().getPendingApproval());
     }
 
+    @Test
+    void handleTypedInput_buildsTaskPlanForCompoundRequest() {
+        LlmClient llmClient = prompt -> "unused";
+        PromptBuilder promptBuilder = new TestPromptBuilder();
+        SpeechService speechService = new SpeechService(new SpeechRecognizer(null, new TypedFallbackService(), null));
+        TrackingFallbackChatService fallbackChatService = new TrackingFallbackChatService(llmClient, promptBuilder, 12);
+        IntentRouter intentRouter = new IntentRouter();
+
+        AssistantService service = new AssistantService(llmClient, promptBuilder, speechService, intentRouter, fallbackChatService, null, 12);
+
+        AssistantResponse response = service.handleTypedInput("create a reminder, draft an email, and open the calendar for tomorrow");
+
+        assertEquals(IntentType.GENERAL_CHAT, response.intentType());
+        assertEquals("Planner", response.source());
+        assertNotNull(response.taskPlan());
+        assertTrue(response.taskPlan().steps().size() >= 2);
+        assertFalse(response.actions().isEmpty());
+    }
+
     private static final class TestPromptBuilder extends PromptBuilder {
 
         @Override

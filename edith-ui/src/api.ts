@@ -12,10 +12,13 @@ export interface AssistantResponse {
   requiresApproval: boolean;
   approvalType: string;
   explanation: string;
+  taskPlan?: TaskPlan;
   actions: AssistantAction[];
   recoveryOptions: RecoveryOption[];
   metadata: Record<string, string>;
 }
+export interface TaskPlanStep { id: string; title: string; tool: string; status: string; detail: string; }
+export interface TaskPlan { goal: string; steps: TaskPlanStep[]; }
 export interface ChatMessage {
   id: string;
   role: string;
@@ -27,6 +30,7 @@ export interface ChatMessage {
   requiresApproval?: boolean;
   approvalType?: string;
   explanation?: string;
+  taskPlan?: TaskPlan;
   actions?: AssistantAction[];
   recoveryOptions?: RecoveryOption[];
 }

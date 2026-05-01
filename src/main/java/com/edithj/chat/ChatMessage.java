@@ -13,7 +13,8 @@ public record ChatMessage(
         boolean success,
         boolean requiresApproval,
         String approvalType,
-        String explanation) {
+        String explanation,
+        String planGoal) {
     public ChatMessage {
         id = id == null || id.isBlank() ? UUID.randomUUID().toString() : id;
         role = role == null || role.isBlank() ? "edith" : role;
@@ -23,20 +24,27 @@ public record ChatMessage(
         intentType = intentType == null ? "" : intentType;
         approvalType = approvalType == null ? "" : approvalType;
         explanation = explanation == null ? "" : explanation;
+        planGoal = planGoal == null ? "" : planGoal;
     }
 
     public ChatMessage(String role, String content) {
-        this(UUID.randomUUID().toString(), role, content, Instant.now(), defaultSource(role), "", true, false, "", "");
+        this(UUID.randomUUID().toString(), role, content, Instant.now(), defaultSource(role), "", true, false, "", "", "");
     }
 
     public ChatMessage(String role, String content, String source, String intentType, boolean success) {
-        this(UUID.randomUUID().toString(), role, content, Instant.now(), source, intentType, success, false, "", "");
+        this(UUID.randomUUID().toString(), role, content, Instant.now(), source, intentType, success, false, "", "", "");
     }
 
     public ChatMessage(String role, String content, String source, String intentType, boolean success,
             boolean requiresApproval, String approvalType, String explanation) {
         this(UUID.randomUUID().toString(), role, content, Instant.now(), source, intentType, success,
-                requiresApproval, approvalType, explanation);
+                requiresApproval, approvalType, explanation, "");
+    }
+
+    public ChatMessage(String role, String content, String source, String intentType, boolean success,
+            boolean requiresApproval, String approvalType, String explanation, String planGoal) {
+        this(UUID.randomUUID().toString(), role, content, Instant.now(), source, intentType, success,
+                requiresApproval, approvalType, explanation, planGoal);
     }
 
     private static String defaultSource(String role) {

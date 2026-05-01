@@ -20,7 +20,7 @@ public class SQLiteChatRepository implements ChatRepository {
 
     @Override
     public List<ChatMessage> findRecent(int limit) {
-        String sql = "SELECT id, role, content, timestamp, source, intent_type, success, requires_approval, approval_type, explanation FROM chat_history ORDER BY timestamp DESC LIMIT ?";
+        String sql = "SELECT id, role, content, timestamp, source, intent_type, success, requires_approval, approval_type, explanation, plan_goal FROM chat_history ORDER BY timestamp DESC LIMIT ?";
         List<ChatMessage> messages = new ArrayList<>();
 
         try (Connection connection = databaseManager.openConnection();
@@ -38,7 +38,8 @@ public class SQLiteChatRepository implements ChatRepository {
                             resultSet.getInt("success") != 0,
                             resultSet.getInt("requires_approval") != 0,
                             resultSet.getString("approval_type"),
-                            resultSet.getString("explanation")
+                            resultSet.getString("explanation"),
+                            resultSet.getString("plan_goal")
                     ));
                 }
             }
@@ -53,7 +54,7 @@ public class SQLiteChatRepository implements ChatRepository {
 
     @Override
     public void save(ChatMessage message) {
-        String sql = "INSERT INTO chat_history (id, role, content, timestamp, source, intent_type, success, requires_approval, approval_type, explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO chat_history (id, role, content, timestamp, source, intent_type, success, requires_approval, approval_type, explanation, plan_goal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseManager.openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, message.id());
@@ -66,6 +67,7 @@ public class SQLiteChatRepository implements ChatRepository {
             statement.setInt(8, message.requiresApproval() ? 1 : 0);
             statement.setString(9, message.approvalType());
             statement.setString(10, message.explanation());
+            statement.setString(11, message.planGoal());
             statement.executeUpdate();
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to save chat message", exception);

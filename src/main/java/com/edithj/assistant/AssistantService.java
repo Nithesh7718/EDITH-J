@@ -50,6 +50,7 @@ public class AssistantService {
     private final FallbackChatService fallbackChatService;
     private final ConversationHistoryService conversationHistoryService;
     private final ActionApprovalPolicy actionApprovalPolicy = new ActionApprovalPolicy();
+    private final TaskPlanner taskPlanner = new TaskPlanner();
     private final PreferencesService preferencesService = PreferencesService.instance();
     private final AssistantTelemetry telemetry = AssistantTelemetry.instance();
     private String lastVoiceTranscript = "";
@@ -149,6 +150,11 @@ public class AssistantService {
             return new AssistantResponse(IntentType.FALLBACK_CHAT, "", "Please enter a message.", channel);
         }
 
+        AssistantResponse planned = maybeBuildTaskPlan(normalized, channel);
+        if (planned != null) {
+            return planned;
+        }
+
         AssistantResponse approvalFollowUp = maybeHandleApprovalFollowUp(normalized, channel);
         if (approvalFollowUp != null) {
             return approvalFollowUp;
@@ -208,6 +214,36 @@ public class AssistantService {
         return null;
     }
 
+    private AssistantResponse maybeBuildTaskPlan(String normalizedInput, String channel) {
+        TaskPlanner.PlanResult plan = taskPlanner.plan(normalizedInput, channel);
+        if (plan == null) {
+            return null;
+        }
+        List<AssistantResponse.TaskPlanStep> steps = plan.steps().stream()
+                .map(step -> new AssistantResponse.TaskPlanStep(
+                        step.id(),
+                        step.title(),
+                        step.tool(),
+                        step.status(),
+                        step.detail()))
+                .toList();
+        AssistantResponse.TaskPlan taskPlan = new AssistantResponse.TaskPlan(plan.goal(), steps);
+        return new AssistantResponse(
+                IntentType.GENERAL_CHAT,
+                normalizedInput,
+                plan.answer(),
+                channel,
+                "Planner",
+                true,
+                false,
+                "",
+                "This request spans multiple actions, so I prepared a structured plan first.",
+                taskPlan,
+                plan.actions(),
+                List.of(),
+                Map.of("planner", "deterministic"));
+    }
+
     private AssistantResponse enrichResponse(AssistantResponse response) {
         if (response == null) {
             return new AssistantResponse(IntentType.FALLBACK_CHAT, "", "I could not complete that request.", "typed");
@@ -227,6 +263,7 @@ public class AssistantService {
                 response.requiresApproval(),
                 response.approvalType(),
                 explanation,
+                response.taskPlan(),
                 response.actions(),
                 recoveryOptions,
                 response.metadata().isEmpty() ? buildMetadata(response) : response.metadata());
