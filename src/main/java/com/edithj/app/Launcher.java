@@ -5,6 +5,7 @@ import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,10 @@ import org.slf4j.LoggerFactory;
 import com.edithj.api.EdithApiServer;
 import com.edithj.config.AppConfig;
 import com.edithj.config.AppPaths;
+import com.edithj.resilience.FailureType;
+import com.edithj.resilience.HealthMonitorRegistry;
+import com.edithj.resilience.HealthSignal;
+import com.edithj.resilience.IncidentSeverity;
 import com.edithj.storage.DatabaseManager;
 import com.edithj.storage.JsonToSqliteMigrationService;
 
@@ -30,20 +35,31 @@ public final class Launcher {
 
     public static void main(String[] args) {
         logger.info("Starting EDITH-J Backend Service...");
+        HealthMonitorRegistry healthRegistry = HealthMonitorRegistry.instance();
+        DatabaseManager databaseManager;
 
         try {
             AppPaths.ensureRuntimeDirectories();
             AppConfig appConfig = AppConfig.load();
+            databaseManager = new DatabaseManager(appConfig.storageConfig().databasePath());
+            healthRegistry.initialize(databaseManager);
 
             if (!EdithApiServer.hasBundledFrontend()) {
                 String message = "EDITH-J could not start because the bundled frontend assets are missing.";
+                healthRegistry.registerHealthSignal(new HealthSignal(
+                        "frontend",
+                        FailureType.FRONTEND,
+                        IncidentSeverity.HIGH,
+                        "Packaged frontend assets are missing from the runtime.",
+                        java.time.Instant.now(),
+                        Map.of("entry", "/public/index.html")));
                 logger.error("{} Rebuild the app before packaging.", message);
                 showStartupDialog("EDITH-J Startup Error", message + System.lineSeparator()
                         + "Rebuild with 'mvn clean package' before creating the installer.");
+                healthRegistry.markStartupFailure();
                 return;
             }
 
-            DatabaseManager databaseManager = new DatabaseManager(appConfig.storageConfig().databasePath());
             new JsonToSqliteMigrationService(databaseManager).migrateOnce();
 
             int port = appConfig.appPort();
@@ -53,6 +69,7 @@ public final class Launcher {
             Javalin app = new EdithApiServer().createApp();
             app.start(host, port);
             logger.info("EDITH-J is ready. Visit {} to open the UI.", url);
+            healthRegistry.markStartupSuccess();
 
             if (appConfig.isAutoOpenBrowserEnabled()) {
                 openBrowser(url);
@@ -60,6 +77,14 @@ public final class Launcher {
         } catch (Exception e) {
             String message = userFacingStartupMessage(e);
             logger.error("EDITH-J failed to start", e);
+            healthRegistry.registerHealthSignal(new HealthSignal(
+                    "startup",
+                    FailureType.STARTUP,
+                    IncidentSeverity.CRITICAL,
+                    message,
+                    java.time.Instant.now(),
+                    Map.of("errorClass", e.getClass().getSimpleName())));
+            healthRegistry.markStartupFailure();
             showStartupDialog("EDITH-J Startup Error", message);
         }
     }

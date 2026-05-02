@@ -1,6 +1,7 @@
 package com.edithj.ai;
 
 import java.net.http.HttpClient;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -46,29 +47,49 @@ public final class ProviderFactory {
         }
 
         return switch (provider) {
-            case GROQ -> new GroqChatProvider(config, httpClient);
-            case GEMINI -> new GeminiChatProvider(config, httpClient);
-            case OPENAI -> new OpenAIChatProvider(config, httpClient);
-            case SARVAM -> new SarvamChatProvider(config, httpClient);
+            case GROQ ->
+                new GroqChatProvider(config, httpClient);
+            case GEMINI ->
+                new GeminiChatProvider(config, httpClient);
+            case OPENAI ->
+                new OpenAIChatProvider(config, httpClient);
+            case SARVAM ->
+                new SarvamChatProvider(config, httpClient);
         };
     }
 
     private String envName(Provider provider) {
         return switch (provider) {
-            case GROQ -> "GROQ_API_KEY";
-            case GEMINI -> "GEMINI_API_KEY";
-            case OPENAI -> "OPENAI_API_KEY";
-            case SARVAM -> "SARVAM_API_KEY";
+            case GROQ ->
+                "GROQ_API_KEY";
+            case GEMINI ->
+                "GEMINI_API_KEY";
+            case OPENAI ->
+                "OPENAI_API_KEY";
+            case SARVAM ->
+                "SARVAM_API_KEY";
         };
     }
 
     private String propertyName(Provider provider) {
         return switch (provider) {
-            case GROQ -> "edith.ai.groq.apiKey";
-            case GEMINI -> "edith.ai.gemini.apiKey";
-            case OPENAI -> "edith.ai.openai.apiKey";
-            case SARVAM -> "edith.ai.sarvam.apiKey";
+            case GROQ ->
+                "edith.ai.groq.apiKey";
+            case GEMINI ->
+                "edith.ai.gemini.apiKey";
+            case OPENAI ->
+                "edith.ai.openai.apiKey";
+            case SARVAM ->
+                "edith.ai.sarvam.apiKey";
         };
+    }
+
+    public String defaultProviderId() {
+        return config.selectedProvider().id();
+    }
+
+    public List<String> supportedProviderIds() {
+        return List.of(Provider.GROQ.id(), Provider.GEMINI.id(), Provider.OPENAI.id(), Provider.SARVAM.id());
     }
 
     private String capitalize(String value) {

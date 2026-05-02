@@ -20,6 +20,7 @@ import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
+import com.edithj.resilience.HealthMonitorRegistry;
 import com.edithj.storage.RepositoryFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -79,7 +80,12 @@ public final class EdithApiServer {
 
     private void registerRoutes(Javalin app, boolean frontendAvailable) {
         // ── Health ────────────────────────────────────────────────────────────
-        app.get("/api/health", ctx -> ctx.json(Map.of("status", "ok", "service", "EDITH-J")));
+        app.get("/api/health", ctx -> ctx.json(Map.of(
+                "status", "ok",
+                "service", "EDITH-J",
+                "healthSummary", HealthMonitorRegistry.instance().healthSummary())));
+
+        app.get("/api/resilience/metrics", ctx -> ctx.json(HealthMonitorRegistry.instance().healthSummary()));
 
         // ── Chat / Assistant ──────────────────────────────────────────────────
         app.get("/api/chat/history", ctx -> {
