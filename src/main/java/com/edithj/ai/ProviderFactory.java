@@ -46,42 +46,54 @@ public final class ProviderFactory {
                     + " in edith.properties.");
         }
 
-        return switch (provider) {
+        ChatProvider providerInstance;
+        switch (provider) {
             case GROQ ->
-                new GroqChatProvider(config, httpClient);
+                providerInstance = new GroqChatProvider(config, httpClient);
             case GEMINI ->
-                new GeminiChatProvider(config, httpClient);
+                providerInstance = new GeminiChatProvider(config, httpClient);
             case OPENAI ->
-                new OpenAIChatProvider(config, httpClient);
+                providerInstance = new OpenAIChatProvider(config, httpClient);
             case SARVAM ->
-                new SarvamChatProvider(config, httpClient);
-        };
+                providerInstance = new SarvamChatProvider(config, httpClient);
+            default ->
+                throw new IllegalStateException("Unexpected provider: " + provider);
+        }
+        return providerInstance;
     }
 
     private String envName(Provider provider) {
-        return switch (provider) {
+        String envName;
+        switch (provider) {
             case GROQ ->
-                "GROQ_API_KEY";
+                envName = "GROQ_API_KEY";
             case GEMINI ->
-                "GEMINI_API_KEY";
+                envName = "GEMINI_API_KEY";
             case OPENAI ->
-                "OPENAI_API_KEY";
+                envName = "OPENAI_API_KEY";
             case SARVAM ->
-                "SARVAM_API_KEY";
-        };
+                envName = "SARVAM_API_KEY";
+            default ->
+                throw new IllegalStateException("Unexpected provider: " + provider);
+        }
+        return envName;
     }
 
     private String propertyName(Provider provider) {
-        return switch (provider) {
+        String propertyName;
+        switch (provider) {
             case GROQ ->
-                "edith.ai.groq.apiKey";
+                propertyName = "edith.ai.groq.apiKey";
             case GEMINI ->
-                "edith.ai.gemini.apiKey";
+                propertyName = "edith.ai.gemini.apiKey";
             case OPENAI ->
-                "edith.ai.openai.apiKey";
+                propertyName = "edith.ai.openai.apiKey";
             case SARVAM ->
-                "edith.ai.sarvam.apiKey";
-        };
+                propertyName = "edith.ai.sarvam.apiKey";
+            default ->
+                throw new IllegalStateException("Unexpected provider: " + provider);
+        }
+        return propertyName;
     }
 
     public String defaultProviderId() {
