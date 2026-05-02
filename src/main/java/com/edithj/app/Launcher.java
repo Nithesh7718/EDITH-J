@@ -1,15 +1,19 @@
 package com.edithj.app;
 
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.edithj.api.EdithApiServer;
 import com.edithj.config.AppConfig;
 import com.edithj.storage.DatabaseManager;
 import com.edithj.storage.JsonToSqliteMigrationService;
-import io.javalin.Javalin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.awt.Desktop;
-import java.net.URI;
+import io.javalin.Javalin;
 
 public final class Launcher {
 
@@ -58,8 +62,8 @@ public final class Launcher {
             } else {
                 new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
             }
-        } catch (Exception e) {
-            logger.error("Failed to open browser", e);
+        } catch (IOException | URISyntaxException exception) {
+            logger.error("Failed to open browser", exception);
         }
     }
 }
