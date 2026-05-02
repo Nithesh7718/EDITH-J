@@ -88,7 +88,7 @@ Do not scatter approval prompts inside every handler. Add a shared action-execut
 
 Build this before the planner so EDITH-J becomes more trustworthy when tools fail.
 
-### Recovery behavior targets
+### Expected behavior
 
 - retry transient failures automatically when safe
 - return exact blocked reason for policy, missing config, missing file, unsupported app, or provider outage
@@ -97,7 +97,7 @@ Build this before the planner so EDITH-J becomes more trustworthy when tools fai
   - create instead of open
   - manual clarification when the target is ambiguous
 
-### Implementation areas
+### Code areas
 
 - `AssistantResponse` recovery fields
 - `AssistantService` orchestration

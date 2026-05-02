@@ -27,6 +27,16 @@ class DatabaseManagerTest {
             try (ResultSet reminders = statement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='reminders'")) {
                 assertTrue(reminders.next());
             }
+            try (ResultSet columns = statement.executeQuery("PRAGMA table_info(chat_history)")) {
+                java.util.Set<String> columnNames = new java.util.HashSet<>();
+                while (columns.next()) {
+                    columnNames.add(columns.getString("name"));
+                }
+                assertTrue(columnNames.contains("task_plan_json"));
+                assertTrue(columnNames.contains("actions_json"));
+                assertTrue(columnNames.contains("recovery_options_json"));
+                assertTrue(columnNames.contains("metadata_json"));
+            }
         }
     }
 }

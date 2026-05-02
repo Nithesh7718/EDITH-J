@@ -1,6 +1,13 @@
 package com.edithj.speech;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
+
+import com.edithj.resilience.FailureType;
+import com.edithj.resilience.HealthMonitorRegistry;
+import com.edithj.resilience.HealthSignal;
+import com.edithj.resilience.IncidentSeverity;
 
 public class SpeechRecognizer {
 
@@ -36,6 +43,13 @@ public class SpeechRecognizer {
 
     public void startListening() {
         if (!isAvailable()) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "speech.pipeline",
+                    FailureType.VOICE,
+                    IncidentSeverity.HIGH,
+                    "Voice capture startup failed because the speech engine is unavailable.",
+                    Instant.now(),
+                    Map.of("available", String.valueOf(isAvailable()))));
             throw new IllegalStateException("Speech recognition is unavailable");
         }
         audioCapture.startRecording();
@@ -48,6 +62,13 @@ public class SpeechRecognizer {
         try {
             transcript = transcribe(wavAudio);
         } catch (NoSpeechRecognizedException exception) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "speech.pipeline",
+                    FailureType.VOICE,
+                    IncidentSeverity.MEDIUM,
+                    "No speech was recognized in the captured audio.",
+                    Instant.now(),
+                    Map.of("reason", exception.getMessage())));
             return new RecognitionResult("", wavAudio, false);
         }
         boolean usedTypedFallback = false;
@@ -59,6 +80,13 @@ public class SpeechRecognizer {
             if (fallbackText.isPresent()) {
                 transcript = fallbackText.get();
                 usedTypedFallback = true;
+                HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                        "speech.pipeline",
+                        FailureType.VOICE,
+                        IncidentSeverity.LOW,
+                        "Voice transcription degraded and typed fallback was used.",
+                        Instant.now(),
+                        Map.of("usedTypedFallback", "true")));
             }
         }
 

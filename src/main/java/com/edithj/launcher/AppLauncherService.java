@@ -1,10 +1,15 @@
 package com.edithj.launcher;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.edithj.config.PreferencesService;
+import com.edithj.resilience.FailureType;
+import com.edithj.resilience.HealthMonitorRegistry;
+import com.edithj.resilience.HealthSignal;
+import com.edithj.resilience.IncidentSeverity;
 import com.edithj.util.ValidationUtils;
 
 /**
@@ -58,14 +63,36 @@ public class AppLauncherService {
 
         String launchResult = launcher.launch(normalized);
         if (!isLaunchFailure(launchResult)) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "automation.launcher",
+                    FailureType.AUTOMATION,
+                    IncidentSeverity.LOW,
+                    "Launch succeeded on first attempt.",
+                    java.time.Instant.now(),
+                    Map.of("target", normalized)));
             return launchResult;
         }
+
+        HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                "automation.launcher",
+                FailureType.AUTOMATION,
+                IncidentSeverity.MEDIUM,
+                "Launch failed and will try a fallback if available.",
+                java.time.Instant.now(),
+                Map.of("target", normalized, "reason", launchResult)));
 
         if (webFallback != null && preferences.isWebFallbackAllowed()) {
             String fallbackResult = launcher.launch(webFallback);
             if (!isLaunchFailure(fallbackResult)) {
                 return fallbackResult;
             }
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "automation.launcher",
+                    FailureType.AUTOMATION,
+                    IncidentSeverity.HIGH,
+                    "Launch failed after fallback attempt.",
+                    java.time.Instant.now(),
+                    Map.of("target", normalized, "webFallback", webFallback, "reason", fallbackResult)));
             return fallbackResult;
         }
 

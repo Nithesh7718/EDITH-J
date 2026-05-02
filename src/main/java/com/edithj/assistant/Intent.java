@@ -8,6 +8,7 @@ public enum Intent {
     OPEN_APP,
     CLOSE_APP,
     DESKTOP_TOOLS,
+    FILE_SEARCH,
     ASK_WORLD,
     ASK_WORLD_RISK,
     ASK_WORLD_MARKETS,
