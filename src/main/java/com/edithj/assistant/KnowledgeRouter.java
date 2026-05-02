@@ -1,9 +1,9 @@
 package com.edithj.assistant;
 
-import java.util.List;
-import java.util.Objects;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -297,6 +297,8 @@ public class KnowledgeRouter {
                 IntentType.APP_LAUNCH;
             case CLOSE_APP, DESKTOP_TOOLS ->
                 IntentType.DESKTOP_TOOLS;
+            case FILE_SEARCH ->
+                IntentType.FILE_SEARCH;
             case ASK_WORLD ->
                 IntentType.ASK_WORLD;
             case ASK_WORLD_RISK ->

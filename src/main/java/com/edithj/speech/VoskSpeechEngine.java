@@ -4,17 +4,23 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.Map;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.vosk.Model;
 import org.vosk.Recognizer;
+
+import com.edithj.resilience.FailureType;
+import com.edithj.resilience.HealthMonitorRegistry;
+import com.edithj.resilience.HealthSignal;
+import com.edithj.resilience.IncidentSeverity;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class VoskSpeechEngine implements SpeechRecognizer.TranscriptionEngine {
 
@@ -41,10 +47,24 @@ public final class VoskSpeechEngine implements SpeechRecognizer.TranscriptionEng
         Path normalizedPath = modelPath == null ? VoskSpeechConfig.resolveModelPath() : modelPath.toAbsolutePath().normalize();
 
         if (!Files.isDirectory(normalizedPath)) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "speech.model",
+                    FailureType.VOICE,
+                    IncidentSeverity.HIGH,
+                    "Vosk speech model folder was missing.",
+                    Instant.now(),
+                    Map.of("modelPath", normalizedPath.toString())));
             return unavailable(normalizedPath, "Vosk model folder was not found at " + normalizedPath);
         }
 
         if (!VoskModelHolder.isAvailable()) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "speech.model",
+                    FailureType.VOICE,
+                    IncidentSeverity.HIGH,
+                    "Vosk speech model failed to load or is unavailable.",
+                    Instant.now(),
+                    Map.of("modelPath", normalizedPath.toString())));
             return unavailable(normalizedPath, "Vosk model failed to load or is not present.");
         }
         return new VoskSpeechEngine(normalizedPath, VoskModelHolder.get(), true, "");

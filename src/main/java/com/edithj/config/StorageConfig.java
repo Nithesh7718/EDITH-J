@@ -21,7 +21,7 @@ public final class StorageConfig {
         String backend = AppConfig.resolve(envConfig, properties, "storage.backend", DEFAULT_BACKEND).trim().toLowerCase();
         String dbPath = AppConfig.resolve(envConfig, properties, "storage.db-path", StoragePaths.databasePath().toString());
 
-        return new StorageConfig(backend, Path.of(dbPath.trim()));
+        return new StorageConfig(backend, resolveDatabasePath(dbPath));
     }
 
     public String backend() {
@@ -30,5 +30,17 @@ public final class StorageConfig {
 
     public Path databasePath() {
         return databasePath;
+    }
+
+    private static Path resolveDatabasePath(String value) {
+        if (value == null || value.isBlank()) {
+            return StoragePaths.databasePath();
+        }
+
+        try {
+            return AppPaths.resolveAgainstDataDirectory(value.trim());
+        } catch (RuntimeException exception) {
+            return StoragePaths.databasePath();
+        }
     }
 }

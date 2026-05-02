@@ -1,6 +1,41 @@
 const API = 'http://localhost:8080/api';
 
-export interface ChatMessage { role: string; content: string; timestamp: string; }
+export interface AssistantAction { id: string; label: string; kind: string; value: string; }
+export interface RecoveryOption { label: string; prompt: string; }
+export interface AssistantResponse {
+  intentType: string;
+  userInput: string;
+  answer: string;
+  channel: string;
+  source: string;
+  success: boolean;
+  requiresApproval: boolean;
+  approvalType: string;
+  explanation: string;
+  taskPlan?: TaskPlan;
+  actions: AssistantAction[];
+  recoveryOptions: RecoveryOption[];
+  metadata: Record<string, string>;
+}
+export interface TaskPlanStep { id: string; title: string; tool: string; status: string; detail: string; }
+export interface TaskPlan { goal: string; steps: TaskPlanStep[]; }
+export interface ChatMessage {
+  id: string;
+  role: string;
+  content: string;
+  timestamp: string;
+  source?: string;
+  intentType?: string;
+  success?: boolean;
+  requiresApproval?: boolean;
+  approvalType?: string;
+  explanation?: string;
+  planGoal?: string;
+  taskPlan?: TaskPlan;
+  actions?: AssistantAction[];
+  recoveryOptions?: RecoveryOption[];
+  metadata?: Record<string, string>;
+}
 export interface Note { id: string; title: string; content: string; createdAt: string; updatedAt: string; }
 export interface Reminder { id: string; text: string; dueAt: string; completed: boolean; createdAt: string; }
 export interface Settings { autoSendVoiceInput: boolean; preferShortcutApps: boolean; allowWebFallback: boolean; whatsappAppFirst: boolean; devSmokeLaunchersEnabled: boolean; }
@@ -18,8 +53,9 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 
 // Chat
 export const sendChat = (message: string) =>
-  req<ChatMessage>('/chat', { method: 'POST', body: JSON.stringify({ message }) });
+  req<AssistantResponse>('/chat', { method: 'POST', body: JSON.stringify({ message }) });
 export const getChatHistory = () => req<ChatMessage[]>('/chat/history');
+export const clearChatHistory = () => req<{ success: boolean; archivedMessages: number }>('/chat/history', { method: 'DELETE' });
 
 // Notes
 export const getNotes = (q?: string) =>
@@ -60,4 +96,4 @@ export const updateSettings = (patch: Partial<Settings>) =>
 // Voice
 export const getVoiceStatus = () => req<{ available: boolean; listening: boolean }>('/voice/status');
 export const startVoice = () => req<{ success: boolean; status: string }>('/voice/start', { method: 'POST' });
-export const stopVoice = () => req<{ transcript: string; answer: string; intent: string }>('/voice/stop', { method: 'POST' });
+export const stopVoice = () => req<{ transcript: string; response: AssistantResponse }>('/voice/stop', { method: 'POST' });

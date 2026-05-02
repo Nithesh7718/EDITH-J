@@ -1,6 +1,7 @@
 package com.edithj.ai;
 
 import java.net.http.HttpClient;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -45,30 +46,62 @@ public final class ProviderFactory {
                     + " in edith.properties.");
         }
 
-        return switch (provider) {
-            case GROQ -> new GroqChatProvider(config, httpClient);
-            case GEMINI -> new GeminiChatProvider(config, httpClient);
-            case OPENAI -> new OpenAIChatProvider(config, httpClient);
-            case SARVAM -> new SarvamChatProvider(config, httpClient);
-        };
+        ChatProvider providerInstance;
+        switch (provider) {
+            case GROQ ->
+                providerInstance = new GroqChatProvider(config, httpClient);
+            case GEMINI ->
+                providerInstance = new GeminiChatProvider(config, httpClient);
+            case OPENAI ->
+                providerInstance = new OpenAIChatProvider(config, httpClient);
+            case SARVAM ->
+                providerInstance = new SarvamChatProvider(config, httpClient);
+            default ->
+                throw new IllegalStateException("Unexpected provider: " + provider);
+        }
+        return providerInstance;
     }
 
     private String envName(Provider provider) {
-        return switch (provider) {
-            case GROQ -> "GROQ_API_KEY";
-            case GEMINI -> "GEMINI_API_KEY";
-            case OPENAI -> "OPENAI_API_KEY";
-            case SARVAM -> "SARVAM_API_KEY";
-        };
+        String envName;
+        switch (provider) {
+            case GROQ ->
+                envName = "GROQ_API_KEY";
+            case GEMINI ->
+                envName = "GEMINI_API_KEY";
+            case OPENAI ->
+                envName = "OPENAI_API_KEY";
+            case SARVAM ->
+                envName = "SARVAM_API_KEY";
+            default ->
+                throw new IllegalStateException("Unexpected provider: " + provider);
+        }
+        return envName;
     }
 
     private String propertyName(Provider provider) {
-        return switch (provider) {
-            case GROQ -> "edith.ai.groq.apiKey";
-            case GEMINI -> "edith.ai.gemini.apiKey";
-            case OPENAI -> "edith.ai.openai.apiKey";
-            case SARVAM -> "edith.ai.sarvam.apiKey";
-        };
+        String propertyName;
+        switch (provider) {
+            case GROQ ->
+                propertyName = "edith.ai.groq.apiKey";
+            case GEMINI ->
+                propertyName = "edith.ai.gemini.apiKey";
+            case OPENAI ->
+                propertyName = "edith.ai.openai.apiKey";
+            case SARVAM ->
+                propertyName = "edith.ai.sarvam.apiKey";
+            default ->
+                throw new IllegalStateException("Unexpected provider: " + provider);
+        }
+        return propertyName;
+    }
+
+    public String defaultProviderId() {
+        return config.selectedProvider().id();
+    }
+
+    public List<String> supportedProviderIds() {
+        return List.of(Provider.GROQ.id(), Provider.GEMINI.id(), Provider.OPENAI.id(), Provider.SARVAM.id());
     }
 
     private String capitalize(String value) {

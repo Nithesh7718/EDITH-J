@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { ChatMessage, Note, Reminder, Settings, Telemetry } from './api';
+import type { AssistantResponse, ChatMessage, Note, Reminder, Settings, Telemetry } from './api';
 import * as api from './api';
 import './App.css';
 
@@ -8,6 +8,36 @@ type View = 'chat' | 'notes' | 'reminders' | 'desktop' | 'settings';
 /* ───────────────── helpers ─────────────────────── */
 function fmt(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function toAssistantMessage(response: AssistantResponse): ChatMessage {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role: 'edith',
+    content: response.answer,
+    timestamp: new Date().toISOString(),
+    source: response.source,
+    intentType: response.intentType,
+    success: response.success,
+    requiresApproval: response.requiresApproval,
+    approvalType: response.approvalType,
+    explanation: response.explanation,
+    taskPlan: response.taskPlan,
+    actions: response.actions,
+    recoveryOptions: response.recoveryOptions,
+  };
+}
+
+function isPlanComplete(message?: ChatMessage | null) {
+  const steps = message?.taskPlan?.steps ?? [];
+  return steps.length > 0 && steps.every(step => step.status.toLowerCase() === 'done');
+}
+
+function planStepClass(status?: string) {
+  const normalized = (status ?? '').toLowerCase();
+  if (normalized === 'done') return 'task-step done';
+  if (normalized === 'in_progress') return 'task-step in-progress';
+  return 'task-step pending';
 }
 
 const BOOT_SEQ = [
@@ -50,9 +80,13 @@ export default function App() {
             setMessages(history);
           } else {
             setMessages([{
+              id: 'boot-greeting',
               role: 'edith',
               content: 'EDITH Initialization Complete. All systems nominal. How may I assist?',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              source: 'System',
+              intentType: 'GENERAL_CHAT',
+              success: true,
             }]);
           }
         })
@@ -123,25 +157,47 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [status, setStatus] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const activePlanMessage = [...messages].reverse().find(message => message.role !== 'user' && message.taskPlan && !isPlanComplete(message));
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  const submitMessage = useCallback(async (rawText: string) => {
+    const text = rawText.trim();
+    if (!text || loading) return;
+    setMessages(prev => [...prev, {
+      id: `${Date.now()}-user`,
+      role: 'user',
+      content: text,
+      timestamp: new Date().toISOString(),
+      source: 'User',
+      success: true,
+    }]);
+    setLoading(true);
+    try {
+      const resp = await api.sendChat(text);
+      setMessages(prev => [...prev, toAssistantMessage(resp)]);
+    } catch (e: unknown) {
+      setMessages(prev => [...prev, {
+        id: `${Date.now()}-error`,
+        role: 'edith',
+        content: `Error: ${(e as Error).message}`,
+        timestamp: new Date().toISOString(),
+        source: 'System',
+        success: false,
+        }]);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, setMessages]);
 
   const send = useCallback(async () => {
     const text = input.trim();
     if (!text || loading) return;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: text, timestamp: new Date().toISOString() }]);
-    setLoading(true);
-    try {
-      const resp = await api.sendChat(text);
-      setMessages(prev => [...prev, resp]);
-    } catch (e: unknown) {
-      setMessages(prev => [...prev, { role: 'edith', content: `Error: ${(e as Error).message}`, timestamp: new Date().toISOString() }]);
-    } finally {
-      setLoading(false);
-    }
-  }, [input, loading, setMessages]);
+    await submitMessage(text);
+  }, [input, loading, submitMessage]);
 
   const toggleVoice = async () => {
     if (listening) {
@@ -151,21 +207,23 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
         const res = await api.stopVoice();
         if (res.transcript) {
           setMessages(prev => [...prev, {
+            id: `${Date.now()}-voice-user`,
             role: 'user',
             content: res.transcript,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: 'User',
+            success: true,
           }]);
-          setMessages(prev => [...prev, {
-            role: 'edith',
-            content: res.answer,
-            timestamp: new Date().toISOString()
-          }]);
+          setMessages(prev => [...prev, toAssistantMessage(res.response)]);
         }
       } catch (e: unknown) {
         setMessages(prev => [...prev, {
+          id: `${Date.now()}-voice-error`,
           role: 'edith',
           content: `Voice Error: ${(e as Error).message}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'System',
+          success: false,
         }]);
       } finally {
         setLoading(false);
@@ -176,11 +234,48 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
         setListening(true);
       } catch (e: unknown) {
         setMessages(prev => [...prev, {
+          id: `${Date.now()}-voice-start-error`,
           role: 'edith',
           content: `Voice Error: ${(e as Error).message}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'System',
+          success: false,
         }]);
       }
+    }
+  };
+
+  const clearChat = async () => {
+    if (loading || listening) return;
+    const confirmed = window.confirm('Clear the current chat view? The conversation will be archived to memory first.');
+    if (!confirmed) return;
+    setLoading(true);
+    try {
+      const result = await api.clearChatHistory();
+      setMessages([{
+        id: 'chat-cleared',
+        role: 'edith',
+        content: 'Chat cleared. I archived the conversation to memory for future reference.',
+        timestamp: new Date().toISOString(),
+        source: 'Memory',
+        intentType: 'GENERAL_CHAT',
+        success: true,
+      }]);
+      setStatus(result.archivedMessages > 0
+        ? `Archived ${result.archivedMessages} messages to memory.`
+        : 'Chat was already empty.');
+      setTimeout(() => setStatus(''), 4000);
+    } catch (e: unknown) {
+      setMessages(prev => [...prev, {
+        id: `${Date.now()}-clear-error`,
+        role: 'edith',
+        content: `Error: ${(e as Error).message}`,
+        timestamp: new Date().toISOString(),
+        source: 'System',
+        success: false,
+      }]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,7 +286,10 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
       <div className="view-header">
         <h1>CHAT</h1>
         <span className="view-sub">AI Assistant</span>
+        <button className="header-btn" onClick={clearChat} disabled={loading || listening}>CLEAR CHAT</button>
       </div>
+
+      {status && <div className="status-bar">{status}</div>}
 
       <div className="quick-actions">
         {QUICK.map(q => (
@@ -201,14 +299,92 @@ function ChatView({ messages, setMessages }: { messages: ChatMessage[], setMessa
         ))}
       </div>
 
+      {activePlanMessage?.taskPlan && (
+        <div className="active-plan-banner">
+          <div className="active-plan-copy">
+            <span className="active-plan-label">ACTIVE PLAN</span>
+            <div className="active-plan-goal">{activePlanMessage.taskPlan.goal}</div>
+          </div>
+          <div className="active-plan-actions">
+            <button
+              className="msg-action-btn"
+              disabled={loading || listening}
+              onClick={() => submitMessage('show plan status')}
+            >
+              Show status
+            </button>
+            <button
+              className="msg-action-btn"
+              disabled={loading || listening}
+              onClick={() => submitMessage('continue this plan')}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="message-list">
         {messages.map((m, i) => (
-          <div key={i} className={`message ${m.role}`}>
+          <div key={m.id ?? i} className={`message ${m.role}`}>
             <div className="msg-header">
               <span className="msg-role">{m.role === 'user' ? '▸ YOU' : '▸ EDITH'}</span>
+              {m.role !== 'user' && m.source && <span className={`source-badge ${m.success === false ? 'error' : ''}`}>{m.source}</span>}
+              {m.role !== 'user' && m.requiresApproval && <span className="pending-badge">PENDING APPROVAL</span>}
               <span className="msg-ts">{fmt(m.timestamp)}</span>
             </div>
             <div className="msg-body">{m.content}</div>
+            {m.role !== 'user' && m.explanation && (
+              <div className={`msg-explanation ${m.requiresApproval ? 'approval' : m.success === false ? 'error' : ''}`}>
+                {m.explanation}
+              </div>
+            )}
+            {m.role !== 'user' && m.intentType && (
+              <div className="msg-meta">
+                <span>{m.intentType.replaceAll('_', ' ')}</span>
+                {m.approvalType && <span> · {m.approvalType.replaceAll('_', ' ')}</span>}
+              </div>
+            )}
+            {m.role !== 'user' && m.taskPlan && (
+              <div className="task-plan">
+                <div className="task-plan-goal">{m.taskPlan.goal}</div>
+                <div className="task-plan-steps">
+                  {m.taskPlan.steps.map(step => (
+                    <div key={step.id} className={planStepClass(step.status)}>
+                      <div className="task-step-title">{step.title}</div>
+                      <div className="task-step-meta">{step.tool} · {step.status}</div>
+                      <div className="task-step-detail">{step.detail}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {m.role !== 'user' && ((m.actions?.length ?? 0) > 0 || (m.recoveryOptions?.length ?? 0) > 0) && (
+              <div className="msg-actions">
+                {m.actions?.map(action => (
+                  <button
+                    key={action.id || `${m.id}-${action.label}`}
+                    className="msg-action-btn"
+                    disabled={loading || listening}
+                    onClick={() => submitMessage(action.value)}
+                    title={action.kind || action.label}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+                {m.recoveryOptions?.map(option => (
+                  <button
+                    key={`${m.id}-${option.label}`}
+                    className="msg-action-btn secondary"
+                    disabled={loading || listening}
+                    onClick={() => submitMessage(option.prompt)}
+                    title={option.prompt}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         {loading && (
