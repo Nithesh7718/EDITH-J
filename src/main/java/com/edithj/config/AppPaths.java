@@ -1,5 +1,6 @@
 package com.edithj.config;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -179,7 +180,7 @@ public final class AppPaths {
     private static void createDirectories(Path path) {
         try {
             Files.createDirectories(path);
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             throw new IllegalStateException("Unable to create directory: " + path, exception);
         }
     }
@@ -187,7 +188,7 @@ public final class AppPaths {
     private static void createDirectoriesQuietly(Path path) {
         try {
             Files.createDirectories(path);
-        } catch (Exception ignored) {
+        } catch (IOException ignored) {
             // Logging should remain best-effort during early bootstrap.
         }
     }

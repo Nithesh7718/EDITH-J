@@ -1,19 +1,21 @@
 package com.edithj.app;
 
-import com.edithj.api.EdithApiServer;
-import com.edithj.config.AppConfig;
-import com.edithj.config.AppPaths;
-import com.edithj.storage.DatabaseManager;
-import com.edithj.storage.JsonToSqliteMigrationService;
-import io.javalin.Javalin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.edithj.api.EdithApiServer;
+import com.edithj.config.AppConfig;
+import com.edithj.config.AppPaths;
+import com.edithj.storage.DatabaseManager;
+import com.edithj.storage.JsonToSqliteMigrationService;
+
+import io.javalin.Javalin;
 
 public final class Launcher {
 
@@ -76,9 +78,13 @@ public final class Launcher {
     }
 
     private static String userFacingStartupMessage(Exception exception) {
-        String rawMessage = exception == null || exception.getMessage() == null
-                ? ""
-                : exception.getMessage();
+        if (exception == null) {
+            return "EDITH-J could not start cleanly."
+                    + System.lineSeparator()
+                    + "Details: Unknown startup error.";
+        }
+
+        String rawMessage = exception.getMessage() == null ? "" : exception.getMessage();
         String lower = rawMessage.toLowerCase();
 
         if (lower.contains("address already in use") || lower.contains("failed to bind")) {
@@ -104,9 +110,8 @@ public final class Launcher {
         }
         try {
             javax.swing.JOptionPane.showMessageDialog(null, message, title, javax.swing.JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ignored) {
+        } catch (RuntimeException ignored) {
             // Keep startup failure reporting best-effort only.
         }
     }
 }
-
