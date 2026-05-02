@@ -1,0 +1,42 @@
+# EDITH-J user configuration
+# Installed builds look for this file at:
+#   %APPDATA%\EDITH-J\edith.properties
+#
+# Environment variables override values from this file.
+
+# App
+app.name=EDITH-J
+app.host=127.0.0.1
+app.port=8080
+app.auto-open-browser=true
+
+# AI
+edith.ai.provider=groq
+# edith.ai.workspaceDir=%USERPROFILE%/Documents/EDITH-workspace
+
+# Provider overrides
+# groq.api-key=
+# groq.model=llama-3.3-70b-versatile
+# groq.base-url=https://api.groq.com/openai/v1
+
+# Storage
+storage.backend=sqlite
+# Relative paths resolve under %LOCALAPPDATA%\EDITH-J\data
+storage.db-path=edith.db
+
+# Speech
+# Leave unset to use the bundled installer model.
+# speech.vosk.model-path=models/vosk-model-small-en-us-0.15
+speech.audio.input-device-name=
+
+# Desktop automation
+edith.desktop.fileOpenEnabled=true
+edith.desktop.clipboardWriteEnabled=true
+
+# Search
+edith.search.maxResults=10
+edith.search.allowedDirs=workspace,documents,downloads,desktop
+edith.search.excludeExtensions=.tmp,.log
+
+# Launcher overrides
+# edith.launch.notepad=C:/Windows/System32/notepad.exe

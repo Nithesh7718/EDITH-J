@@ -1,14 +1,15 @@
 package com.edithj.storage;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
+
+import com.edithj.config.AppPaths;
 
 /**
  * Centralized storage path management for application data.
  */
 public final class StoragePaths {
 
-    private static final Path DATA_DIR = Paths.get(System.getProperty("user.home", "."), ".edith-j", "data");
+    private static final Path DATA_DIR = AppPaths.dataDirectory();
 
     private StoragePaths() {
         // Utility class
@@ -27,7 +28,7 @@ public final class StoragePaths {
     }
 
     public static Path logsDirectory() {
-        return DATA_DIR.resolve("logs");
+        return AppPaths.logsDirectory();
     }
 
     public static Path dataDirectory() {

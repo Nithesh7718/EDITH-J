@@ -1,4 +1,6 @@
 target/
+target_old_*/
+.m2/
 .idea/
 .vscode/
 *.iml

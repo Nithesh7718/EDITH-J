@@ -1,10 +1,9 @@
 package com.edithj.storage;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 class StoragePathsTest {
@@ -13,7 +12,7 @@ class StoragePathsTest {
     void dataDirectory_returnsValidPath() {
         Path path = StoragePaths.dataDirectory();
         assertNotNull(path);
-        assertTrue(path.toString().contains(".edith-j"));
+        assertTrue(path.toString().contains(".edith-j") || path.toString().contains("EDITH-J"));
     }
 
     @Test
@@ -65,9 +64,8 @@ class StoragePathsTest {
         Path dataDir = StoragePaths.dataDirectory();
         Path notesPath = StoragePaths.notesPath();
         Path remindersPath = StoragePaths.remindersPath();
-        
+
         assertTrue(notesPath.toString().startsWith(dataDir.toString()));
         assertTrue(remindersPath.toString().startsWith(dataDir.toString()));
     }
 }
-

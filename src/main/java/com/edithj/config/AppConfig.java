@@ -2,8 +2,10 @@ package com.edithj.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -23,6 +25,9 @@ public final class AppConfig {
             Map.entry("groq.timeout-seconds", "30"),
             Map.entry("groq.temperature", "0.2"),
             Map.entry("worldmonitor.base-url", "https://www.worldmonitor.app"),
+            Map.entry("app.port", "8080"),
+            Map.entry("app.host", "127.0.0.1"),
+            Map.entry("app.auto-open-browser", "true"),
             Map.entry("storage.backend", "sqlite"),
             Map.entry("edith.dev.smokeLaunchersEnabled", "false"),
             Map.entry("edith.desktop.fileOpenEnabled", "true"),
@@ -95,6 +100,18 @@ public final class AppConfig {
         return Boolean.parseBoolean(get("edith.desktop.clipboardWriteEnabled", DEFAULTS.get("edith.desktop.clipboardWriteEnabled")));
     }
 
+    public int appPort() {
+        return parsePort(get("app.port", DEFAULTS.get("app.port")));
+    }
+
+    public String appHost() {
+        return normalizeHost(get("app.host", DEFAULTS.get("app.host")));
+    }
+
+    public boolean isAutoOpenBrowserEnabled() {
+        return Boolean.parseBoolean(get("app.auto-open-browser", DEFAULTS.get("app.auto-open-browser")));
+    }
+
     /**
      * Resolves a configuration value with precedence:
      * 1. Environment Variable (normalized key, e.g. "edith.ai.provider" -> "EDITH_AI_PROVIDER")
@@ -129,17 +146,78 @@ public final class AppConfig {
 
     private static Properties loadProperties() {
         Properties properties = new Properties();
+        AppPaths.ensureRuntimeDirectories();
+        ensureUserConfigTemplate();
 
-        // ONLY load from edith.properties in project root.
-        Path localOverride = Path.of(LOCAL_OVERRIDE_FILE);
-        if (Files.isRegularFile(localOverride)) {
-            try (InputStream inputStream = Files.newInputStream(localOverride)) {
+        Path[] candidates = new Path[] {
+            AppPaths.userConfigPath(),
+            AppPaths.bundledConfigDirectory().resolve(LOCAL_OVERRIDE_FILE),
+            AppPaths.workingDirectoryConfigPath()
+        };
+
+        for (Path candidate : candidates) {
+            if (!Files.isRegularFile(candidate)) {
+                continue;
+            }
+            try (InputStream inputStream = Files.newInputStream(candidate)) {
                 properties.load(inputStream);
             } catch (IOException exception) {
-                throw new IllegalStateException("Unable to load local configuration from " + LOCAL_OVERRIDE_FILE, exception);
+                throw new IllegalStateException("Unable to load configuration from " + candidate, exception);
             }
         }
 
         return properties;
+    }
+
+    private static void ensureUserConfigTemplate() {
+        Path destination = AppPaths.userConfigTemplatePath();
+        if (Files.exists(destination)) {
+            return;
+        }
+
+        Path bundledTemplate = AppPaths.bundledConfigTemplatePath();
+        if (Files.isRegularFile(bundledTemplate)) {
+            try {
+                Files.createDirectories(destination.getParent());
+                Files.copy(bundledTemplate, destination, StandardCopyOption.REPLACE_EXISTING);
+                return;
+            } catch (IOException exception) {
+                throw new IllegalStateException("Unable to copy bundled configuration template to " + destination, exception);
+            }
+        }
+
+        try (InputStream inputStream = AppConfig.class.getResourceAsStream("/config/edith.properties.example")) {
+            if (inputStream == null) {
+                return;
+            }
+            Files.createDirectories(destination.getParent());
+            Files.writeString(destination,
+                    new String(inputStream.readAllBytes(), StandardCharsets.UTF_8),
+                    StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to create configuration template at " + destination, exception);
+        }
+    }
+
+    private int parsePort(String value) {
+        if (value == null || value.isBlank()) {
+            return Integer.parseInt(DEFAULTS.get("app.port"));
+        }
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            if (parsed < 1 || parsed > 65535) {
+                return Integer.parseInt(DEFAULTS.get("app.port"));
+            }
+            return parsed;
+        } catch (NumberFormatException exception) {
+            return Integer.parseInt(DEFAULTS.get("app.port"));
+        }
+    }
+
+    private String normalizeHost(String value) {
+        if (value == null || value.isBlank()) {
+            return DEFAULTS.get("app.host");
+        }
+        return value.trim();
     }
 }

@@ -1,43 +1,49 @@
 package com.edithj.api;
 
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.edithj.assistant.AssistantResponse;
 import com.edithj.assistant.AssistantService;
 import com.edithj.assistant.AssistantTelemetry;
+import com.edithj.chat.ConversationHistoryService;
+import com.edithj.commands.FileSearchService;
 import com.edithj.config.PreferencesService;
 import com.edithj.desktop.ClipboardService;
 import com.edithj.desktop.DesktopFileService;
 import com.edithj.desktop.SystemClipboardService;
 import com.edithj.desktop.SystemDesktopFileService;
+import com.edithj.memory.MemoryService;
 import com.edithj.notes.Note;
 import com.edithj.notes.NoteService;
-import com.edithj.chat.ConversationHistoryService;
 import com.edithj.reminders.Reminder;
 import com.edithj.reminders.ReminderService;
+import com.edithj.resilience.HealthMonitorRegistry;
 import com.edithj.storage.RepositoryFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
-
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Wires all EDITH features to REST endpoints consumed by the React frontend.
  */
 public final class EdithApiServer {
 
+    private static final String FRONTEND_ENTRY = "/public/index.html";
 
     private final NoteService noteService;
     private final ReminderService reminderService;
     private final AssistantService assistantService;
     private final ClipboardService clipboardService;
     private final DesktopFileService desktopFileService;
+    private final FileSearchService fileSearchService;
     private final ConversationHistoryService historyService;
+    private final MemoryService memoryService;
     private final PreferencesService preferences;
     private final ObjectMapper mapper;
 
@@ -46,8 +52,10 @@ public final class EdithApiServer {
         this.reminderService = new ReminderService(RepositoryFactory.createReminderRepository());
         this.historyService = new ConversationHistoryService(RepositoryFactory.createChatRepository());
         this.assistantService = new AssistantService(this.historyService);
+        this.memoryService = new MemoryService();
         this.clipboardService = new SystemClipboardService();
         this.desktopFileService = new SystemDesktopFileService();
+        this.fileSearchService = new FileSearchService();
         this.preferences = PreferencesService.instance();
         this.mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
@@ -55,23 +63,39 @@ public final class EdithApiServer {
     }
 
     public Javalin createApp() {
+        boolean frontendAvailable = hasBundledFrontend();
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add("/public", Location.CLASSPATH);
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
             config.jsonMapper(new io.javalin.json.JavalinJackson(mapper, false));
         });
 
-        registerRoutes(app);
+        registerRoutes(app, frontendAvailable);
         return app;
     }
 
-    private void registerRoutes(Javalin app) {
+    public static boolean hasBundledFrontend() {
+        return EdithApiServer.class.getResource(FRONTEND_ENTRY) != null;
+    }
+
+    private void registerRoutes(Javalin app, boolean frontendAvailable) {
         // ── Health ────────────────────────────────────────────────────────────
-        app.get("/api/health", ctx -> ctx.json(Map.of("status", "ok", "service", "EDITH-J")));
+        app.get("/api/health", ctx -> ctx.json(Map.of(
+                "status", "ok",
+                "service", "EDITH-J",
+                "healthSummary", HealthMonitorRegistry.instance().healthSummary())));
+
+        app.get("/api/resilience/metrics", ctx -> ctx.json(HealthMonitorRegistry.instance().healthSummary()));
 
         // ── Chat / Assistant ──────────────────────────────────────────────────
         app.get("/api/chat/history", ctx -> {
             ctx.json(historyService.getRecentHistory(50));
+        });
+
+        app.delete("/api/chat/history", ctx -> {
+            int archivedMessages = historyService.archiveToMemoryAndClear(memoryService, 200);
+            assistantService.clearConversationState();
+            ctx.json(Map.of("success", true, "archivedMessages", archivedMessages));
         });
 
         app.post("/api/chat", ctx -> {
@@ -81,7 +105,7 @@ public final class EdithApiServer {
                 return;
             }
             AssistantResponse response = assistantService.handleTypedInput(req.message());
-            ctx.json(new ChatMessageDto(java.util.UUID.randomUUID().toString(), "edith", response.answer(), Instant.now().toString()));
+            ctx.json(response);
         });
 
         // ── Notes ─────────────────────────────────────────────────────────────
@@ -197,16 +221,21 @@ public final class EdithApiServer {
         app.put("/api/settings", ctx -> {
             @SuppressWarnings("unchecked")
             Map<String, Object> body = ctx.bodyAsClass(Map.class);
-            if (body.containsKey("autoSendVoiceInput"))
+            if (body.containsKey("autoSendVoiceInput")) {
                 preferences.setAutoSendVoiceInputEnabled((Boolean) body.get("autoSendVoiceInput"));
-            if (body.containsKey("preferShortcutApps"))
+            }
+            if (body.containsKey("preferShortcutApps")) {
                 preferences.setPreferShortcutAppsEnabled((Boolean) body.get("preferShortcutApps"));
-            if (body.containsKey("allowWebFallback"))
+            }
+            if (body.containsKey("allowWebFallback")) {
                 preferences.setWebFallbackAllowed((Boolean) body.get("allowWebFallback"));
-            if (body.containsKey("whatsappAppFirst"))
+            }
+            if (body.containsKey("whatsappAppFirst")) {
                 preferences.setWhatsAppAppFirstEnabled((Boolean) body.get("whatsappAppFirst"));
-            if (body.containsKey("devSmokeLaunchersEnabled"))
+            }
+            if (body.containsKey("devSmokeLaunchersEnabled")) {
                 preferences.setDevSmokeLaunchersEnabled((Boolean) body.get("devSmokeLaunchersEnabled"));
+            }
             ctx.json(Map.of("success", true));
         });
 
@@ -231,14 +260,29 @@ public final class EdithApiServer {
         app.post("/api/automation/file", ctx -> {
             FileAutomationRequest req = ctx.bodyAsClass(FileAutomationRequest.class);
             String cmd = switch (req.action().toLowerCase()) {
-                case "open" -> "file open " + req.path();
-                case "create" -> "file create text " + req.path() + (req.content() != null ? " with " + req.content() : "");
-                case "rename" -> "file rename " + req.path() + " to " + req.to();
-                case "move" -> "file move " + req.path() + " to " + req.to();
-                default -> throw new IllegalArgumentException("Unknown file action: " + req.action());
+                case "open" ->
+                    "file open " + req.path();
+                case "create" ->
+                    "file create text " + req.path() + (req.content() != null ? " with " + req.content() : "");
+                case "rename" ->
+                    "file rename " + req.path() + " to " + req.to();
+                case "move" ->
+                    "file move " + req.path() + " to " + req.to();
+                default ->
+                    throw new IllegalArgumentException("Unknown file action: " + req.action());
             };
             AssistantResponse res = assistantService.handleTypedInput(cmd);
             ctx.json(res);
+        });
+
+        app.post("/api/automation/search-files", ctx -> {
+            SearchFilesRequest req = ctx.bodyAsClass(SearchFilesRequest.class);
+            if (req.query() == null || req.query().isBlank()) {
+                ctx.status(400).json(Map.of("error", "query is required"));
+                return;
+            }
+            List<FileSearchService.FileSearchResult> results = fileSearchService.search(req.query(), req.fileType(), req.scope());
+            ctx.json(results);
         });
 
         app.post("/api/automation/write-code", ctx -> {
@@ -275,30 +319,72 @@ public final class EdithApiServer {
                 AssistantResponse res = assistantService.stopVoiceInputAndHandle();
                 ctx.json(Map.of(
                         "transcript", assistantService.getLastVoiceTranscript(),
-                        "answer", res.answer(),
-                        "intent", res.intentType().name()
+                        "response", res
                 ));
             } catch (Exception e) {
                 ctx.status(500).json(Map.of("error", "Voice capture failed: " + e.getMessage()));
             }
         });
 
+        if (!frontendAvailable) {
+            app.get("/", ctx -> {
+                ctx.status(503).html("""
+                        <html><head><title>EDITH-J Startup Error</title></head>
+                        <body style="font-family:Segoe UI,Arial,sans-serif;padding:2rem;">
+                        <h1>EDITH-J UI assets are missing</h1>
+                        <p>The backend started, but the packaged frontend files were not found.</p>
+                        <p>Rebuild with <code>mvn clean package</code> before creating the installer.</p>
+                        </body></html>
+                        """);
+            });
+        }
+
         // SPA fallback — serve index.html for all unmatched routes
         app.error(404, ctx -> {
             if (!ctx.path().startsWith("/api")) {
-                ctx.redirect("/");
+                if (frontendAvailable) {
+                    ctx.redirect("/");
+                } else {
+                    ctx.status(503).result("EDITH-J frontend assets are missing from this build.");
+                }
             }
         });
     }
 
     // ── Request / Response DTOs ────────────────────────────────────────────────
-    public record ChatRequest(String message) {}
-    public record ChatMessageDto(String id, String role, String content, String timestamp) {}
-    public record NoteRequest(String content) {}
-    public record ReminderRequest(String text, String dueHint) {}
-    public record ClipboardRequest(String text) {}
-    public record OpenAppRequest(String app) {}
-    public record WebSearchRequest(String query) {}
-    public record FileAutomationRequest(String action, String path, String content, String to) {}
-    public record WriteGeneratedRequest(String path, String instructions) {}
+    public record ChatRequest(String message) {
+
+    }
+
+    public record NoteRequest(String content) {
+
+    }
+
+    public record ReminderRequest(String text, String dueHint) {
+
+    }
+
+    public record ClipboardRequest(String text) {
+
+    }
+
+    public record OpenAppRequest(String app) {
+
+    }
+
+    public record WebSearchRequest(String query) {
+
+    }
+
+    public record FileAutomationRequest(String action, String path, String content, String to) {
+
+    }
+
+    public record SearchFilesRequest(String query, String fileType, String scope) {
+
+    }
+
+    public record WriteGeneratedRequest(String path, String instructions) {
+
+    }
 }

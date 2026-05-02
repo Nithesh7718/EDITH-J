@@ -6,7 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,6 +17,10 @@ import com.edithj.ai.ChatProvider;
 import com.edithj.ai.ProviderFactory;
 import com.edithj.assistant.IntentType;
 import com.edithj.launcher.AppLauncherService;
+import com.edithj.resilience.FailureType;
+import com.edithj.resilience.HealthMonitorRegistry;
+import com.edithj.resilience.HealthSignal;
+import com.edithj.resilience.IncidentSeverity;
 
 public class DesktopAutomationCommandHandler implements CommandHandler {
 
@@ -265,9 +271,23 @@ public class DesktopAutomationCommandHandler implements CommandHandler {
 
         String generated = provider.generateReply(prompt);
         if (generated == null || generated.isBlank()) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "automation.ai",
+                    FailureType.PROVIDER,
+                    IncidentSeverity.HIGH,
+                    "Generated content was empty from the provider.",
+                    Instant.now(),
+                    Map.of("provider", provider.providerName(), "path", target.toString())));
             return "The model returned no content for this request.";
         }
         if (looksLikeProviderError(generated)) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "automation.ai",
+                    FailureType.PROVIDER,
+                    IncidentSeverity.MEDIUM,
+                    "Provider returned an error message during code generation.",
+                    Instant.now(),
+                    Map.of("provider", provider.providerName(), "response", generated)));
             return generated;
         }
 
@@ -282,6 +302,13 @@ public class DesktopAutomationCommandHandler implements CommandHandler {
                     + workspaceRelativeDisplay(target)
                     + ".";
         } catch (IOException exception) {
+            HealthMonitorRegistry.instance().registerHealthSignal(new HealthSignal(
+                    "automation.storage",
+                    FailureType.STORAGE,
+                    IncidentSeverity.MEDIUM,
+                    "Generated file was created but could not be written to disk.",
+                    Instant.now(),
+                    Map.of("path", target.toString(), "error", exception.getMessage())));
             return "I generated content, but I could not save the file.";
         }
     }
